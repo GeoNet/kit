@@ -1,1 +1,5 @@
 .idea
+cvendor/libmseed/*.o
+cvendor/libmseed/*.a
+cvendor/libslink/*.o
+cvendor/libslink/*.a
