@@ -5,8 +5,6 @@ import (
 	"time"
 )
 
-const GRAVITY = 9.80665
-
 // running acceleration stream state information
 type Stream struct {
 	Rate float64
@@ -44,8 +42,7 @@ func (s *Stream) Sample(sample int32) (float64, float64) {
 	a := s.HighPass.Sample(float64(sample))
 	// velocity
 	v := s.Integrator.Sample(a)
-	// update units
-	return 100.0 * a / GRAVITY, v * 100.0
+	return a, v
 }
 
 // estimate the peak ground motions ...

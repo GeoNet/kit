@@ -9,6 +9,8 @@ import (
 	"testing"
 )
 
+const GRAVITY = 9.80665
+
 func TestStreams(t *testing.T) {
 
 	// Check real data for a couple of sites, one, KIKS, has only strong motion
@@ -19,6 +21,9 @@ func TestStreams(t *testing.T) {
 	// For reference, sensor FBA-ES-T (2g) has gain 1.01971 Volts per M/S**S
 	// and the Q330 datalogger has gain 419430.4 counts per Volt.
 	// The Basalt (at KIKS) has the same overall gain as the Q330 with FBA-ES-T.
+
+	// in the tests pga and pgv returned from Peaks is converted from m/s/s and m/s to
+	// %g and cm/s so that it can be compared to values calculated externally (from scwfparam).
 
 	var tests = []struct {
 		path   string  // path to raw samples
@@ -125,19 +130,17 @@ func TestStreams(t *testing.T) {
 
 		pga, pgv := s.Peaks(d)
 
-		if v := strconv.FormatFloat(pga, 'f', 4, 64); v != x.pga {
+		if v := strconv.FormatFloat(100 * pga / GRAVITY, 'f', 4, 64); v != x.pga {
 			t.Errorf("invalid pga %s: found %s, expected %s", x.path, v, x.pga)
 		}
-		if v := strconv.FormatFloat(pgv, 'f', 4, 64); v != x.pgv {
+		if v := strconv.FormatFloat(pgv * 100, 'f', 4, 64); v != x.pgv {
 			t.Errorf("invalid pgv %s: found %s, expected %s", x.path, v, x.pgv)
 		}
 
-		t.Logf("%s found %g pga, expected external %g pga, found %g pgv, expected external %g pgv", x.path, pga, x.extPga, pgv, x.extPgv)
-
-		if rpga := math.Abs((pga - x.extPga) / x.extPga); rpga > 0.15 {
+		if rpga := math.Abs(((100 * pga / GRAVITY) - x.extPga) / x.extPga); rpga > 0.15 {
 			t.Errorf("large pga error %s:, expected: %g got %g, relative error: %g", x.path, x.extPga, pga, rpga)
 		}
-		if rpgv := math.Abs((pgv - x.extPgv) / x.extPgv); rpgv > 0.15 {
+		if rpgv := math.Abs(((100 * pgv) - x.extPgv) / x.extPgv); rpgv > 0.15 {
 			t.Errorf("large pgv error %s:, expected: %g got %g, relative error: %g", x.path, x.extPgv, pgv, rpgv)
 		}
 	}
