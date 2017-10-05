@@ -2,6 +2,15 @@
 
 Common packages for GeoNet applications.
 
+## metrics
+
+metrics is for gathering metrics.
+
+
+## mmi
+
+mmi is for Modificed Mercalli Intensity calculations in New Zealand.
+
 
 ## mseed
 
@@ -39,3 +48,7 @@ cd vendor/github.com/GeoNet/kit/cvendor/libslink
 make clean 
 make
 ```
+
+## wgs84
+
+wgs84 is for distance, bearing, and locality calculations on the WGS84 ellipsoid.
