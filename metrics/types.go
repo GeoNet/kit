@@ -22,3 +22,14 @@ func DoProcess(m Processor, b []byte) error {
 
 	return err
 }
+
+// Logger defines an interface for logging.
+type Logger interface {
+	Printf(string, ...interface{})
+}
+
+type discarder struct {
+}
+
+func (d discarder) Printf(string, ...interface{}) {
+}
