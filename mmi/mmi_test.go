@@ -46,6 +46,82 @@ func TestMMIDistance(t *testing.T) {
 	}
 }
 
+func TestSeverity(t *testing.T) {
+	in := []struct {
+		id       string
+		mmi      float64
+		severity string
+	}{
+		{id: loc(), mmi: 9.0, severity: "Extreme"},
+		{id: loc(), mmi: 8.0, severity: "Extreme"},
+		{id: loc(), mmi: 7.0, severity: "Severe"},
+		{id: loc(), mmi: 6.1, severity: "Moderate"},
+		{id: loc(), mmi: 6.0, severity: "Moderate"},
+		{id: loc(), mmi: 5.9, severity: "Minor"},
+		{id: loc(), mmi: 0.0, severity: "Minor"},
+		{id: loc(), mmi: -1.0, severity: "Minor"},
+	}
+
+	for _, v := range in {
+		if Severity(v.mmi) != v.severity {
+			t.Errorf("%s expected %s got %s", v.id, v.severity, Severity(v.mmi))
+
+		}
+	}
+}
+
+func TestMMIIntensity(t *testing.T) {
+	in := []struct {
+		id        string
+		mmi       float64
+		intensity string
+	}{
+		{id: loc(), mmi: 9.0, intensity: "severe"},
+		{id: loc(), mmi: 8.0, intensity: "severe"},
+		{id: loc(), mmi: 7.0, intensity: "severe"},
+		{id: loc(), mmi: 6.0, intensity: "strong"},
+		{id: loc(), mmi: 5.0, intensity: "moderate"},
+		{id: loc(), mmi: 4.0, intensity: "light"},
+		{id: loc(), mmi: 3.0, intensity: "weak"},
+		{id: loc(), mmi: 2.0, intensity: "unnoticeable"},
+		{id: loc(), mmi: 0.0, intensity: "unnoticeable"},
+		{id: loc(), mmi: -1.0, intensity: "unnoticeable"},
+	}
+
+	for _, v := range in {
+		if MMIIntensity(v.mmi) != v.intensity {
+			t.Errorf("%s expected %s got %s", v.id, v.intensity, MMIIntensity(v.mmi))
+
+		}
+	}
+}
+
+func TestIntensityMMI(t *testing.T) {
+	in := []struct {
+		id        string
+		mmi       float64
+		intensity string
+	}{
+		{id: loc(), mmi: 7.0, intensity: "severe"},
+		{id: loc(), mmi: 7.0, intensity: "severe"},
+		{id: loc(), mmi: 7.0, intensity: "severe"},
+		{id: loc(), mmi: 6.0, intensity: "strong"},
+		{id: loc(), mmi: 5.0, intensity: "moderate"},
+		{id: loc(), mmi: 4.0, intensity: "light"},
+		{id: loc(), mmi: 3.0, intensity: "weak"},
+		{id: loc(), mmi: -9.0, intensity: "unnoticeable"},
+		{id: loc(), mmi: -9.0, intensity: "unnoticeable"},
+		{id: loc(), mmi: -9.0, intensity: "unnoticeable"},
+	}
+
+	for _, v := range in {
+		if IntensityMMI(v.intensity) != v.mmi {
+			t.Errorf("%s expected %f got %f", v.id, v.mmi, IntensityMMI(v.intensity))
+
+		}
+	}
+}
+
 func loc() string {
 	_, _, l, _ := runtime.Caller(1)
 	return "L" + strconv.Itoa(l)
