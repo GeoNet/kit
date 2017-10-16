@@ -153,3 +153,21 @@ func (q *Quake) Publish() bool {
 		return false
 	}
 }
+
+// Certainty returns the CAP certainty for the quake.
+func (q *Quake) Certainty() string {
+	status := q.Status()
+
+	switch {
+	case status == `reviewed`:
+		return `Observed`
+	case status == `deleted`:
+		return `Unlikely`
+	case q.UsedPhaseCount >= 20 && q.MagnitudeStationCount >= 10:
+		return `Likely`
+	case status == "automatic" && (q.UsedPhaseCount < 20 || q.MagnitudeStationCount < 10):
+		return `Possible`
+	default:
+		return `Unknown`
+	}
+}

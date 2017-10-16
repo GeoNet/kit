@@ -262,6 +262,30 @@ func TestAlert(t *testing.T) {
 	}
 }
 
+func TestCertainty(t *testing.T) {
+	in := []struct {
+		id        string
+		q         Quake
+		certainty string
+	}{
+		{id: loc(), q: Quake{}, certainty: "Possible"},
+		{id: loc(), q: Quake{EvaluationMode: "manual"}, certainty: "Observed"},
+		{id: loc(), q: Quake{Type: "not existing", EvaluationMode: "manual"}, certainty: "Unlikely"},
+		{id: loc(), q: Quake{Type: "not existing", EvaluationStatus: "confirmed"}, certainty: "Unlikely"},
+		{id: loc(), q: Quake{Type: "not existing", EvaluationMode: "manual", EvaluationStatus: "confirmed"}, certainty: "Unlikely"},
+		{id: loc(), q: Quake{UsedPhaseCount: 10, MagnitudeStationCount: 4}, certainty: "Possible"},
+		{id: loc(), q: Quake{UsedPhaseCount: 19, MagnitudeStationCount: 10}, certainty: "Possible"},
+		{id: loc(), q: Quake{UsedPhaseCount: 20, MagnitudeStationCount: 9}, certainty: "Possible"},
+		{id: loc(), q: Quake{UsedPhaseCount: 20, MagnitudeStationCount: 10}, certainty: "Likely"},
+	}
+
+	for _, v := range in {
+		if v.q.Certainty() != v.certainty {
+			t.Errorf("%s expected certainty %s got %s", v.id, v.certainty, v.q.Certainty())
+		}
+	}
+}
+
 func loc() string {
 	_, _, l, _ := runtime.Caller(1)
 	return "L" + strconv.Itoa(l)
