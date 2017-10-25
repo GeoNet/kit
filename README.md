@@ -11,6 +11,11 @@ version of `github.com/golang/protobuf/proto`.
 
 ## Go Packages
 
+### gloria_pb
+
+a generated pkg for gloria protobuf messages.
+
+
 ### haz_pb
 
 a generated pkg for haz protobuf messages.
