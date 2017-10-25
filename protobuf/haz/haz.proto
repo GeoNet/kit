@@ -1,0 +1,196 @@
+syntax = "proto3";
+
+package haz;
+option go_package = "haz_pb";
+
+// protoc --proto_path=protobuf/haz/ --go_out=haz_pb protobuf/haz/haz.proto
+
+// Quake is for earthquake information.
+message Quake {
+    // the unique public identifier for this quake.
+    string public_iD = 1;
+    // the origin time of the quake.
+    Timestamp time = 2;
+    // the modification time of the quake information.
+    Timestamp modification_time = 3;
+    // latitude of the quake location.
+    double latitude = 4;
+    // longitude of the quake location.
+    double longitude = 5;
+    // the depth of the quake in km.
+    double depth = 6;
+    // magnitude of the quake.
+    double magnitude = 7;
+    // distance and direction to the nearest locality.
+    string locality = 8;
+    // the quality of this information; `best`, `good`, `caution`, `deleted`.
+    string quality = 9;
+    // the calculated MMI shaking at the closest locality in the New Zealand region.
+    int32 mmi = 10;
+}
+
+// Timestamp for encoding time stamps.
+message Timestamp {
+    // Unix time in seconds
+    int64 sec = 1;
+    // Fractional part of time in nanoseconds.
+    int64 nsec = 2;
+}
+
+message Quakes {
+    repeated Quake quakes = 1;
+}
+
+message Volcano {
+    // a unique identifier for the volcano.
+    string volcano_iD = 1;
+    // the volcano title.
+    string title = 2;
+    // latitude of the volcano.
+    double latitude = 3;
+    // longitude of the volcano.
+    double longitude = 4;
+
+    VAL val = 5;
+}
+
+// volcanic alert level.
+message VAL {
+    int32 level = 1;
+    string activity = 2;
+    string hazards = 3;
+}
+
+message Volcanoes {
+    repeated Volcano volcanoes = 1;
+}
+
+message MMI {
+    // latitude of the mmi.
+    double latitude = 1;
+    // longitude of the mmi.
+    double longitude = 2;
+    // the mmi at the location.  Currently the max mmi.
+    int32 mmi = 3;
+    // count of mmi values at the location.
+    int32 count = 4;
+}
+
+message Shaking {
+    repeated MMI mmi = 1;
+
+    map<int32, int32> mmi_summary = 2;
+
+    int32 mmi_total = 3;
+}
+
+message Story {
+    string Title = 1;
+    string link = 2;
+    Timestamp published = 3;
+}
+
+message News {
+    repeated Story stories = 1;
+}
+
+message Rate {
+    Timestamp time = 1;
+    int32 count = 2;
+}
+
+message QuakeStats {
+    // quakes per day
+    repeated Rate per_day = 1;
+
+    // magnitude count over the last 7 days
+    map<int32, int32> week = 2;
+    // magnitude count over the last 28 days
+    map<int32, int32> month = 3;
+    // magnitude count over the last 365 days
+    map<int32, int32> year = 4;
+}
+
+// QuakeTechnical for encoding technical information about a quake.
+// More information than haz.Quake.
+message QuakeTechnical {
+    string public_iD = 1;
+    string type = 2;
+
+    string agency = 3;
+
+    Timestamp time = 4;
+    Timestamp modification_time = 5;
+
+    RealQuantity latitude = 6;
+    RealQuantity longitude = 7;
+    RealQuantity depth = 8;
+
+    string depth_type = 9;
+
+    string method = 10;
+    string earth_model = 11;
+
+    string evaluation_mode = 12;
+    string evaluation_status = 13;
+
+    int64 used_phase_count = 14;
+    int64 used_station_count = 15;
+    double standard_error = 16;
+    double azimuthal_gap = 17;
+    double minimum_distance = 18;
+    double maximum_distance = 19;
+    double median_distance = 20;
+
+    repeated Pick pick = 21;
+
+    RealQuantity magnitude = 22;
+    string magnitude_type = 23;
+
+    repeated Magnitude magnitudes = 24;
+}
+
+message RealQuantity {
+    double value = 1;
+    double uncertainty = 2;
+}
+
+message StationMagnitude {
+    Waveform waveform = 1;
+
+    RealQuantity magnitude = 2;
+    string type = 3;
+
+    double azimuth = 4;
+    double distance = 5;
+    double residual = 6;
+    double weight = 7;
+
+    RealQuantity amplitude = 8;
+}
+
+message Magnitude {
+    RealQuantity magnitude = 1;
+    string type = 2;
+    int64 station_count = 3;
+    repeated StationMagnitude station_magnitude = 4;
+}
+
+message Pick {
+    Waveform waveform = 1;
+    Timestamp time = 2;
+    string phase = 3;
+    double azimuth = 4;
+    double distance = 5;
+    double residual = 6;
+    double weight = 7;
+    string evaluation_mode = 8;
+    string evaluation_status = 9;
+}
+
+message Waveform {
+    string network = 1;
+    string station = 2;
+    string location = 3;
+    string channel = 4;
+}
