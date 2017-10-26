@@ -72,3 +72,17 @@ func IntensityMMI(Intensity string) float64 {
 		return -9
 	}
 }
+
+// Severity returns the CAP severity for mmi.
+func Severity(mmi float64) string {
+	switch {
+	case mmi >= 8:
+		return `Extreme`
+	case mmi >= 7:
+		return `Severe`
+	case mmi >= 6:
+		return `Moderate`
+	default:
+		return "Minor"
+	}
+}
