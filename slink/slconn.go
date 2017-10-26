@@ -5,6 +5,8 @@ package slink
 //#cgo LDFLAGS: ${SRCDIR}/../cvendor/libslink/libslink.a
 //#include <libslink.h>
 //typedef void (*log_func)(const char *message);
+//void logPrint(const char *message);
+//void errPrint(const char *message);
 //void log_print(const char *message) {logPrint(message);}
 //void err_print(const char *message) {errPrint(message);}
 import "C"
