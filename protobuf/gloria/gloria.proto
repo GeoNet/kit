@@ -124,4 +124,6 @@ message Download {
 message Distribution {
     // Set true if data should be sent to the IGS
     bool igs = 1;
+    // Set true if this site belongs to LINZ
+    bool linz = 2;
 }
