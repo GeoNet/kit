@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+// protoc --proto_path=protobuf/sit --go_out=sit_pb protobuf/sit/sit.proto
+
+package sit;
+option go_package = "sit_pb";
+
+// A geographical point on NZGD2000
+message Point {
+    // Latitude - geographical latitude of the point.
+    double latitude = 1;
+    // Longitude - geographical longitude of the point.
+    double longitude = 2;
+    // Elevation - geographical height of the point.
+    double elevation = 3;
+    // Datum
+    string datum = 4;
+}
+
+//A site record (represents a seismic site OR gps mark)
+message site {
+    string Code = 1;
+    Access access = 2;
+    Address address = 3;
+    repeated Equipment_Install equipment_installs = 4;
+    Place place = 5;
+    repeated Person people = 6;
+}
+
+// A time span that has a start and and end.
+message Span {
+    // Start - time in Unix seconds.
+    int64 start = 1;
+    // End - time in Unix seconds.  A future date of 9999-01-01T00:00:00Z is used to indicate still open.
+    int64 end = 2;
+}
+
+//An access record - access.csv
+message Access {
+    string description = 1;
+    string notes = 2;
+    //Only contains company, address1-3 and city
+    Address address = 3;
+}
+
+//An address record - address.csv
+message Address {
+    string company = 1;
+    string address1 = 2;
+    string address2 = 3;
+    string address3 = 4;
+    string city = 5;
+    string state = 6;
+    string postcode = 7;
+    string country = 8;
+    string po_box = 9;
+}
+
+//An equipment record - equipment.csv
+message Equipment {
+    string asset_number = 1;
+    string serial_number = 2;
+    string manufacturer = 3;
+    string model = 4;
+    string type = 5;
+    string owner = 6;
+}
+
+//An equipment install record - equipment_installs.csv
+message Equipment_Install {
+    Equipment equipment = 1;
+    Span installed = 2;
+}
+
+//A place record - place.csv
+message Place {
+    string name = 1;
+    string long_name = 2;
+    Point point = 3;
+    string text = 4;
+    string type = 5;
+    string established_by = 6;
+    int64 date_established = 7;
+    string description = 8;
+    string protection_description = 9;
+    string notes = 10;
+    string cell_coverage = 11;
+    Address address = 12;
+}
+
+//A person record - place_person.csv
+message Person {
+    string place = 1;
+    string surname = 2;
+    string first_name = 3;
+    string initial = 4;
+    string email = 5;
+    string suffix = 6;
+    string title = 7;
+    string preferred_contact = 8;
+    string phone = 9;
+    string notes = 10;
+    string type = 11;
+    Address address = 12;
+}
