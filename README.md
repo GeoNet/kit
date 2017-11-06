@@ -75,6 +75,11 @@ make clean
 make
 ```
 
+### weft
+
+weft helps with web applications.
+
+
 ### wgs84
 
 wgs84 is for distance, bearing, and locality calculations on the WGS84 ellipsoid.
