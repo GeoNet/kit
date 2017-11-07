@@ -450,7 +450,7 @@ func (m *Download) GetRate() int64 {
 type Distribution struct {
 	// Set true if data should be sent to the IGS
 	Igs bool `protobuf:"varint,1,opt,name=igs" json:"igs,omitempty"`
-	// Set true if data should be sent to the LINZ
+	// Set true if this site belongs to LINZ
 	Linz bool `protobuf:"varint,2,opt,name=linz" json:"linz,omitempty"`
 }
 
