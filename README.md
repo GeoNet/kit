@@ -15,6 +15,13 @@ version of `github.com/golang/protobuf/proto`.
 
 a generated pkg for gloria protobuf messages.
 
+### sit_pb
+
+a generated pkg for protobufs created from the SIT repo.
+
+### sit_delta_pb
+
+a generated pkg for protobufs created from the Delta repo for SIT.
 
 ### haz_pb
 
