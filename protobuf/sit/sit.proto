@@ -25,6 +25,7 @@ message site {
     repeated Equipment_Install equipment_installs = 4;
     Place place = 5;
     repeated Person people = 6;
+    repeated Company company = 7;
 }
 
 // A time span that has a start and and end.
@@ -54,6 +55,7 @@ message Address {
     string postcode = 7;
     string country = 8;
     string po_box = 9;
+    string type = 10;
 }
 
 //An equipment record - equipment.csv
@@ -101,5 +103,11 @@ message Person {
     string phone = 9;
     string notes = 10;
     string type = 11;
-    Address address = 12;
+    repeated Address address = 12;
+}
+
+message Company {
+    string name = 1;
+    string phone = 2;
+    repeated Address address = 3;
 }
