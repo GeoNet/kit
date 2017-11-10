@@ -5,6 +5,16 @@ syntax = "proto3";
 package gloria;
 option go_package = "gloria_pb";
 
+message Mark_Index {
+    message Mark {
+        // Code used to uniquely identify the GNSS Mark e.g. TAUP
+        string code = 1;
+        Point point = 2;
+    }
+
+    repeated Mark marks = 3;
+}
+
 // A GNSS Mark.
 message Mark {
     // Code used to uniquely identify the GNSS Mark e.g. TAUP
