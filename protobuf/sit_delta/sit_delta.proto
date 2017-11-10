@@ -57,6 +57,8 @@ message Location {
     //depth? maybe?
     double ground_relationship = 4;
     string notes = 5;
+
+    Span span = 6;
 }
 
 //An equipment record
@@ -70,6 +72,8 @@ message Equipment {
 
     string extras_type = 7;
     map<string, string> extras = 8;
+
+    double height = 9;
 }
 
 //An equipment install record
