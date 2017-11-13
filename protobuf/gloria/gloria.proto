@@ -5,6 +5,11 @@ syntax = "proto3";
 package gloria;
 option go_package = "gloria_pb";
 
+// All GNSS Marks.  Use Mark.Code for the map key.
+message Marks {
+    map<string, Mark> marks = 1;
+}
+
 // A GNSS Mark.
 message Mark {
     // Code used to uniquely identify the GNSS Mark e.g. TAUP
