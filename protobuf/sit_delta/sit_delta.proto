@@ -85,6 +85,8 @@ message Equipment_Install {
 // A GNSS Mark.
 message Mark {
     repeated InstalledMonument installed_monument = 1;
+
+    Point point = 2;
 }
 
 message InstalledMonument {
@@ -95,4 +97,5 @@ message InstalledMonument {
 //A monument for a Mark
 message Monument {
     string domes_number = 1;
+    double height = 3;
 }
