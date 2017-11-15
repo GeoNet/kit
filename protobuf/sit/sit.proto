@@ -21,7 +21,7 @@ message Point {
 message site {
     string Code = 1;
     Access access = 2;
-    Address address = 3;
+    //Address address = 3;
     repeated Equipment_Install equipment_installs = 4;
     Place place = 5;
     repeated Person people = 6;
@@ -56,6 +56,7 @@ message Address {
     string country = 8;
     string po_box = 9;
     string type = 10;
+    string notes = 11;
 }
 
 //An equipment record - equipment.csv
