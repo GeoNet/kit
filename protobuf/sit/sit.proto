@@ -105,6 +105,7 @@ message Person {
     string notes = 10;
     string type = 11;
     repeated Address address = 12;
+    Span span = 13;
 }
 
 message Company {
