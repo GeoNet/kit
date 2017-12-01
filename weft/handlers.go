@@ -116,8 +116,10 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 			metrics.StatusOK()
 		case http.StatusBadRequest:
 			metrics.StatusBadRequest()
+			logger.Printf("%d %s", status, r.RequestURI)
 		case http.StatusUnauthorized:
 			metrics.StatusUnauthorized()
+			logger.Printf("%d %s", status, r.RequestURI)
 		case http.StatusNotFound:
 			metrics.StatusNotFound()
 			logger.Printf("%d %s", status, r.RequestURI)
@@ -128,6 +130,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 			metrics.StatusServiceUnavailable()
 			logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
 		}
+
 	}
 }
 
@@ -198,8 +201,10 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 			metrics.StatusOK()
 		case http.StatusBadRequest:
 			metrics.StatusBadRequest()
+			logger.Printf("%d %s", status, r.RequestURI)
 		case http.StatusUnauthorized:
 			metrics.StatusUnauthorized()
+			logger.Printf("%d %s", status, r.RequestURI)
 		case http.StatusNotFound:
 			metrics.StatusNotFound()
 			logger.Printf("%d %s", status, r.RequestURI)
