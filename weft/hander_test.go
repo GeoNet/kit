@@ -191,17 +191,17 @@ func TestMakeDirectHandler(t *testing.T) {
 	}{
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				w.Write([]byte{})
-				return nil
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				n, err := w.Write([]byte{})
+				return int64(n), err
 			},
 			code: http.StatusOK,
 		},
 		// returning an error will result in a 503
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return errors.New("some error")
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, errors.New("some error")
 			},
 			code:      http.StatusServiceUnavailable,
 			surrogate: "max-age=10",
@@ -209,8 +209,8 @@ func TestMakeDirectHandler(t *testing.T) {
 		// an explicit 503 can also be returned
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusServiceUnavailable, Err: errors.New("some error")}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusServiceUnavailable, Err: errors.New("some error")}
 			},
 			code:      http.StatusServiceUnavailable,
 			surrogate: "max-age=10",
@@ -218,8 +218,8 @@ func TestMakeDirectHandler(t *testing.T) {
 		// 500
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusInternalServerError, Err: errors.New("some error")}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusInternalServerError, Err: errors.New("some error")}
 			},
 			code:      http.StatusInternalServerError,
 			surrogate: "max-age=10",
@@ -227,48 +227,48 @@ func TestMakeDirectHandler(t *testing.T) {
 		// 404 - no StatusError.Err needed
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusNotFound}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusNotFound}
 			},
 			code:      http.StatusNotFound,
 			surrogate: "max-age=10",
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusMovedPermanently}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
 			surrogate: "max-age=86400",
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusMovedPermanently}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
 			surrogate: "max-age=86400",
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusGone}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusGone}
 			},
 			code:      http.StatusGone,
 			surrogate: "max-age=86400",
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusBadRequest}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusBadRequest}
 			},
 			code:      http.StatusBadRequest,
 			surrogate: "max-age=86400",
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) error {
-				return weft.StatusError{Code: http.StatusMethodNotAllowed}
+			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+				return 0, weft.StatusError{Code: http.StatusMethodNotAllowed}
 			},
 			code:      http.StatusMethodNotAllowed,
 			surrogate: "max-age=86400",

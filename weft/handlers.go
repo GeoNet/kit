@@ -52,7 +52,8 @@ var compressibleMimes = map[string]bool{
 type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer) error
 
 // DirectRequestHandler allows writing to the http.ResponseWriter directly.
-type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) error
+// Should return the number of bytes written to w and any errors.
+type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) (int64, error)
 
 // ErrorHandler should write the error for err into b and adjust h as required.
 // err can be nil
@@ -64,9 +65,10 @@ type ErrorHandler func(err error, h http.Header, b *bytes.Buffer) error
 // Responses are counted.  rh is not wrapped with a timer as this includes the write to the client.
 func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		err := rh(r, w)
+		n, err := rh(r, w)
 		if err == nil {
 			metrics.StatusOK()
+			metrics.Written(n)
 			return
 		}
 
@@ -85,6 +87,10 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 
 		status := Status(err)
 
+		// keep errors for writing to client separate from errors that came from the request handler.
+		// log them but don't add metrics
+		var writeErr error
+
 		switch status {
 		case http.StatusMovedPermanently:
 			http.Redirect(w, r, err.Error(), http.StatusMovedPermanently)
@@ -100,15 +106,20 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 				gz := gzip.NewWriter(w)
 				defer gz.Close()
 				w.WriteHeader(status)
-				b.WriteTo(gz)
+				n, writeErr = b.WriteTo(gz)
 			} else {
 				w.WriteHeader(status)
-				b.WriteTo(w)
+				n, writeErr = b.WriteTo(w)
 			}
 		}
 
-		// metrics and logging
+		if writeErr != nil {
+			logger.Printf("error writing to w: %s", writeErr.Error())
+		}
 
+		// request metrics and logging
+
+		metrics.Written(n)
 		metrics.Request()
 
 		switch status {
@@ -165,6 +176,10 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 		}
 
 		status := Status(err)
+		var n int64
+		// keep errors for writing to client separate from errors that came from the request handler.
+		// log them but don't add metrics
+		var writeErr error
 
 		switch status {
 		case http.StatusMovedPermanently:
@@ -181,15 +196,20 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 				gz := gzip.NewWriter(w)
 				defer gz.Close()
 				w.WriteHeader(status)
-				b.WriteTo(gz)
+				n, writeErr = b.WriteTo(gz)
 			} else {
 				w.WriteHeader(status)
-				b.WriteTo(w)
+				n, writeErr = b.WriteTo(w)
 			}
 		}
 
-		// metrics and logging
+		if writeErr != nil {
+			logger.Printf("error writing to w: %s", writeErr.Error())
+		}
 
+		// request metrics and logging
+
+		metrics.Written(n)
 		name := name(rh)
 
 		t.Track(name + "." + r.Method)
