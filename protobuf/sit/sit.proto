@@ -84,7 +84,7 @@ message Place {
     string type = 5;
     string established_by = 6;
     int64 date_established = 7;
-    string description = 8;
+    //string description = 8; Removed from place.csv, column MARK_DESCRIPTION
     string protection_description = 9;
     string notes = 10;
     string cell_coverage = 11;
