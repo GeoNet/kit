@@ -130,10 +130,10 @@ func TestStreams(t *testing.T) {
 
 		pga, pgv := s.Peaks(d)
 
-		if v := strconv.FormatFloat(100 * pga / GRAVITY, 'f', 4, 64); v != x.pga {
+		if v := strconv.FormatFloat(100*pga/GRAVITY, 'f', 4, 64); v != x.pga {
 			t.Errorf("invalid pga %s: found %s, expected %s", x.path, v, x.pga)
 		}
-		if v := strconv.FormatFloat(pgv * 100, 'f', 4, 64); v != x.pgv {
+		if v := strconv.FormatFloat(pgv*100, 'f', 4, 64); v != x.pgv {
 			t.Errorf("invalid pgv %s: found %s, expected %s", x.path, v, x.pgv)
 		}
 

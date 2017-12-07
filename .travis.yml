@@ -1,6 +1,5 @@
 language: go
 go:
-- 1.8.4
 - 1.9.1
 
 # dependencies for kit are not vendored and should always build with the latest version.
@@ -10,4 +9,6 @@ install:
 script:
   - make -C cvendor/libmseed
   - make -C cvendor/libslink
+  - test -z "$(gofmt -s -l `find . -name "*.go" | egrep -v vendor` | tee /dev/stderr)"
+  - go vet -cgocall=false ./...
   - go test -v ./...

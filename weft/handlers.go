@@ -121,6 +121,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 
 		metrics.Written(n)
 		metrics.Request()
+		name := nameD(rh)
 
 		switch status {
 		case http.StatusOK, http.StatusMovedPermanently, http.StatusSeeOther, http.StatusGone, http.StatusNoContent:
@@ -374,6 +375,21 @@ func HTMLError(e error, h http.Header, b *bytes.Buffer) error {
 
 // name finds the name of the function f
 func name(f RequestHandler) string {
+	var n string
+	// Find the name of the function f to use as the timer id
+	fn := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
+	if fn != nil {
+		n = fn.Name()
+		i := strings.LastIndex(n, ".")
+		if i > 0 && i+1 < len(n) {
+			n = n[i+1:]
+		}
+	}
+	return n
+}
+
+// name finds the name of the function f
+func nameD(f DirectRequestHandler) string {
 	var n string
 	// Find the name of the function f to use as the timer id
 	fn := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
