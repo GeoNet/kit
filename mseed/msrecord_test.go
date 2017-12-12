@@ -2,9 +2,9 @@ package mseed_test
 
 import (
 	"github.com/GeoNet/kit/mseed"
-	"testing"
-	"os"
 	"io"
+	"os"
+	"testing"
 	"time"
 )
 
@@ -58,7 +58,7 @@ func TestMSR(t *testing.T) {
 
 	if !s.Equal(msr.Starttime()) {
 		t.Errorf("start time does not match expected 2016-03-19T00:00:01.968393Z got %s",
-		msr.Starttime().Format(time.RFC3339Nano))
+			msr.Starttime().Format(time.RFC3339Nano))
 	}
 
 	e, err := time.Parse(time.RFC3339Nano, "2016-03-19T00:00:05.928393Z")
@@ -84,4 +84,3 @@ func TestMSR(t *testing.T) {
 		t.Errorf("expected first data value 227 got %d", d[0])
 	}
 }
-

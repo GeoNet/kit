@@ -19,12 +19,12 @@ func TestProto(t *testing.T) {
 			Elevation: 427.0279,
 		},
 		DeployedReceiver: []*DeployedReceiver{
-			&DeployedReceiver{
+			{
 				Receiver: &Receiver{
 					Model:        "TRIMBLE NETR9",
 					SerialNumber: "5033K69574",
 					Firmware: []*Firmware{
-						&Firmware{Version: "5.15",
+						{Version: "5.15",
 							Span: &Span{
 								Start: time.Date(2016, 12, 20, 22, 21, 26, 0, time.UTC).Unix(),
 								End:   time.Date(9999, 1, 1, 0, 0, 0, 0, time.UTC).Unix(),
@@ -39,7 +39,7 @@ func TestProto(t *testing.T) {
 			},
 		},
 		InstalledAntenna: []*InstalledAntenna{
-			&InstalledAntenna{
+			{
 				Antenna: &Antenna{
 					Model:        "TRM57971.00",
 					SerialNumber: "1441031450",

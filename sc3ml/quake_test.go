@@ -74,7 +74,7 @@ func TestFromSC3ML(t *testing.T) {
 		}
 
 		if e.Magnitude != 5.691131913 {
-			t.Errorf("%s: Magnitude expected M got %s", input, e.Magnitude)
+			t.Errorf("%s: Magnitude expected M got %f", input, e.Magnitude)
 		}
 
 		if e.MagnitudeUncertainty != 0 {
