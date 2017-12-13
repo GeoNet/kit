@@ -21,6 +21,10 @@ var bufferPool = sync.Pool{
 
 var logger Logger = discarder{}
 
+const (
+	GZIP = "gzip"
+)
+
 // Compressible types from https://www.fastly.com/blog/new-gzip-settings-and-deciding-what-compress
 var compressibleMimes = map[string]bool{
 	"text/html":                     true,
@@ -101,8 +105,16 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		default:
 			w.Header().Add("Vary", "Accept-Encoding")
 
-			if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && compressibleMimes[w.Header().Get("Content-Type")] && b.Len() > 20 {
-				w.Header().Set("Content-Encoding", "gzip")
+			//remove trailing content-type information, like ';version=2'
+			contentType := w.Header().Get("Content-Type")
+			i := strings.Index(contentType, ";")
+			if i > 0 {
+				contentType = contentType[0:i]
+			}
+			contentType = strings.TrimSpace(contentType)
+
+			if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
+				w.Header().Set("Content-Encoding", GZIP)
 				gz := gzip.NewWriter(w)
 				defer gz.Close()
 				w.WriteHeader(status)
@@ -161,6 +173,7 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 		t := metrics.Start()
 
 		err := rh(r, w.Header(), b)
+
 		if err != nil {
 			e := eh(err, w.Header(), b)
 			if e != nil {
@@ -171,11 +184,9 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 		t.Stop()
 
 		// serve the content (which could now be error content).  Gzipping if required.
-
 		if w.Header().Get("Content-Type") == "" && b != nil {
 			w.Header().Set("Content-Type", http.DetectContentType(b.Bytes()))
 		}
-
 		status := Status(err)
 		var n int64
 		// keep errors for writing to client separate from errors that came from the request handler.
@@ -192,8 +203,16 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 		default:
 			w.Header().Add("Vary", "Accept-Encoding")
 
-			if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") && compressibleMimes[w.Header().Get("Content-Type")] && b.Len() > 20 {
-				w.Header().Set("Content-Encoding", "gzip")
+			//remove trailing content-type information, like ';version=2'
+			contentType := w.Header().Get("Content-Type")
+			i := strings.Index(contentType, ";")
+			if i > 0 {
+				contentType = contentType[0:i]
+			}
+			contentType = strings.TrimSpace(contentType)
+
+			if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
+				w.Header().Set("Content-Encoding", GZIP)
 				gz := gzip.NewWriter(w)
 				defer gz.Close()
 				w.WriteHeader(status)
