@@ -18,14 +18,22 @@ message Point {
 }
 
 //A site record (represents a seismic site OR gps mark)
-message site {
-    string Code = 1;
+message sit_site {
+    string ComboCode = 1;
     Access access = 2;
-    //Address address = 3;
-    repeated Equipment_Install equipment_installs = 4;
-    Place place = 5;
-    repeated Person people = 6;
-    repeated Company company = 7;
+    repeated Equipment_Install equipment_installs = 3;
+    Place place = 4;
+    repeated Person people = 5;
+    repeated Company company = 6;
+    repeated Site sites = 7;
+}
+
+message Site {
+    string code = 1;
+    string status = 2;
+    string long_name = 3;
+    string established_by = 4;
+    int64 date_established = 5;
 }
 
 // A time span that has a start and and end.
@@ -78,17 +86,10 @@ message Equipment_Install {
 //A place record - place.csv
 message Place {
     string name = 1;
-    string long_name = 2;
     Point point = 3;
-    string text = 4;
-    string type = 5;
-    string established_by = 6;
-    int64 date_established = 7;
-    //string description = 8; Removed from place.csv, column MARK_DESCRIPTION
-    string protection_description = 9;
-    string notes = 10;
-    string cell_coverage = 11;
-    Address address = 12;
+    string notes = 7;
+    string cell_coverage = 8;
+    Address address = 9;
 }
 
 //A person record - place_person.csv
