@@ -14,16 +14,11 @@ The following production changes are required to deploy this code:
 
 ## Code Review Guide
 
-- [ ] This is a minor pull request.
+### Minor or Non Code Changes
 
-
-### Build System
-
-- [ ] This is a build system only pull request.
-
-### Content
-
+- [ ] This is a minor change.
 - [ ] This is a content (README, documentation etc) only pull request.
+- [ ] This is a build system only pull request.
 
 
 ### Kit pkgs
