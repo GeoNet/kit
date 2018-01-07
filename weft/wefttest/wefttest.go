@@ -125,15 +125,15 @@ METHOD:
 			if a == v {
 				continue METHOD
 			}
-
-			r.Method = v
-
-			_, err := r.Do(server)
-			if err != nil {
-				return 0, err
-			}
-			i++
 		}
+
+		r.Method = v
+
+		_, err := r.Do(server)
+		if err != nil {
+			return 0, err
+		}
+		i++
 	}
 
 	return i, nil
