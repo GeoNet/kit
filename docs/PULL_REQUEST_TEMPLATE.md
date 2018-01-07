@@ -1,36 +1,29 @@
+## Proposed Changes
+
 Resolves #.
 
 Changes proposed in this pull request:
 
--
+- 
 -
 -
 
 ## Production Changes
 
-The following production changes are required to deploy this code:
+The following production changes are required to deploy these changes:
 
 - None
 
-## Code Review Guide
+## Review
 
-### Minor or Non Code Changes
+Check the box that applies to this code review.  If necessary please seek help with adding a checklist guide for the reviewer.
+When assigning the code review please consider the expertise needed to review the changes.
 
-- [ ] This is a minor change.
-- [ ] This is a content (README, documentation etc) only pull request.
-- [ ] This is a build system only pull request.
+- [ ] This is a content (documentation, web page etc) only change.
+- [ ] This is a minor change (meta data, bug fix, improve test coverage etc).
+- [ ] This is a larger change (new feature, significant refactoring etc).  Please use the code review guidelines to add a checklist below to guide the code reviewer.
 
 
-### Kit pkgs
+### Code Review Guide
 
-- [ ] No application back doors.
-- [ ] No hard coded credentials.
-- [ ] No external resources are used by pkgs (no databases etc).
-- [ ] No Logging.
-- [ ] Errors are not wrapped.
-- [ ] There is no custom hashing or cryptography.
-- [ ] There is no vendor directory.  If external dependencies are used pkgs must compile against the latest version.
-- [ ] Appropriate static analysis (gofmt, go vet, safesql etc) is used in CI.
-- [ ] Compilation and tests are included in CI.
-- [ ] Code has appropriate test coverage.
-- [ ] Public methods are documented.
+*Insert check list here if needed.*
