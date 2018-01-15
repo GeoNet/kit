@@ -26,6 +26,9 @@ message sit_site {
     repeated Person people = 5;
     repeated Company company = 6;
     repeated Site sites = 7;
+    repeated PowerEquipment power = 8;
+    repeated CableConduit conduit = 9;
+    repeated Enclosure enclosure = 10;
 }
 
 message Site {
@@ -81,6 +84,40 @@ message Equipment {
 message Equipment_Install {
     Equipment equipment = 1;
     Span installed = 2;
+}
+
+//A record for a piece of power equipment - power.csv
+message PowerEquipment {
+    string type = 1;
+    string manufacturer = 2;
+    string model = 3;
+    int64 quantity = 4;
+    string configuration = 5;
+    string system_voltage = 6;
+    int64 installation_date = 7;
+}
+
+//A record for a cable/conduit
+message CableConduit {
+    string destination = 1;
+    string conduit_type = 2;
+    double conduit_length = 3; //Should be in meters
+    double conduit_size = 4; //Should be in mm
+    string cable_type = 5;
+    double cable_length = 6; //Should be in meters
+    int64 installation_date = 7;
+}
+
+//A record for an enclosure
+message Enclosure {
+    string enclosure_type = 1; //'cabinet' or 'hut'
+    string enclosure_brand = 2;
+    double enclosure_x = 3; //x dimension in mm
+    double enclosure_y = 4; //y dimension in mm
+    double enclosure_height = 5;
+    string fence_type = 6;
+    double fence_x = 7; //x dimension in meters
+    double fence_y = 8; //y dimension in meters
 }
 
 //A place record - place.csv
