@@ -29,6 +29,7 @@ message sit_site {
     repeated PowerEquipment power = 8;
     repeated CableConduit conduit = 9;
     repeated Enclosure enclosure = 10;
+    repeated Earthing earthing = 11;
 }
 
 message Site {
@@ -150,4 +151,9 @@ message Company {
     string name = 1;
     string phone = 2;
     repeated Address address = 3;
+}
+
+message Earthing {
+    string type = 1;
+    double ohms = 2;
 }
