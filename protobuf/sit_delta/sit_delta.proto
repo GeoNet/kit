@@ -74,6 +74,7 @@ message Equipment {
     map<string, string> extras = 8;
 
     double height = 9;
+    string location = 10;
 }
 
 //An equipment install record
