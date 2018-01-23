@@ -29,6 +29,7 @@ message sit_site {
     repeated PowerEquipment power = 8;
     repeated CableConduit conduit = 9;
     repeated Enclosure enclosure = 10;
+    repeated Earthing earthing = 11;
 }
 
 message Site {
@@ -67,7 +68,7 @@ message Address {
     string country = 8;
     string po_box = 9;
     string type = 10;
-    string notes = 11;
+    //string notes = 11;
 }
 
 //An equipment record - equipment.csv
@@ -150,4 +151,9 @@ message Company {
     string name = 1;
     string phone = 2;
     repeated Address address = 3;
+}
+
+message Earthing {
+    string type = 1;
+    double ohms = 2;
 }
