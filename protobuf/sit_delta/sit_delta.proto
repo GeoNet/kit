@@ -70,11 +70,9 @@ message Equipment {
     string type = 5;
     string owner = 6;
 
-    string extras_type = 7;
-    map<string, string> extras = 8;
-
     double height = 9;
     string location = 10;
+    double orientation = 11;
 }
 
 //An equipment install record
