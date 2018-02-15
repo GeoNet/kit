@@ -30,6 +30,8 @@ message Mark {
     Download download = 8;
 
     Distribution distribution = 9;
+
+    Span span = 10;
 }
 
 // A geographical point on NZGD2000
