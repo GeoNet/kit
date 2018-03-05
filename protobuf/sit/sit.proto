@@ -1,9 +1,13 @@
 syntax = "proto3";
 
 // protoc --proto_path=protobuf/sit --go_out=sit_pb protobuf/sit/sit.proto
+// protoc --proto_path=protobuf/sit --java_out=sit_pb_java protobuf/sit/sit.proto
 
 package sit;
 option go_package = "sit_pb";
+
+option java_package = "nz.org.geonet.sitnotebook.sitprotos";
+option java_outer_classname = "SitSite";
 
 // A geographical point on NZGD2000
 message Point {
@@ -15,6 +19,10 @@ message Point {
     double elevation = 3;
     // Datum
     string datum = 4;
+}
+
+message all_sites {
+    repeated sit_site sites = 1;
 }
 
 //A site record (represents a seismic site OR gps mark)
