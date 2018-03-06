@@ -146,7 +146,7 @@ func (r Request) ExtraParameter(server, key, value string) error {
 		r.URL = server + r.URL
 	}
 
-	req, err := http.NewRequest(r.Method, server+r.URL, nil)
+	req, err := http.NewRequest(r.Method, r.URL, nil)
 	if err != nil {
 		return err
 	}
@@ -174,7 +174,7 @@ func (r Request) FuzzPath(server string, fuzz []string) (int, error) {
 		r.URL = server + r.URL
 	}
 
-	req, err := http.NewRequest(r.Method, server+r.URL, nil)
+	req, err := http.NewRequest(r.Method, r.URL, nil)
 	if err != nil {
 		return 0, err
 	}
@@ -221,7 +221,7 @@ func (r Request) FuzzQuery(server string, fuzz []string) (int, error) {
 		r.URL = server + r.URL
 	}
 
-	req, err := http.NewRequest(r.Method, server+r.URL, nil)
+	req, err := http.NewRequest(r.Method, r.URL, nil)
 	if err != nil {
 		return 0, err
 	}
