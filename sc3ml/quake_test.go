@@ -9,7 +9,7 @@ import (
 )
 
 func TestFromSC3ML(t *testing.T) {
-	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml"} {
+	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml"} {
 		r, err := os.Open("testdata/" + input)
 		if err != nil {
 			t.Fatal(err)
