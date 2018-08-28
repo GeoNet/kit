@@ -1,6 +1,7 @@
 package wefttest
 
 import (
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -20,6 +21,7 @@ var httpMethods = []string{"GET", "DELETE", "POST", "PUT", "HEAD", "CONNECT", "O
 type Request struct {
 	ID             string // An identifier for the request.  Used in error messages.
 	Method         string // Method for the request e.g., "PUT".  Defaults to "GET".
+	PostBody       []byte // Request body.
 	Accept         string // Accept header for the request.  Defaults to */*
 	URL            string // The URL to be tested e.g., /path/to/test.  The server can be added at test time.
 	User, Password string // Credentials for basic auth if required.
@@ -74,7 +76,13 @@ func (r Request) Do(server string) ([]byte, error) {
 	var res *http.Response
 	var err error
 
-	if req, err = http.NewRequest(r.Method, r.URL, nil); err != nil {
+	if r.PostBody != nil {
+		req, err = http.NewRequest(r.Method, r.URL, bytes.NewReader(r.PostBody))
+	} else {
+		req, err = http.NewRequest(r.Method, r.URL, nil)
+	}
+
+	if err != nil {
 		return nil, err
 	}
 
