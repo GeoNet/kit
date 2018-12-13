@@ -27,6 +27,8 @@ message Quake {
     string quality = 9;
     // the calculated MMI shaking at the closest locality in the New Zealand region.
     int32 mmi = 10;
+    // indicating if this quake is in New Zealand region
+    bool in_newzealand = 11;
 }
 
 // Timestamp for encoding time stamps.
