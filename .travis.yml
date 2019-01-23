@@ -1,6 +1,6 @@
 language: go
 go:
-- 1.9.1
+- 1.11.5
 
 # dependencies for kit are not vendored and should always build with the latest version.
 install:
