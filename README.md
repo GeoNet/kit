@@ -83,3 +83,7 @@ weft helps with web applications.
 ### wgs84
 
 wgs84 is for distance, bearing, and locality calculations on the WGS84 ellipsoid.
+
+
+### cfg
+cfg helps read Postgres configuration from env var.
