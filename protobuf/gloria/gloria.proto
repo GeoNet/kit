@@ -126,6 +126,8 @@ message Download {
     int64 priority = 1;
     // Download rate limit in KBytes/sec. 0 = no limit.
     int64 rate = 2;
+    // Whether or not the site is a third party site
+    bool third_party = 3;
 }
 
 message Distribution {
