@@ -5,6 +5,7 @@ go:
 # dependencies for kit are not vendored and should always build with the latest version.
 install:
   - go get github.com/golang/protobuf/proto
+  - go get github.com/golang/groupcache
 
 script:
   - make -C cvendor/libmseed

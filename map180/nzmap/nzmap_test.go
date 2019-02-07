@@ -4,10 +4,14 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"testing"
 )
 
 // these tests also output SVG to svg_test/ for visual inspection.
+func init() {
+	os.Mkdir("svg_test", 0755)
+}
 
 func TestIconWellington(t *testing.T) {
 	var b bytes.Buffer

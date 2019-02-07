@@ -6,7 +6,7 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
-	"github.com/GeoNet/cfg"
+	"github.com/GeoNet/kit/cfg"
 	_ "github.com/lib/pq"
 	"io/ioutil"
 	"log"
@@ -87,22 +87,19 @@ const (
 var wm *Map180
 
 func setup(t *testing.T) {
-	pg := cfg.DataBase{
-		Host:              "localhost",
-		Name:              "hazard",
-		User:              "hazard_r",
-		Password:          "test",
-		SSLMode:           "disable",
-		MaxOpenConns:      1,
-		MaxIdleConns:      1,
-		ConnectionTimeOut: 5,
+	p, err := cfg.PostgresEnv()
+
+	if err != nil {
+		log.Fatalf("error reading DB config from the environment vars: %s", err)
 	}
 
-	var err error
-	db, err = sql.Open("postgres", pg.Postgres())
+	db, err = sql.Open("postgres", p.Connection())
 	if err != nil {
 		log.Fatalf("ERROR: problem with DB config: %s", err)
 	}
+
+	db.SetMaxIdleConns(p.MaxIdle)
+	db.SetMaxOpenConns(p.MaxOpen)
 
 	err = db.Ping()
 	if err != nil {
