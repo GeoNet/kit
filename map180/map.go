@@ -408,13 +408,13 @@ func (m *map3857) nePolySVG(zoom int, layer int) (string, error) {
 	switch m.crossesCentral {
 	case true:
 		//  things to the left of 180.
-		db.QueryRow(svgPolyQuery,
+		_ = db.QueryRow(svgPolyQuery,
 			m.llx, m.lly, left3857, m.ury, m.xshift, m.yshift, m.dx, m.dx, zoom, layer, m.region).Scan(&l)
 		//  things to the right of 180 and shift them over.
-		db.QueryRow(svgPolyQuery,
+		_ = db.QueryRow(svgPolyQuery,
 			right3857, m.lly, m.urx, m.ury, width3857-m.llx, m.yshift, m.dx, m.dx, zoom, layer, m.region).Scan(&r)
 	case false:
-		db.QueryRow(svgPolyQuery,
+		_ = db.QueryRow(svgPolyQuery,
 			m.llx, m.lly, m.urx, m.ury, m.xshift, m.yshift, m.dx, m.dx, zoom, layer, m.region).Scan(&l)
 	}
 

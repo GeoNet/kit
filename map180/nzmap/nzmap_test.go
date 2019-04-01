@@ -10,7 +10,9 @@ import (
 
 // these tests also output SVG to svg_test/ for visual inspection.
 func init() {
-	os.Mkdir("svg_test", 0755)
+	if err := os.Mkdir("svg_test", 0755); err != nil {
+		fmt.Println("Error creating svg_test directory", err)
+	}
 }
 
 func TestIconWellington(t *testing.T) {

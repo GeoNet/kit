@@ -71,7 +71,9 @@ func TestReadStreamList(t *testing.T) {
 		t.Fatal("unable to open temporary file")
 	}
 	defer os.Remove(tf.Name())
-	ioutil.WriteFile(tf.Name(), ([]byte)("# A comment\nGE ISP  BH?.D\nNL HGN\nMN AGU BH? HH?\n"), 0644)
+	if err = ioutil.WriteFile(tf.Name(), ([]byte)("# A comment\nGE ISP  BH?.D\nNL HGN\nMN AGU BH? HH?\n"), 0644); err != nil {
+		t.Errorf("unable to write file: %v", err)
+	}
 	count, err := slconn.ReadStreamList(tf.Name(), "")
 	if err != nil {
 		t.Error("unable to read stream list, invalid format")
@@ -153,7 +155,7 @@ func TestParseStreamList(t *testing.T) {
 	if count != 3 {
 		t.Error("unable to parse stream list, wrong count")
 	}
-	count, err = slconn.ParseStreamList("IU__KONO:BHE BHN,GE_WLF,MN_AQU:HH?.D", "")
+	_, err = slconn.ParseStreamList("IU__KONO:BHE BHN,GE_WLF,MN_AQU:HH?.D", "")
 	if err == nil {
 		t.Error("shouldn't be able to parse stream list, invalid string")
 	}
@@ -174,7 +176,10 @@ func TestLogInitErrorMessage(t *testing.T) {
 		t.Fatal("unable to create new SLCD")
 	}
 
-	slconn.ParseStreamList("IU__KONO:BHE BHN,GE_WLF,MN_AQU:HH?.D", "")
+	if _, err := slconn.ParseStreamList("IU__KONO:BHE BHN,GE_WLF,MN_AQU:HH?.D", ""); err == nil {
+		t.Error("shouldn't be able to parse stream list, invalid string")
+	}
+
 	if ans := "not in NET_STA format: IU__KONO"; msg != ans {
 		t.Errorf("error message: expected \"%s\", received \"%s\"", ans, msg)
 	}

@@ -7,9 +7,13 @@ install:
   - go get github.com/golang/protobuf/proto
   - go get github.com/golang/groupcache
 
+before_script:
+ - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin v1.15.0
+
 script:
   - make -C cvendor/libmseed
   - make -C cvendor/libslink
   - test -z "$(gofmt -s -l `find . -name "*.go" | egrep -v vendor` | tee /dev/stderr)"
   - go vet -cgocall=false ./...
   - go test -v ./...
+  - golangci-lint run -E gosec # default linters + gosec
