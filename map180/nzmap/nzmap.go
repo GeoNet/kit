@@ -128,8 +128,6 @@ func (p *Point) Icon(b *bytes.Buffer) {
 		p.x = -1000
 		p.y = -1000
 	}
-
-	return
 }
 
 /*
@@ -277,5 +275,4 @@ func (pts Points) Medium(b *bytes.Buffer) {
 		}
 		b.WriteString(nzMedium)
 	}
-	return
 }
