@@ -1,3 +1,4 @@
+//nolint //cgo generates code that doesn't pass linting
 package mseed
 
 //#cgo CFLAGS: -I${SRCDIR}/../cvendor/libmseed

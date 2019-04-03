@@ -1,3 +1,4 @@
+//nolint //cgo generates code that doesn't pass linting
 package slink
 
 import (
