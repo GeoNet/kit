@@ -13,14 +13,14 @@ import (
 	"unsafe"
 )
 
-type MSTrace _Ctype_MSTrace
+type MSTrace C.MSTrace
 
 func NewMSTrace() *MSTrace {
 	return (*MSTrace)(C.mst_init(nil))
 }
 
 func FreeMSTrace(t *MSTrace) {
-	C.mst_free((**_Ctype_struct_MSTrace_s)((unsafe.Pointer)(&t)))
+	C.mst_free((**C.struct_MSTrace_s)((unsafe.Pointer)(&t)))
 }
 
 func (t *MSTrace) String() string {
@@ -66,7 +66,7 @@ func (t *MSTrace) MsgSamples() (string, error) {
 	if t.sampletype != 'a' {
 		return "", errors.New("not an ascii formatted record")
 	}
-	return C.GoStringN((*_Ctype_char)(t.datasamples), C.int(t.numsamples)), nil
+	return C.GoStringN((*C.char)(t.datasamples), C.int(t.numsamples)), nil
 }
 
 func (t *MSTrace) DataSamples() ([]int32, error) {
@@ -107,6 +107,6 @@ func (t *MSTrace) Endtime() time.Time {
 func (t *MSTrace) SrcName(quality int8) string {
 	csrcname := C.CString("NN_SSSSS_LL_CHA_Q_0")
 	defer C.free(unsafe.Pointer(csrcname))
-	C.mst_srcname((*_Ctype_struct_MSTrace_s)(t), csrcname, C.flag(quality))
+	C.mst_srcname((*C.struct_MSTrace_s)(t), csrcname, C.flag(quality))
 	return C.GoString(csrcname)
 }
