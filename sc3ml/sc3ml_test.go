@@ -15,9 +15,10 @@ the version.  The validating them using the XSDs:
     xmllint --noout --schema sc3ml_0.8.xsd 2015p768477_0.8.xml
     xmllint --noout --schema sc3ml_0.9.xsd 2015p768477_0.9.xml
     xmllint --noout --schema sc3ml_0.10.xsd 2015p768477_0.10.xml
+	xmllint --noout --schema sc3ml_0.11.xsd 2015p768477_0.11.xml
 */
 func TestUnmarshal(t *testing.T) {
-	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml"} {
+	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml", "2015p768477_0.11.xml"} {
 		b, err := ioutil.ReadFile("testdata/" + input)
 		if err != nil {
 			t.Fatal(err)
@@ -260,7 +261,7 @@ func TestUnmarshal(t *testing.T) {
 }
 
 func TestUnmarshall10(t *testing.T) {
-	for _, input := range []string{"2018p587301-201808060715471135_0.10.xml", "2018p632195-201808222155051312_0.10.xml"} {
+	for _, input := range []string{"2018p587301-201808060715471135_0.10.xml", "2018p632195-201808222155051312_0.10.xml", "2018p587301-201808060715471135_0.11.xml", "2018p632195-201808222155051312_0.11.xml"} {
 		b, err := ioutil.ReadFile("testdata/" + input)
 		if err != nil {
 			t.Fatal(err)
@@ -305,7 +306,7 @@ func TestUnmarshall10(t *testing.T) {
 }
 
 func TestDecodeSC3ML07CMT(t *testing.T) {
-	for _, input := range []string{"2016p408314-201606010431276083_0.7.xml", "2016p408314-201606010431276083_0.8.xml", "2016p408314-201606010431276083_0.9.xml", "2016p408314-201606010431276083_0.10.xml"} {
+	for _, input := range []string{"2016p408314-201606010431276083_0.7.xml", "2016p408314-201606010431276083_0.8.xml", "2016p408314-201606010431276083_0.9.xml", "2016p408314-201606010431276083_0.10.xml", "2016p408314-201606010431276083_0.11.xml"} {
 		b, err := ioutil.ReadFile("testdata/" + input)
 		if err != nil {
 			t.Fatal(err)
