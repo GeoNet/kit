@@ -270,10 +270,10 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request) {
 	//Content Security Policy: allow inline styles, but no inline scripts, prevent from clickjacking
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; "+
-		"img-src 'self' *.geonet.org.nz data: www.google-analytics.com; "+
+		"img-src 'self' *.geonet.org.nz data: https://www.google-analytics.com;"+
 		"font-src 'self' https://fonts.gstatic.com https://surveys-static.survicate.com; "+
 		"style-src 'self' 'unsafe-inline' https://*.googleapis.com; "+
-		"script-src 'self' https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com https://*.survicate.com https://www.googletagmanager.com;"+
+		"script-src 'self' https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com https://*.survicate.com https://www.google-analytics.com;"+
 		"connect-src 'self' https://*.geonet.org.nz https://*.survicate.com;"+
 		"frame-src 'self' https://www.youtube.com https://www.google.com; "+
 		"form-action 'self'; "+
