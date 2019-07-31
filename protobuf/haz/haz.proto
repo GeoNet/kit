@@ -76,6 +76,8 @@ message MMI {
     int32 mmi = 3;
     // count of mmi values at the location.
     int32 count = 4;
+    //count_mmi for the location
+    map<int32, int32> mmi_summary = 5;
 }
 
 message Shaking {
@@ -195,4 +197,24 @@ message Waveform {
     string station = 2;
     string location = 3;
     string channel = 4;
+}
+
+message StrongShaking {
+    // latitude of the location.
+    double latitude = 1;
+    // longitude of the location.
+    double longitude = 2;
+    string network = 3;
+    string station = 4;
+    string location = 5;
+    // the mmi at the location.
+    int32 mmi = 6;
+    double pga_h = 7;
+    double pga_v = 8;
+    double pgv_h = 9;
+    double pgv_v = 10;
+}
+
+message StrongShakingList {
+    repeated StrongShaking strongShakings = 1;
 }
