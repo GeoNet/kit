@@ -8,6 +8,7 @@ option go_package = "fmp_pb";
 //A structure containing all the devices listed in the network repo.
 message Devices {
     map<string, Device> devices = 1;
+    int64 timestamp = 2; //The moment that this metadata was generated
 }
 
 message Device {
