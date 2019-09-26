@@ -8,6 +8,7 @@ import "C"
 
 import (
 	"errors"
+	_ "github.com/GeoNet/kit/cvendor/libmseed"
 	"strings"
 	"time"
 	"unicode/utf8"

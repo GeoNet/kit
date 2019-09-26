@@ -14,6 +14,7 @@ import "C"
 
 import (
 	"errors"
+	_ "github.com/GeoNet/kit/cvendor/libslink"
 	"unsafe"
 )
 
