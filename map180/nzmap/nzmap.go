@@ -164,7 +164,7 @@ func (pts Points) Medium(b *bytes.Buffer) {
 			yi, yf := math.Modf(v.Latitude*10 + 480.0)
 			y := int(yi)
 
-			if x >= 0 && x < 150 && y >= 0 && y < 140 {
+			if x >= 0 && x < 150 && y >= 0 && y < 139 {
 				p = nzMediumPts[int(x)][y]
 				pp = nzMediumPts[x+1][y+1]
 				pts[i].x = p.x + int(float64(pp.x-p.x)*xf)
