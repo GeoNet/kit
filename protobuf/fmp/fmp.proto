@@ -9,6 +9,9 @@ option go_package = "fmp_pb";
 message Devices {
     map<string, Device> devices = 1;
     int64 timestamp = 2; //The moment that this metadata was generated
+
+    //Extra information describing locality positions
+    map<string, Locality> localities = 3;
 }
 
 message Device {
@@ -18,4 +21,10 @@ message Device {
     string sitecode = 4;
     string locality = 5;
     repeated string tags = 6;
+}
+
+message Locality {
+    string locality = 1;
+    float latitude = 2;
+    float longitude = 3;
 }
