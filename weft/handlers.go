@@ -274,6 +274,7 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 */
 func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request) {
 	//Content Security Policy: allow inline styles, but no inline scripts, prevent from clickjacking
+	//The hash in script-src is to allow the inline JavaScript that the SurveyMonkey popup inserts as part of its IFrame.
 	w.Header().Set("Content-Security-Policy", "default-src 'none'; "+
 		"img-src 'self' *.geonet.org.nz data: https://www.google-analytics.com https://*.surveymonkey.com https://stats.g.doubleclick.net;"+
 		"font-src 'self' https://fonts.gstatic.com;"+
