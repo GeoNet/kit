@@ -12,6 +12,9 @@ message Devices {
 
     //Extra information describing locality positions
     map<string, Locality> localities = 3;
+    
+    //Links to remote locations
+    repeated Link links = 4;
 }
 
 message Device {
@@ -27,4 +30,16 @@ message Locality {
     string locality = 1;
     float latitude = 2;
     float longitude = 3;
+}
+
+message Link {
+    string local = 1;
+    string remote = 2;
+    Network network = 3;
+    repeated string tags = 4;
+}
+
+message Network {
+    bytes ip = 1;
+    bytes mask = 2;
 }
