@@ -6,6 +6,7 @@ package map180
 
 import (
 	"bytes"
+	"context"
 	"database/sql"
 	"fmt"
 	"github.com/golang/groupcache"
@@ -35,6 +36,7 @@ var (
 	mapLayers      *groupcache.Group
 	landLayers     *groupcache.Group
 	lakeLayers     *groupcache.Group
+	dummyCtx       = context.TODO()
 )
 
 type Map180 struct {
@@ -147,7 +149,7 @@ func (w *Map180) SVG(boundingBox string, width int, markers []Marker, insetBbox 
 	// if they haven't been cached already.
 	var landLakes string
 
-	err = mapLayers.Get(nil, m.toKey(), groupcache.StringSink(&landLakes))
+	err = mapLayers.Get(dummyCtx, m.toKey(), groupcache.StringSink(&landLakes))
 	if err != nil {
 		return
 	}
@@ -167,7 +169,7 @@ func (w *Map180) SVG(boundingBox string, width int, markers []Marker, insetBbox 
 		}
 
 		var insetMap string
-		err = mapLayers.Get(nil, in.toKey(), groupcache.StringSink(&insetMap))
+		err = mapLayers.Get(dummyCtx, in.toKey(), groupcache.StringSink(&insetMap))
 		if err != nil {
 			return
 		}
@@ -254,7 +256,7 @@ func (w *Map180) Map(boundingBox string, width int, pts Points, insetBbox string
 	// if they haven't been cached already.
 	var landLakes string
 
-	err = mapLayers.Get(nil, m.toKey(), groupcache.StringSink(&landLakes))
+	err = mapLayers.Get(dummyCtx, m.toKey(), groupcache.StringSink(&landLakes))
 	if err != nil {
 		return
 	}
@@ -274,7 +276,7 @@ func (w *Map180) Map(boundingBox string, width int, pts Points, insetBbox string
 		}
 
 		var insetMap string
-		err = mapLayers.Get(nil, in.toKey(), groupcache.StringSink(&insetMap))
+		err = mapLayers.Get(dummyCtx, in.toKey(), groupcache.StringSink(&insetMap))
 		if err != nil {
 			return
 		}
@@ -383,11 +385,11 @@ func (w *Map180) MapRaw(boundingBox string, width int) (mr Raw, err error) {
 
 	// Get the land and lakes layers from the cache.  This creates them
 	// if they haven't been cached already.
-	if err = landLayers.Get(nil, m.toKey(), groupcache.StringSink(&mr.Land)); err != nil {
+	if err = landLayers.Get(dummyCtx, m.toKey(), groupcache.StringSink(&mr.Land)); err != nil {
 		return
 	}
 
-	if err = lakeLayers.Get(nil, m.toKey(), groupcache.StringSink(&mr.Lakes)); err != nil {
+	if err = lakeLayers.Get(dummyCtx, m.toKey(), groupcache.StringSink(&mr.Lakes)); err != nil {
 		return
 	}
 
@@ -430,7 +432,7 @@ func (m *map3857) nePolySVG(zoom int, layer int) (string, error) {
 
 // Functions for map layers with groupcache.
 
-func layerGetter(ctx groupcache.Context, key string, dest groupcache.Sink) error {
+func layerGetter(ctx context.Context, key string, dest groupcache.Sink) error {
 	m, err := fromKey(key)
 	if err != nil {
 		return err
@@ -460,7 +462,7 @@ func layerGetter(ctx groupcache.Context, key string, dest groupcache.Sink) error
 	return dest.SetString(b.String())
 }
 
-func landGetter(ctx groupcache.Context, key string, dest groupcache.Sink) error {
+func landGetter(ctx context.Context, key string, dest groupcache.Sink) error {
 	m, err := fromKey(key)
 	if err != nil {
 		return err
@@ -474,7 +476,7 @@ func landGetter(ctx groupcache.Context, key string, dest groupcache.Sink) error 
 	return dest.SetString(land)
 }
 
-func lakeGetter(ctx groupcache.Context, key string, dest groupcache.Sink) error {
+func lakeGetter(ctx context.Context, key string, dest groupcache.Sink) error {
 	m, err := fromKey(key)
 	if err != nil {
 		return err
