@@ -55,6 +55,20 @@ var compressibleMimes = map[string]bool{
 	"text/csv":                 true,
 }
 
+var defaultCsp = map[string]string{
+	"default-src":     "'none'",
+	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://*.surveymonkey.com https://stats.g.doubleclick.net",
+	"font-src":        "'self' https://fonts.gstatic.com",
+	"style-src":       "'self' 'unsafe-inline' https://*.googleapis.com",
+	"script-src":      "'self' https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com https://www.google-analytics.com https://*.surveymonkey.com https://*.googleapis.com 'sha256-dHbSLiAH+H4Ao0KmrWYrtJSaFkcmQkIW4wp0vB4/lhY='",
+	"connect-src":     "'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net",
+	"frame-src":       "'self' https://www.youtube.com https://www.google.com https://www.surveymonkey.com",
+	"form-action":     "'self'",
+	"base-uri":        "'none'",
+	"frame-ancestors": "'self'",
+	"object-src":      "'self'",
+}
+
 // RequestHandler should write the response for r into b and adjust h as required.
 type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer) error
 
@@ -66,11 +80,17 @@ type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) (int64, e
 // err can be nil
 type ErrorHandler func(err error, h http.Header, b *bytes.Buffer) error
 
+// MakeDirectHandler with default CSP policy
+func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFunc {
+	return MakeDirectHandlerWithCsp(rh, eh, nil)
+}
+
+// MakeDirectHandler with specified CSP policy
 // MakeDirectHandler executes rh.  The caller should write directly to w for success (200) only.
 // In the case of an rh returning an error ErrorHandler is executed and the response written to the client.
 //
 // Responses are counted.  rh is not wrapped with a timer as this includes the write to the client.
-func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFunc {
+func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		n, err := rh(r, w)
 		if err == nil {
@@ -83,7 +103,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		defer bufferPool.Put(b)
 		b.Reset()
 
-		setBestPracticeHeaders(w, r)
+		setBestPracticeHeaders(w, r, customCsp)
 		logRequest(r)
 
 		e := eh(err, w.Header(), b)
@@ -164,10 +184,16 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 	}
 }
 
+// MakeHandler with default CSP policy
+func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
+	return MakeHandlerWithCsp(rh, eh, nil)
+}
+
+// MakeHandler with specified CSP policy
 // MakeHandler returns an http.Handler that executes RequestHandler and collects timing information and metrics.
 // In the case of errors ErrorHandler is used to set error content for the client.
 // 50x errors are logged.
-func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
+func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b := bufferPool.Get().(*bytes.Buffer)
 		defer bufferPool.Put(b)
@@ -178,7 +204,7 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 
 		t := metrics.Start()
 
-		setBestPracticeHeaders(w, r)
+		setBestPracticeHeaders(w, r, customCsp)
 		logRequest(r)
 
 		err := rh(r, w.Header(), b)
@@ -270,22 +296,27 @@ func MakeHandler(rh RequestHandler, eh ErrorHandler) http.HandlerFunc {
 }
 
 /*
-	These are recommended by Mozilla as part of the Observatory scan.
-*/
-func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request) {
+ * These are recommended by Mozilla as part of the Observatory scan.
+ * NOTE: customCsp should include the whole set of an item as it override that in defaultCsp
+ */
+func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp map[string]string) {
+	var csp strings.Builder
+	for k, v := range defaultCsp {
+		s := v
+		if customCsp != nil {
+			if v1, ok := customCsp[k]; ok {
+				s = v1
+			}
+		}
+
+		csp.WriteString(k)
+		csp.WriteString(" ")
+		csp.WriteString(s)
+		csp.WriteString("; ")
+	}
 	//Content Security Policy: allow inline styles, but no inline scripts, prevent from clickjacking
 	//The hash in script-src is to allow the inline JavaScript that the SurveyMonkey popup inserts as part of its IFrame.
-	w.Header().Set("Content-Security-Policy", "default-src 'none'; "+
-		"img-src 'self' *.geonet.org.nz data: https://www.google-analytics.com https://*.surveymonkey.com https://stats.g.doubleclick.net;"+
-		"font-src 'self' https://fonts.gstatic.com;"+
-		"style-src 'self' 'unsafe-inline' https://*.googleapis.com; "+
-		"script-src 'self' https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com https://www.google-analytics.com https://*.surveymonkey.com https://*.googleapis.com 'sha256-dHbSLiAH+H4Ao0KmrWYrtJSaFkcmQkIW4wp0vB4/lhY=';"+
-		"connect-src 'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net;"+
-		"frame-src 'self' https://www.youtube.com https://www.google.com https://www.surveymonkey.com; "+
-		"form-action 'self'; "+
-		"base-uri 'none'; "+
-		"frame-ancestors 'self'; "+
-		"object-src 'self';")
+	w.Header().Set("Content-Security-Policy", csp.String())
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
 	w.Header().Set("X-Content-Type-Options", "nosniff")
