@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"errors"
+	"fmt"
 	"github.com/GeoNet/kit/metrics"
 	"io/ioutil"
 	"net/http"
@@ -69,12 +70,16 @@ var defaultCsp = map[string]string{
 	"object-src":      "'self'",
 }
 
-// RequestHandler should write the response for r into b and adjust h as required.
-type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer) error
+/**
+ * RequestHandler should write the response for r into b and adjust h as required
+ * @param nonce: string to be passed to page template as attribute of scripts
+ * refer https://csp.withgoogle.com/docs/strict-csp.html
+ */
+type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error
 
 // DirectRequestHandler allows writing to the http.ResponseWriter directly.
 // Should return the number of bytes written to w and any errors.
-type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) (int64, error)
+type DirectRequestHandler func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error)
 
 // ErrorHandler should write the error for err into b and adjust h as required.
 // err can be nil
@@ -92,7 +97,11 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 // Responses are counted.  rh is not wrapped with a timer as this includes the write to the client.
 func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		n, err := rh(r, w)
+		nonce, err := getCspNonce(16)
+		if err != nil {
+			logger.Printf("setting error: %v", err)
+		}
+		n, err := rh(r, w, nonce)
 		if err == nil {
 			metrics.StatusOK()
 			metrics.Written(n)
@@ -103,7 +112,7 @@ func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCs
 		defer bufferPool.Put(b)
 		b.Reset()
 
-		setBestPracticeHeaders(w, r, customCsp)
+		setBestPracticeHeaders(w, r, customCsp, nonce)
 		logRequest(r)
 
 		e := eh(err, w.Header(), b)
@@ -203,11 +212,16 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 		// ErrorHandler to set the error content and header.
 
 		t := metrics.Start()
+		//get a random nonce string
+		nonce, err := getCspNonce(16)
+		if err != nil {
+			logger.Printf("setting error: %v", err)
+		}
 
-		setBestPracticeHeaders(w, r, customCsp)
+		setBestPracticeHeaders(w, r, customCsp, nonce)
 		logRequest(r)
 
-		err := rh(r, w.Header(), b)
+		err = rh(r, w.Header(), b, nonce)
 
 		if err != nil {
 			e := eh(err, w.Header(), b)
@@ -298,8 +312,9 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 /*
  * These are recommended by Mozilla as part of the Observatory scan.
  * NOTE: customCsp should include the whole set of an item as it override that in defaultCsp
+ * @param nonce: string to be added to script CSP, refer: https://csp.withgoogle.com/docs/strict-csp.html
  */
-func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp map[string]string) {
+func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp map[string]string, nonce string) {
 	var csp strings.Builder
 	for k, v := range defaultCsp {
 		s := v
@@ -308,11 +323,14 @@ func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp ma
 				s = v1
 			}
 		}
-
 		csp.WriteString(k)
 		csp.WriteString(" ")
-		csp.WriteString(s)
-		csp.WriteString("; ")
+		if k == "script-src" && nonce != "" { //add nonce to CSP
+			csp.WriteString(fmt.Sprintf("'nonce-%s' 'strict-dynamic';", nonce))
+		} else {
+			csp.WriteString(s)
+			csp.WriteString("; ")
+		}
 	}
 	//Content Security Policy: allow inline styles, but no inline scripts, prevent from clickjacking
 	//The hash in script-src is to allow the inline JavaScript that the SurveyMonkey popup inserts as part of its IFrame.
@@ -508,7 +526,7 @@ func nameD(f DirectRequestHandler) string {
 // NoMatch returns a 404 for GET requests.
 //
 // Implements RequestHandler
-func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer) error {
+func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err
@@ -520,7 +538,7 @@ func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer) error {
 // Up returns a 200 and simple page for GET requests.
 //
 // Implements RequestHandler
-func Up(r *http.Request, h http.Header, b *bytes.Buffer) error {
+func Up(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err
@@ -536,7 +554,7 @@ func Up(r *http.Request, h http.Header, b *bytes.Buffer) error {
 // Soh returns a 200 and simple page for GET requests.
 //
 // Implements RequestHandler
-func Soh(r *http.Request, h http.Header, b *bytes.Buffer) error {
+func Soh(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err

@@ -36,7 +36,7 @@ func teardown() {
 	ts.Close()
 }
 
-func queryHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
+func queryHandler(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 	_, err := weft.CheckQueryValid(r, []string{"GET"}, []string{"petType"}, []string{}, validator)
 	if err != nil {
 		return err

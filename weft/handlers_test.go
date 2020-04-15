@@ -18,7 +18,7 @@ func TestMakeHandler(t *testing.T) {
 	}{
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return nil
 			},
 			code: http.StatusOK,
@@ -26,7 +26,7 @@ func TestMakeHandler(t *testing.T) {
 		// returning an error will result in a 503
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return errors.New("some error")
 			},
 			code:      http.StatusServiceUnavailable,
@@ -35,7 +35,7 @@ func TestMakeHandler(t *testing.T) {
 		// an explicit 503 can also be returned
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusServiceUnavailable, Err: errors.New("some error")}
 			},
 			code:      http.StatusServiceUnavailable,
@@ -44,7 +44,7 @@ func TestMakeHandler(t *testing.T) {
 		// 500
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusInternalServerError, Err: errors.New("some error")}
 			},
 			code:      http.StatusInternalServerError,
@@ -53,7 +53,7 @@ func TestMakeHandler(t *testing.T) {
 		// 404 - no StatusError.Err needed
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusNotFound}
 			},
 			code:      http.StatusNotFound,
@@ -61,7 +61,7 @@ func TestMakeHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
@@ -69,7 +69,7 @@ func TestMakeHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
@@ -77,7 +77,7 @@ func TestMakeHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusGone}
 			},
 			code:      http.StatusGone,
@@ -85,7 +85,7 @@ func TestMakeHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusBadRequest}
 			},
 			code:      http.StatusBadRequest,
@@ -93,7 +93,7 @@ func TestMakeHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+			f: func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 				return weft.StatusError{Code: http.StatusMethodNotAllowed}
 			},
 			code:      http.StatusMethodNotAllowed,
@@ -191,7 +191,7 @@ func TestMakeDirectHandler(t *testing.T) {
 	}{
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				n, err := w.Write([]byte{})
 				return int64(n), err
 			},
@@ -200,7 +200,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		// returning an error will result in a 503
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, errors.New("some error")
 			},
 			code:      http.StatusServiceUnavailable,
@@ -209,7 +209,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		// an explicit 503 can also be returned
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusServiceUnavailable, Err: errors.New("some error")}
 			},
 			code:      http.StatusServiceUnavailable,
@@ -218,7 +218,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		// 500
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusInternalServerError, Err: errors.New("some error")}
 			},
 			code:      http.StatusInternalServerError,
@@ -227,7 +227,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		// 404 - no StatusError.Err needed
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusNotFound}
 			},
 			code:      http.StatusNotFound,
@@ -235,7 +235,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
@@ -243,7 +243,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusMovedPermanently}
 			},
 			code:      http.StatusMovedPermanently,
@@ -251,7 +251,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusGone}
 			},
 			code:      http.StatusGone,
@@ -259,7 +259,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusBadRequest}
 			},
 			code:      http.StatusBadRequest,
@@ -267,7 +267,7 @@ func TestMakeDirectHandler(t *testing.T) {
 		},
 		{
 			id: loc(),
-			f: func(r *http.Request, w http.ResponseWriter) (int64, error) {
+			f: func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error) {
 				return 0, weft.StatusError{Code: http.StatusMethodNotAllowed}
 			},
 			code:      http.StatusMethodNotAllowed,
@@ -333,7 +333,7 @@ func TestMakeDirectHandler(t *testing.T) {
 }
 
 func TestGzip(t *testing.T) {
-	fn := func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+	fn := func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 		// write some content to test encoding sniffing and gzip
 		b.Write([]byte(weft.ErrNotFound))
 
@@ -382,7 +382,7 @@ func TestGzip(t *testing.T) {
 }
 
 func TestGzip2(t *testing.T) {
-	fn := func(r *http.Request, h http.Header, b *bytes.Buffer) error {
+	fn := func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 		// write some content to test encoding sniffing and gzip
 		b.Write([]byte(weft.ErrNotFound))
 
