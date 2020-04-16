@@ -58,16 +58,16 @@ var compressibleMimes = map[string]bool{
 
 var defaultCsp = map[string]string{
 	"default-src":     "'none'",
-	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://*.surveymonkey.com https://stats.g.doubleclick.net",
+	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://stats.g.doubleclick.net",
 	"font-src":        "'self' https://fonts.gstatic.com",
-	"style-src":       "'self' 'unsafe-inline' https://*.googleapis.com",
-	"script-src":      "'self' https://cdnjs.cloudflare.com https://www.google.com https://www.gstatic.com https://www.google-analytics.com https://*.surveymonkey.com https://*.googleapis.com 'sha256-dHbSLiAH+H4Ao0KmrWYrtJSaFkcmQkIW4wp0vB4/lhY='",
+	"style-src":       "'self'",
+	"script-src":      "'self'",
 	"connect-src":     "'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net",
-	"frame-src":       "'self' https://www.youtube.com https://www.google.com https://www.surveymonkey.com",
+	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
 	"form-action":     "'self'",
 	"base-uri":        "'none'",
 	"frame-ancestors": "'self'",
-	"object-src":      "'self'",
+	"object-src":      "'none'",
 }
 
 /**
@@ -97,9 +97,18 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 // Responses are counted.  rh is not wrapped with a timer as this includes the write to the client.
 func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		b := bufferPool.Get().(*bytes.Buffer)
+		defer bufferPool.Put(b)
+		b.Reset()
+
 		nonce, err := getCspNonce(16)
 		if err != nil {
 			logger.Printf("setting error: %v", err)
+			e := eh(err, w.Header(), b)
+			if e != nil {
+				logger.Printf("setting error: %s", e.Error())
+			}
+			return
 		}
 		n, err := rh(r, w, nonce)
 		if err == nil {
@@ -107,10 +116,6 @@ func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCs
 			metrics.Written(n)
 			return
 		}
-
-		b := bufferPool.Get().(*bytes.Buffer)
-		defer bufferPool.Put(b)
-		b.Reset()
 
 		setBestPracticeHeaders(w, r, customCsp, nonce)
 		logRequest(r)
@@ -215,7 +220,11 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 		//get a random nonce string
 		nonce, err := getCspNonce(16)
 		if err != nil {
-			logger.Printf("setting error: %v", err)
+			e := eh(err, w.Header(), b)
+			if e != nil {
+				logger.Printf("setting error: %s", e.Error())
+			}
+			return
 		}
 
 		setBestPracticeHeaders(w, r, customCsp, nonce)
