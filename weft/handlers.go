@@ -72,129 +72,52 @@ var defaultCsp = map[string]string{
 
 /**
  * RequestHandler should write the response for r into b and adjust h as required
+ */
+type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer) error
+
+/**
+ * RequestHandlerWithNonce for pages with strict scripts csp
  * @param nonce: string to be passed to page template as attribute of scripts
  * refer https://csp.withgoogle.com/docs/strict-csp.html
  */
-type RequestHandler func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error
+type RequestHandlerWithNonce func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error
 
 // DirectRequestHandler allows writing to the http.ResponseWriter directly.
 // Should return the number of bytes written to w and any errors.
-type DirectRequestHandler func(r *http.Request, w http.ResponseWriter, nonce string) (int64, error)
+type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) (int64, error)
 
 // ErrorHandler should write the error for err into b and adjust h as required.
 // err can be nil
 type ErrorHandler func(err error, h http.Header, b *bytes.Buffer) error
 
-// MakeDirectHandler with default CSP policy
-func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFunc {
-	return MakeDirectHandlerWithCsp(rh, eh, nil)
-}
-
-// MakeDirectHandler with specified CSP policy
 // MakeDirectHandler executes rh.  The caller should write directly to w for success (200) only.
 // In the case of an rh returning an error ErrorHandler is executed and the response written to the client.
 //
 // Responses are counted.  rh is not wrapped with a timer as this includes the write to the client.
-func MakeDirectHandlerWithCsp(rh DirectRequestHandler, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
+func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		b := bufferPool.Get().(*bytes.Buffer)
 		defer bufferPool.Put(b)
 		b.Reset()
-
-		nonce, err := getCspNonce(16)
-		if err != nil {
-			logger.Printf("setting error: %v", err)
-			e := eh(err, w.Header(), b)
-			if e != nil {
-				logger.Printf("setting error: %s", e.Error())
-			}
-			return
-		}
-		n, err := rh(r, w, nonce)
-		if err == nil {
+		n, err := rh(r, w)
+		if err == nil { //all good, return
 			metrics.StatusOK()
 			metrics.Written(n)
 			return
 		}
 
-		setBestPracticeHeaders(w, r, customCsp, nonce)
+		//set csp headers
+		setBestPracticeHeaders(w, r, nil, "")
 		logRequest(r)
-
+		//run error handler
 		e := eh(err, w.Header(), b)
 		if e != nil {
 			logger.Printf("setting error: %s", e.Error())
 		}
 
-		if w.Header().Get("Content-Type") == "" && b != nil {
-			w.Header().Set("Content-Type", http.DetectContentType(b.Bytes()))
-		}
-
-		status := Status(err)
-
-		// keep errors for writing to client separate from errors that came from the request handler.
-		// log them but don't add metrics
-		var writeErr error
-
-		switch status {
-		case http.StatusMovedPermanently:
-			http.Redirect(w, r, err.Error(), http.StatusMovedPermanently)
-			metrics.StatusOK()
-		case http.StatusSeeOther:
-			http.Redirect(w, r, err.Error(), http.StatusSeeOther)
-			metrics.StatusOK()
-		default:
-			w.Header().Add("Vary", "Accept-Encoding")
-
-			//remove trailing content-type information, like ';version=2'
-			contentType := w.Header().Get("Content-Type")
-			i := strings.Index(contentType, ";")
-			if i > 0 {
-				contentType = contentType[0:i]
-			}
-			contentType = strings.TrimSpace(contentType)
-
-			if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
-				w.Header().Set("Content-Encoding", GZIP)
-				gz := gzip.NewWriter(w)
-				defer gz.Close()
-				w.WriteHeader(status)
-				n, writeErr = b.WriteTo(gz)
-			} else {
-				w.WriteHeader(status)
-				n, writeErr = b.WriteTo(w)
-			}
-		}
-
-		if writeErr != nil {
-			logger.Printf("error writing to w: %s", writeErr.Error())
-		}
-
-		// request metrics and logging
-
-		metrics.Written(n)
-		metrics.Request()
-		name := nameD(rh)
-
-		switch status {
-		case http.StatusOK, http.StatusMovedPermanently, http.StatusSeeOther, http.StatusGone, http.StatusNoContent:
-			metrics.StatusOK()
-		case http.StatusBadRequest:
-			metrics.StatusBadRequest()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusUnauthorized:
-			metrics.StatusUnauthorized()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusNotFound:
-			metrics.StatusNotFound()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusInternalServerError:
-			metrics.StatusInternalServerError()
-			logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
-		case http.StatusServiceUnavailable:
-			metrics.StatusServiceUnavailable()
-			logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
-		}
-
+		//write error response and log metrics
+		name := name(rh)
+		writeResponseAndLogMetrics(err, w, r, b, name, nil)
 	}
 }
 
@@ -215,106 +138,152 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 
 		// run the RequestHandler with timing.  If this returns an error then use the
 		// ErrorHandler to set the error content and header.
+		t := metrics.Start()
+		//run request handler
+		err := rh(r, w.Header(), b)
 
+		if err != nil {
+			//run error handler
+			e := eh(err, w.Header(), b)
+			if e != nil {
+				logger.Printf("2 error from error handler: %s", e.Error())
+			}
+		}
+
+		setBestPracticeHeaders(w, r, customCsp, "")
+		logRequest(r)
+
+		t.Stop()
+
+		//write error response and log metrics
+		name := name(rh)
+		writeResponseAndLogMetrics(err, w, r, b, name, &t)
+	}
+}
+
+/*
+ * MakeHandler with default CSP policy and RequestHandlerWithNonce
+ * a randomly generated nonce is passed to RequestHandlerWithNonce
+ */
+func MakeHandlerWithNonce(rh RequestHandlerWithNonce, eh ErrorHandler) http.HandlerFunc {
+	return MakeHandlerWithCspNonce(rh, eh, nil)
+}
+
+// MakeHandler with specified CSP policy and RequestHandlerWithNonce which accept a nonce string
+// to be used in page template (which need nonce for scripts)
+// returns an http.Handler that executes RequestHandler and collects timing information and metrics.
+// In the case of errors ErrorHandler is used to set error content for the client.
+// 50x errors are logged.
+func MakeHandlerWithCspNonce(rh RequestHandlerWithNonce, eh ErrorHandler, customCsp map[string]string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		b := bufferPool.Get().(*bytes.Buffer)
+		defer bufferPool.Put(b)
+		b.Reset()
+
+		// run the RequestHandler with timing.  If this returns an error then use the
+		// ErrorHandler to set the error content and header.
 		t := metrics.Start()
 		//get a random nonce string
 		nonce, err := getCspNonce(16)
+		if err == nil {
+			//run request handler
+			err = rh(r, w.Header(), b, nonce)
+		}
 		if err != nil {
+			//run error handler
 			e := eh(err, w.Header(), b)
 			if e != nil {
-				logger.Printf("setting error: %s", e.Error())
+				logger.Printf("2 error from error handler: %s", e.Error())
 			}
-			return
 		}
 
 		setBestPracticeHeaders(w, r, customCsp, nonce)
 		logRequest(r)
 
-		err = rh(r, w.Header(), b, nonce)
-
-		if err != nil {
-			e := eh(err, w.Header(), b)
-			if e != nil {
-				logger.Printf("setting error: %s", e.Error())
-			}
-		}
-
 		t.Stop()
 
-		// serve the content (which could now be error content).  Gzipping if required.
-		if w.Header().Get("Content-Type") == "" && b != nil {
-			w.Header().Set("Content-Type", http.DetectContentType(b.Bytes()))
-		}
-		status := Status(err)
-		var n int64
-		// keep errors for writing to client separate from errors that came from the request handler.
-		// log them but don't add metrics
-		var writeErr error
-
-		switch status {
-		case http.StatusMovedPermanently:
-			http.Redirect(w, r, err.Error(), http.StatusMovedPermanently)
-			metrics.StatusOK()
-		case http.StatusSeeOther:
-			http.Redirect(w, r, err.Error(), http.StatusSeeOther)
-			metrics.StatusOK()
-		default:
-			w.Header().Add("Vary", "Accept-Encoding")
-
-			//remove trailing content-type information, like ';version=2'
-			contentType := w.Header().Get("Content-Type")
-			i := strings.Index(contentType, ";")
-			if i > 0 {
-				contentType = contentType[0:i]
-			}
-			contentType = strings.TrimSpace(contentType)
-
-			if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
-				w.Header().Set("Content-Encoding", GZIP)
-				gz := gzip.NewWriter(w)
-				defer gz.Close()
-				w.WriteHeader(status)
-				n, writeErr = b.WriteTo(gz)
-			} else {
-				w.WriteHeader(status)
-				n, writeErr = b.WriteTo(w)
-			}
-		}
-
-		if writeErr != nil {
-			logger.Printf("error writing to w: %s", writeErr.Error())
-		}
-
-		// request metrics and logging
-
-		metrics.Written(n)
+		//write error response and log metrics
 		name := name(rh)
+		writeResponseAndLogMetrics(err, w, r, b, name, &t)
+	}
+}
 
+/**
+ * write http response and metrics logging
+ */
+func writeResponseAndLogMetrics(err error, w http.ResponseWriter, r *http.Request, b *bytes.Buffer, name string, t *metrics.Timer) {
+	// serve the content (which could now be error content).  Gzipping if required.
+	if w.Header().Get("Content-Type") == "" && b != nil {
+		w.Header().Set("Content-Type", http.DetectContentType(b.Bytes()))
+	}
+	status := Status(err)
+	var n int64
+	// keep errors for writing to client separate from errors that came from the request handler.
+	// log them but don't add metrics
+	var writeErr error
+
+	switch status {
+	case http.StatusMovedPermanently:
+		http.Redirect(w, r, err.Error(), http.StatusMovedPermanently)
+		metrics.StatusOK()
+	case http.StatusSeeOther:
+		http.Redirect(w, r, err.Error(), http.StatusSeeOther)
+		metrics.StatusOK()
+	default:
+		w.Header().Add("Vary", "Accept-Encoding")
+
+		//remove trailing content-type information, like ';version=2'
+		contentType := w.Header().Get("Content-Type")
+		i := strings.Index(contentType, ";")
+		if i > 0 {
+			contentType = contentType[0:i]
+		}
+		contentType = strings.TrimSpace(contentType)
+
+		if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
+			w.Header().Set("Content-Encoding", GZIP)
+			gz := gzip.NewWriter(w)
+			defer gz.Close()
+			w.WriteHeader(status)
+			n, writeErr = b.WriteTo(gz)
+		} else {
+			w.WriteHeader(status)
+			n, writeErr = b.WriteTo(w)
+		}
+	}
+
+	if writeErr != nil {
+		logger.Printf("error writing to w: %s", writeErr.Error())
+	}
+
+	// request metrics and logging
+	metrics.Written(n)
+	if t != nil {
 		if e := t.Track(name + "." + r.Method); e != nil {
 			logger.Printf("Track error: %s", e.Error())
 		}
+	}
 
-		metrics.Request()
+	metrics.Request()
 
-		switch status {
-		case http.StatusOK, http.StatusMovedPermanently, http.StatusSeeOther, http.StatusGone, http.StatusNoContent:
-			metrics.StatusOK()
-		case http.StatusBadRequest:
-			metrics.StatusBadRequest()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusUnauthorized:
-			metrics.StatusUnauthorized()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusNotFound:
-			metrics.StatusNotFound()
-			logger.Printf("%d %s", status, r.RequestURI)
-		case http.StatusInternalServerError:
-			metrics.StatusInternalServerError()
-			logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
-		case http.StatusServiceUnavailable:
-			metrics.StatusServiceUnavailable()
-			logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
-		}
+	switch status {
+	case http.StatusOK, http.StatusMovedPermanently, http.StatusSeeOther, http.StatusGone, http.StatusNoContent:
+		metrics.StatusOK()
+	case http.StatusBadRequest:
+		metrics.StatusBadRequest()
+		logger.Printf("%d %s", status, r.RequestURI)
+	case http.StatusUnauthorized:
+		metrics.StatusUnauthorized()
+		logger.Printf("%d %s", status, r.RequestURI)
+	case http.StatusNotFound:
+		metrics.StatusNotFound()
+		logger.Printf("%d %s", status, r.RequestURI)
+	case http.StatusInternalServerError:
+		metrics.StatusInternalServerError()
+		logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
+	case http.StatusServiceUnavailable:
+		metrics.StatusServiceUnavailable()
+		logger.Printf("%d %s %s %s %s", status, r.Method, r.RequestURI, name, err.Error())
 	}
 }
 
@@ -503,22 +472,7 @@ func HTMLError(e error, h http.Header, b *bytes.Buffer) error {
 }
 
 // name finds the name of the function f
-func name(f RequestHandler) string {
-	var n string
-	// Find the name of the function f to use as the timer id
-	fn := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
-	if fn != nil {
-		n = fn.Name()
-		i := strings.LastIndex(n, ".")
-		if i > 0 && i+1 < len(n) {
-			n = n[i+1:]
-		}
-	}
-	return n
-}
-
-// name finds the name of the function f
-func nameD(f DirectRequestHandler) string {
+func name(f interface{}) string {
 	var n string
 	// Find the name of the function f to use as the timer id
 	fn := runtime.FuncForPC(reflect.ValueOf(f).Pointer())
@@ -535,7 +489,7 @@ func nameD(f DirectRequestHandler) string {
 // NoMatch returns a 404 for GET requests.
 //
 // Implements RequestHandler
-func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
+func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err
@@ -547,7 +501,7 @@ func NoMatch(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) erro
 // Up returns a 200 and simple page for GET requests.
 //
 // Implements RequestHandler
-func Up(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
+func Up(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err
@@ -563,7 +517,7 @@ func Up(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
 // Soh returns a 200 and simple page for GET requests.
 //
 // Implements RequestHandler
-func Soh(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
+func Soh(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{})
 	if err != nil {
 		return err

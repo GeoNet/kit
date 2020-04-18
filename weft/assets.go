@@ -118,7 +118,7 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 //    /assets/bootstrap/1fdd2266-hello.css
 //
 // The finger printed path can be looked up with AssetPath.
-func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
+func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{"v"})
 	if err != nil {
 		return err
