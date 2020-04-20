@@ -442,3 +442,22 @@ func TestHandlers(t *testing.T) {
 		}
 	}
 }
+
+/**
+ * Test MakeHandlerWithNonce
+ */
+func TestHandlerWithNonce(t *testing.T) {
+	rh := func(r *http.Request, h http.Header, b *bytes.Buffer, nonce string) error {
+		if nonce == "" {
+			return weft.StatusError{Code: http.StatusNotAcceptable, Err: errors.New("No nonce")}
+		}
+		return nil
+	}
+	handler := weft.MakeHandlerWithNonce(rh, weft.TextError)
+	req := httptest.NewRequest("GET", "http://example.com/foo", nil)
+	w := httptest.NewRecorder()
+	handler(w, req)
+	if w.Code != http.StatusOK {
+		t.Errorf("expected %d got %d", http.StatusOK, w.Code)
+	}
+}

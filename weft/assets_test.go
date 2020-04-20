@@ -35,16 +35,17 @@ func TestCreateSubResourceTag(t *testing.T) {
 	}
 
 	work := []struct {
+		nonce    string
 		path     string
 		expected string
 	}{
-		{
+		{"",
 			"testdata/leaflet.css",
 			`<link rel="stylesheet" href="/07800b98-leaflet.css" integrity="sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4">`,
 		},
-		{
+		{"abcdefgh",
 			"testdata/gnss-map-plot.js",
-			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1"></script>`,
+			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1" nonce="abcdefgh"></script>`,
 		},
 	}
 
@@ -56,7 +57,7 @@ func TestCreateSubResourceTag(t *testing.T) {
 				t.Error(err)
 			}
 
-			tag, err := createSubResourceTag(a)
+			tag, err := createSubResourceTag(a, w.nonce)
 			if err != nil {
 				t.Fatalf("Couldn't create embedded resource tag: %v", err)
 			}
