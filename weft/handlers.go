@@ -303,15 +303,13 @@ func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp ma
 		}
 		csp.WriteString(k)
 		csp.WriteString(" ")
+
 		if k == "script-src" && nonce != "" { //add nonce to CSP
-			csp.WriteString(fmt.Sprintf("'nonce-%s' 'strict-dynamic';", nonce))
-		} else {
-			csp.WriteString(s)
-			csp.WriteString("; ")
+			csp.WriteString(fmt.Sprintf(" 'nonce-%s' 'strict-dynamic' ", nonce))
 		}
+		csp.WriteString(s)
+		csp.WriteString("; ")
 	}
-	//Content Security Policy: allow inline styles, but no inline scripts, prevent from clickjacking
-	//The hash in script-src is to allow the inline JavaScript that the SurveyMonkey popup inserts as part of its IFrame.
 	w.Header().Set("Content-Security-Policy", csp.String())
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("X-XSS-Protection", "1; mode=block")
