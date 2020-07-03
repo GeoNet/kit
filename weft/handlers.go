@@ -70,6 +70,20 @@ var defaultCsp = map[string]string{
 	"object-src":      "'none'",
 }
 
+var strictCsp = map[string]string{
+	"default-src":     "'none'",
+	"img-src":         "'self' ",
+	"font-src":        "'none'",
+	"style-src":       "'none'",
+	"script-src":      "'none'",
+	"connect-src":     "'none'",
+	"frame-src":       "'none'",
+	"form-action":     "'none'",
+	"base-uri":        "'none'",
+	"frame-ancestors": "'none'",
+	"object-src":      "'none'",
+}
+
 /**
  * RequestHandler should write the response for r into b and adjust h as required
  */
@@ -148,6 +162,7 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
+			customCsp = strictCsp //set strict csp for error page
 		}
 
 		setBestPracticeHeaders(w, r, customCsp, "")
@@ -195,6 +210,7 @@ func MakeHandlerWithCspNonce(rh RequestHandlerWithNonce, eh ErrorHandler, custom
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
+			customCsp = strictCsp //set strict csp for error page
 		}
 
 		setBestPracticeHeaders(w, r, customCsp, nonce)
