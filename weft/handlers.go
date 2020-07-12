@@ -72,7 +72,7 @@ var defaultCsp = map[string]string{
 
 var strictCsp = map[string]string{
 	"default-src":     "'none'",
-	"img-src":         "'self' ",
+	"img-src":         "'self'",
 	"font-src":        "'none'",
 	"style-src":       "'none'",
 	"script-src":      "'none'",
@@ -323,7 +323,7 @@ func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp ma
 		csp.WriteString(k)
 		csp.WriteString(" ")
 
-		if k == "script-src" && nonce != "" { //add nonce to CSP
+		if k == "script-src" && nonce != "" && s != "'none'" { //add nonce to CSP
 			csp.WriteString(fmt.Sprintf(" 'nonce-%s' 'strict-dynamic' ", nonce))
 		}
 		csp.WriteString(s)
