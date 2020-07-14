@@ -16,6 +16,36 @@ const (
 	maxAge86400 = "max-age=86400"
 )
 
+//expected csp header for normal responses
+var normalCspHeader = map[string]string{
+	"default-src":     "'none'",
+	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://stats.g.doubleclick.net",
+	"font-src":        "'self' https://fonts.gstatic.com",
+	"style-src":       "'self'",
+	"script-src":      "'self'",
+	"connect-src":     "'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net",
+	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
+	"form-action":     "'self'",
+	"base-uri":        "'none'",
+	"frame-ancestors": "'self'",
+	"object-src":      "'none'",
+}
+
+//expected csp header for error responses
+var errorCspHeader = map[string]string{
+	"default-src":     "'none'",
+	"img-src":         "'self'",
+	"font-src":        "'none'",
+	"style-src":       "'none'",
+	"script-src":      "'none'",
+	"connect-src":     "'none'",
+	"frame-src":       "'none'",
+	"form-action":     "'none'",
+	"base-uri":        "'none'",
+	"frame-ancestors": "'none'",
+	"object-src":      "'none'",
+}
+
 // test server and handlers for running the tests
 
 var ts *httptest.Server
@@ -71,6 +101,7 @@ func TestRoutes(t *testing.T) {
 	errors := 0
 
 	for _, v := range routes {
+		v.CSP = normalCspHeader
 		_, err := v.Do(ts.URL)
 		if err != nil {
 			t.Errorf("TestRoutes %s", err.Error())
@@ -93,6 +124,7 @@ func TestMethodNotAllowed(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
+		v.CSP = errorCspHeader //strictCsp for error response
 
 		i, err := v.MethodNotAllowed(ts.URL, []string{"GET"})
 		if err != nil {
@@ -116,6 +148,7 @@ func TestExtraParameter(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
+		v.CSP = errorCspHeader //strictCsp for error response
 
 		err := v.ExtraParameter(ts.URL, "extra", "parameter")
 		if err != nil {
@@ -142,6 +175,7 @@ func TestFuzzQuery(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
+		v.CSP = errorCspHeader //strictCsp for error response
 		i, err := v.FuzzQuery(ts.URL, wt.FuzzValues)
 		if err != nil {
 			t.Errorf("TestFuzzQuery %s", err.Error())
@@ -164,6 +198,7 @@ func TestFuzzPath(t *testing.T) {
 		// will 404 or 400 so can't be sure of cache or content types.  Exclude them.
 		v.Surrogate = ""
 		v.Content = ""
+		v.CSP = nil //no csp check
 		i, err := v.FuzzPath(ts.URL, wt.FuzzValues)
 		if err != nil {
 			t.Errorf("TestFuzzPath %s", err.Error())
