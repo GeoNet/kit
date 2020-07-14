@@ -31,7 +31,7 @@ type Request struct {
 	Status         int               // The expected HTTP status code for the request.  Defaults to http.StatusOK (200).
 	Content        string            // The expected content type.  Not tested if zero.  A zero Content-Type in the response is an error.
 	Surrogate      string            // The expected Surrogate-Control.  Not tested if zero.
-	CSP            map[string]string //expected content-security-policy
+	CSP            map[string]string // expected header for content-security-policy
 }
 
 type Requests []Request

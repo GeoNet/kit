@@ -16,7 +16,8 @@ const (
 	maxAge86400 = "max-age=86400"
 )
 
-var defaultCsp = map[string]string{
+//expected csp header for normal responses
+var normalCspHeader = map[string]string{
 	"default-src":     "'none'",
 	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://stats.g.doubleclick.net",
 	"font-src":        "'self' https://fonts.gstatic.com",
@@ -30,7 +31,8 @@ var defaultCsp = map[string]string{
 	"object-src":      "'none'",
 }
 
-var strictCsp = map[string]string{
+//expected csp header for error responses
+var errorCspHeader = map[string]string{
 	"default-src":     "'none'",
 	"img-src":         "'self'",
 	"font-src":        "'none'",
@@ -99,7 +101,7 @@ func TestRoutes(t *testing.T) {
 	errors := 0
 
 	for _, v := range routes {
-		v.CSP = defaultCsp
+		v.CSP = normalCspHeader
 		_, err := v.Do(ts.URL)
 		if err != nil {
 			t.Errorf("TestRoutes %s", err.Error())
@@ -122,7 +124,7 @@ func TestMethodNotAllowed(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = strictCsp //strictCsp for error response
+		v.CSP = errorCspHeader //strictCsp for error response
 
 		i, err := v.MethodNotAllowed(ts.URL, []string{"GET"})
 		if err != nil {
@@ -146,7 +148,7 @@ func TestExtraParameter(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = strictCsp //strictCsp for error response
+		v.CSP = errorCspHeader //strictCsp for error response
 
 		err := v.ExtraParameter(ts.URL, "extra", "parameter")
 		if err != nil {
@@ -173,7 +175,7 @@ func TestFuzzQuery(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = strictCsp //strictCsp for error response
+		v.CSP = errorCspHeader //strictCsp for error response
 		i, err := v.FuzzQuery(ts.URL, wt.FuzzValues)
 		if err != nil {
 			t.Errorf("TestFuzzQuery %s", err.Error())
