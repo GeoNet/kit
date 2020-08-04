@@ -154,6 +154,11 @@ func parseCspContent(content string) map[string]string {
  * check response CSP match expected
  */
 func checkCSP(respCsp, expectedCsp map[string]string) error {
+	l1 := len(respCsp)
+	l2 := len(expectedCsp)
+	if l1 != l2 {
+		return fmt.Errorf("## Response CSP count %v doesn't match expected %v", l1, l2)
+	}
 	for k, v := range expectedCsp {
 		v1 := respCsp[k]
 		if k == "script-src" && strings.Contains(v1, "nonce-") { //check nonce
