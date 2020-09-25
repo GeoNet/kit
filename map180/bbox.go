@@ -123,8 +123,8 @@ func newBboxFromMarkers(m []Marker) (bbox, error) {
 
 	for _, b := range mapBounds {
 		var in bool
-		err := db.QueryRow(`select ST_Within(ST_Shift_Longitude(st_setsrid(ST_GeomFromText($1), 4326)), 
-		ST_Shift_Longitude(ST_MakeEnvelope($2,$3,$4,$5, 4326)))`, geom, b.llx, b.lly, b.urx, b.ury).Scan(&in)
+		err := db.QueryRow(`select ST_Within(ST_ShiftLongitude(st_setsrid(ST_GeomFromText($1), 4326)),
+		ST_ShiftLongitude(ST_MakeEnvelope($2,$3,$4,$5, 4326)))`, geom, b.llx, b.lly, b.urx, b.ury).Scan(&in)
 		if err != nil {
 			return bbox{}, err
 		}
@@ -154,8 +154,8 @@ func (b *bbox) setRegion() error {
 	}
 
 	var in bool
-	err := db.QueryRow(`select ST_Within(ST_Shift_Longitude(ST_MakeEnvelope($1,$2,$3,$4, 4326)), 
-		ST_Shift_Longitude(ST_MakeEnvelope($5,$6,$7,$8, 4326)))`, b.llx, b.lly, b.urx, b.ury,
+	err := db.QueryRow(`select ST_Within(ST_ShiftLongitude(ST_MakeEnvelope($1,$2,$3,$4, 4326)),
+		ST_ShiftLongitude(ST_MakeEnvelope($5,$6,$7,$8, 4326)))`, b.llx, b.lly, b.urx, b.ury,
 		zoomRegion.llx, zoomRegion.lly, zoomRegion.urx, zoomRegion.ury).Scan(&in)
 	if err != nil {
 		return err
