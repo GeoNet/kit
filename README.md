@@ -56,6 +56,10 @@ make
 
 sc3ml is for working with SeisComPML files.
 
+### seis
+
+seis is a go version of the mseed and slink packages, it is aimed at realtime applications which require receiving and decoding
+miniseed data. To run a full test the `-tags=link` option is needed, this will also be dependent on external services and data flows.
 
 ### shake
 

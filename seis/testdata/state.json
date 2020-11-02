@@ -1,0 +1,14 @@
+[
+  {
+    "network": "NZ",
+    "station": "CAW",
+    "sequence": 1001839,
+    "timestamp": "2020-11-09T05:34:12.49313Z"
+  },
+  {
+    "network": "NZ",
+    "station": "WEL",
+    "sequence": 1003830,
+    "timestamp": "2020-11-09T05:34:18.255Z"
+  }
+]
