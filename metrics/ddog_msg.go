@@ -191,7 +191,11 @@ func dogMsg(apiKey, hostName, appName string, m runtime.MemStats, t []TimerStats
 		return err
 	}
 
-	req, err := http.NewRequest("POST", dogUrl, bytes.NewBuffer(b))
+	return SendDogMsg(apiKey, b)
+}
+
+func SendDogMsg(apiKey string, data []byte) error {
+	req, err := http.NewRequest("POST", dogUrl, bytes.NewBuffer(data))
 	if err != nil {
 		return err
 	}

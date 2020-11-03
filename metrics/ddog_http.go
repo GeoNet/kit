@@ -1,10 +1,7 @@
 package metrics
 
 import (
-	"bytes"
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"runtime"
 	"time"
 )
@@ -153,35 +150,5 @@ func dogHttp(apiKey, hostName, appName string, m runtime.MemStats, t []TimerStat
 		return err
 	}
 
-	req, err := http.NewRequest("POST", dogUrl, bytes.NewBuffer(b))
-	if err != nil {
-		return err
-	}
-
-	req.Header.Set("Content-type", "application/json")
-
-	q := req.URL.Query()
-	q.Add("api_key", apiKey)
-
-	req.URL.RawQuery = q.Encode()
-
-	var res *http.Response
-
-	for tries := 0; time.Now().Before(time.Now().Add(time.Second * 30)); tries++ {
-		if res, err = client.Do(req); err == nil {
-			if res != nil && res.StatusCode == 202 {
-				break
-			} else {
-				err = fmt.Errorf("non 202 code from datadog: %d", res.StatusCode)
-				break
-			}
-		}
-		// non nil connection error, sleep and try again
-		time.Sleep(time.Second << uint(tries))
-	}
-	if res != nil {
-		res.Body.Close()
-	}
-
-	return err
+	return SendDogMsg(apiKey, b)
 }
