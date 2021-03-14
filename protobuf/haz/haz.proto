@@ -54,6 +54,8 @@ message Volcano {
     double longitude = 4;
 
     VAL val = 5;
+    //aviation colour code
+    string acc = 6;
 }
 
 // volcanic alert level.
