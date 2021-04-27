@@ -1,7 +1,7 @@
 
 
 # sl
-`import "github.com/GeoNet/kit/sl"`
+`import "github.com/GeoNet/kit/seis/sl"`
 
 * [Overview](#pkg-overview)
 * [Index](#pkg-index)

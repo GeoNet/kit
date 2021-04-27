@@ -71,11 +71,13 @@ func (s *SLConn) CollectWithContext(ctx context.Context, fn CollectFunc) error {
 	if s.Flush > 0 && s.StateFile != "" {
 		go func() {
 			for range time.Tick(s.Flush) {
-				state.WriteFile(s.StateFile)
+				_ = state.WriteFile(s.StateFile)
 			}
 		}()
 		// and after an uneventful end
-		defer state.WriteFile(s.StateFile)
+		defer func() {
+			_ = state.WriteFile(s.StateFile)
+		}()
 	}
 
 loop:
