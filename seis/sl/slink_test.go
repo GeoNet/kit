@@ -39,11 +39,12 @@ func TestSLink_Connect(t *testing.T) {
 
 	for _, w := range work {
 		t.Run(w.streamlist, func(t *testing.T) {
-			sl := NewSLink("link.geonet.org.nz:18000",
+			sl := NewSLink(
+				SetServer("link.geonet.org.nz:18000"),
 				SetTimeout(5*time.Second),
 				SetStreams(w.streamlist),
 				SetSelectors(w.deflist),
-				SetStartTime(func() time.Time {
+				SetStart(func() time.Time {
 					switch {
 					case w.start && w.end:
 						return time.Now().Add(-(time.Minute * 30))
@@ -53,7 +54,7 @@ func TestSLink_Connect(t *testing.T) {
 						return time.Time{}
 					}
 				}()),
-				SetEndTime(func() time.Time {
+				SetEnd(func() time.Time {
 					switch {
 					case w.start && w.end:
 						return time.Now().Add(-(time.Minute * 18))
@@ -80,7 +81,8 @@ func TestSLink_Connect(t *testing.T) {
 
 func TestSLink_KeepAlive(t *testing.T) {
 
-	sl := NewSLink("link.geonet.org.nz:18000",
+	sl := NewSLink(
+		SetServer("link.geonet.org.nz:18000"),
 		SetStreams("XX_ZZZZ"),
 		SetKeepAlive(200*time.Millisecond),
 		SetNetTo(500*time.Millisecond),
@@ -101,7 +103,8 @@ func TestSLink_KeepAlive(t *testing.T) {
 
 func TestSLink_NetTo(t *testing.T) {
 
-	sl := NewSLink("link.geonet.org.nz:18000",
+	sl := NewSLink(
+		SetServer("link.geonet.org.nz:18000"),
 		SetStreams("XX_ZZZZ"),
 		SetKeepAlive(0),
 		SetNetTo(500*time.Millisecond),
