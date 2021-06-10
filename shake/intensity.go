@@ -42,3 +42,16 @@ type FaenzaMichelini2010 struct{}
 func (fn FaenzaMichelini2010) RawIntensity(vel float64) float64 {
 	return 5.11 + 2.35*math.Log10(100.0*math.Abs(vel)+1.0e-9)
 }
+
+// "New Ground Motion to Intensity Conversion Equations (GMICEs) for New Zealand" - Jose M. Moratalla et. al.
+// Seismological Research Letters 92 (2020), 448–459, doi: 10.1785/0220200156
+type Moratalla2020 struct{}
+
+func (fn Moratalla2020) RawIntensity(vel float64) float64 {
+	switch v := math.Log10(100.0 * math.Abs(vel)); {
+	case v < 1.0024:
+		return 1.6323*v + 4.107
+	default:
+		return 3.837*v + 1.8970
+	}
+}
