@@ -11,11 +11,11 @@ func TestState(t *testing.T) {
 
 	t.Run("check empty files", func(t *testing.T) {
 		var state State
-		if err := state.ReadFile(""); err != nil {
-			t.Errorf("an empty read path should not return an error")
+		if err := state.ReadFile(""); err == nil {
+			t.Errorf("an empty read path should return an error")
 		}
-		if err := state.WriteFile(""); err != nil {
-			t.Errorf("an empty write path should not return an error")
+		if err := state.WriteFile(""); err == nil {
+			t.Errorf("an empty write path should return an error")
 		}
 	})
 
