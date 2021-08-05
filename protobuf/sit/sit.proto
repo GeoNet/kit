@@ -1,10 +1,10 @@
 syntax = "proto3";
 
-// protoc --proto_path=protobuf/sit --go_out=sit_pb protobuf/sit/sit.proto
+// protoc --proto_path=protobuf/sit --go_out=./ protobuf/sit/sit.proto
 // protoc --proto_path=protobuf/sit --java_out=sit_pb_java protobuf/sit/sit.proto
 
 package sit;
-option go_package = "sit_pb";
+option go_package = "./sit_pb";
 
 option java_package = "nz.org.geonet.sitnotebook.sitprotos";
 option java_outer_classname = "SitSite";

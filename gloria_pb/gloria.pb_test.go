@@ -1,7 +1,7 @@
 package gloria_pb
 
 import (
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"sort"
 	"testing"

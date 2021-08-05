@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-// protoc --proto_path=protobuf/gloria --go_out=gloria_pb protobuf/gloria/gloria.proto
+// protoc --proto_path=protobuf/gloria --go_out=./ protobuf/gloria/gloria.proto
 
 package gloria;
-option go_package = "gloria_pb";
+option go_package = "./gloria_pb";
 
 // All GNSS Marks.  Use Mark.Code for the map key.
 message Marks {

@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-// protoc --proto_path=protobuf/sit_delta --go_out=sit_delta_pb protobuf/sit_delta/sit_delta.proto
+// protoc --proto_path=protobuf/sit_delta --go_out=./ protobuf/sit_delta/sit_delta.proto
 
 package sit_delta;
-option go_package = "sit_delta_pb";
+option go_package = "./sit_delta_pb";
 
 
 // A geographical point on NZGD2000
