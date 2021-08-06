@@ -9,6 +9,8 @@ with a `_pb` suffix e.g., `haz_pb` is generated from `protobuf/haz`.  Go protobu
 `google.golang.org/protobuf/proto` this is not vendored here.  Pkgs are tested against the latest
 version of `google.golang.org/protobuf/proto`.
 
+(06/Aug/2021) Currently `github.com/golang/groupcache` is still using `github.com/golang/protobuf` thus an indirect still in `go.mod`. Need to keep watching if groupcache has migrated so we can get rid of this.
+
 ## Go Packages
 
 ### gloria_pb
