@@ -66,7 +66,7 @@ Contact: www.geonet.org.nz  email: info@geonet.org.nz`,
 		t.Error(err)
 	}
 
-	err = ioutil.WriteFile("testdata/taup.pb", b, 0644)
+	err = ioutil.WriteFile("testdata/taup.pb", b, 0600)
 	if err != nil {
 		t.Error(err)
 	}

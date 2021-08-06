@@ -64,7 +64,7 @@ func SVGTriangle(m Marker, b *bytes.Buffer) {
 	b.WriteString(fmt.Sprintf("<g id=\"%s\"><path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" fill=\"%s\" opacity=\"0.5\">",
 		m.id, int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour))
 	b.WriteString(`<desc>` + m.label + `.</desc>`)
-	b.WriteString(fmt.Sprint(`<set attributeName="opacity" from="0.5" to="1" begin="mouseover" end="mouseout"  dur="2s"/></path>`))
+	b.WriteString(`<set attributeName="opacity" from="0.5" to="1" begin="mouseover" end="mouseout"  dur="2s"/></path>`)
 	b.WriteString(fmt.Sprintf("<path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\" opacity=\"1\" /></g>",
 		int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour))
 }
@@ -89,6 +89,7 @@ func labelMarkers(m []Marker, x, y int, anchor string, fontSize int, short bool,
 
 func (m map3857) drawMarkers(markers []Marker, b *bytes.Buffer) (err error) {
 	for _, mr := range markers {
+		mr := mr // this prevents lint error
 		if mr.latitude <= 85.0 && mr.latitude >= -85.0 {
 			err = m.marker3857(&mr)
 			if err != nil {
