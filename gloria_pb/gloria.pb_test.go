@@ -75,9 +75,9 @@ Contact: www.geonet.org.nz  email: info@geonet.org.nz`,
 // TestPrioritySort checks the sort by download priority for marks.
 func TestPrioritySort(t *testing.T) {
 	m := MarksPriority{
-		Mark{Code: "last", Download: &Download{Priority: 0}},
-		Mark{Code: "first", Download: &Download{Priority: 1000}},
-		Mark{Code: "second", Download: &Download{Priority: 100}},
+		&Mark{Code: "last", Download: &Download{Priority: 0}},
+		&Mark{Code: "first", Download: &Download{Priority: 1000}},
+		&Mark{Code: "second", Download: &Download{Priority: 100}},
 	}
 
 	sort.Sort(sort.Reverse(m))
