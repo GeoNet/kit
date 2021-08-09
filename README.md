@@ -6,8 +6,10 @@ Common packages for GeoNet applications.
 
 Protobuf definitions are stored in the `protobuf` dir.  Go pkgs are generated from these files
 with a `_pb` suffix e.g., `haz_pb` is generated from `protobuf/haz`.  Go protobuf pkgs import
-`github.com/golang/protobuf/proto` this is not vendored here.  Pkgs are tested against the latest
-version of `github.com/golang/protobuf/proto`.
+`google.golang.org/protobuf/proto` this is not vendored here.  Pkgs are tested against the latest
+version of `google.golang.org/protobuf/proto`.
+
+(06/Aug/2021) Currently `github.com/golang/groupcache` is still using `github.com/golang/protobuf` thus an indirect still in `go.mod`. Need to keep watching if groupcache has migrated so we can get rid of this.
 
 ## Go Packages
 

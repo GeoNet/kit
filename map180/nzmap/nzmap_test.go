@@ -29,7 +29,7 @@ func TestIconWellington(t *testing.T) {
 
 	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
 
-	if err := ioutil.WriteFile("svg_test/nzicon-wellington.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzicon-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -48,7 +48,7 @@ func TestIconRaoul(t *testing.T) {
 
 	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
 
-	if err := ioutil.WriteFile("svg_test/nzicon-raoul.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzicon-raoul.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -67,7 +67,7 @@ func TestIconAucklandIsland(t *testing.T) {
 
 	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
 
-	if err := ioutil.WriteFile("svg_test/nzicon-aucklandisland.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzicon-aucklandisland.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -86,7 +86,7 @@ func TestIconCanberra(t *testing.T) {
 
 	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
 
-	if err := ioutil.WriteFile("svg_test/nzicon-canberra.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzicon-canberra.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -113,7 +113,7 @@ func TestMediumWellington(t *testing.T) {
 
 	b.WriteString("</svg>")
 
-	if err := ioutil.WriteFile("svg_test/nzmedium-wellington.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzmedium-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -141,7 +141,7 @@ func TestMediumIob(t *testing.T) {
 
 	b.WriteString("</svg>")
 
-	if err := ioutil.WriteFile("svg_test/nzmedium-iob.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzmedium-iob.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -196,7 +196,7 @@ func TestMediumRegionWellington(t *testing.T) {
 
 	b.WriteString("</svg>")
 
-	if err := ioutil.WriteFile("svg_test/nzmediumregion-wellington.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzmediumregion-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }
@@ -250,7 +250,7 @@ func TestMediumRegionRaoul(t *testing.T) {
 
 	b.WriteString("</svg>")
 
-	if err := ioutil.WriteFile("svg_test/nzmediumregion-raoul.svg", b.Bytes(), 0644); err != nil {
+	if err := ioutil.WriteFile("svg_test/nzmediumregion-raoul.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
 		t.Fatal(err)
 	}
 }

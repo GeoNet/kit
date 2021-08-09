@@ -1,7 +1,7 @@
 package gloria_pb
 
 import (
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"io/ioutil"
 	"sort"
 	"testing"
@@ -66,7 +66,7 @@ Contact: www.geonet.org.nz  email: info@geonet.org.nz`,
 		t.Error(err)
 	}
 
-	err = ioutil.WriteFile("testdata/taup.pb", b, 0644)
+	err = ioutil.WriteFile("testdata/taup.pb", b, 0600)
 	if err != nil {
 		t.Error(err)
 	}
@@ -75,9 +75,9 @@ Contact: www.geonet.org.nz  email: info@geonet.org.nz`,
 // TestPrioritySort checks the sort by download priority for marks.
 func TestPrioritySort(t *testing.T) {
 	m := MarksPriority{
-		Mark{Code: "last", Download: &Download{Priority: 0}},
-		Mark{Code: "first", Download: &Download{Priority: 1000}},
-		Mark{Code: "second", Download: &Download{Priority: 100}},
+		&Mark{Code: "last", Download: &Download{Priority: 0}},
+		&Mark{Code: "first", Download: &Download{Priority: 1000}},
+		&Mark{Code: "second", Download: &Download{Priority: 100}},
 	}
 
 	sort.Sort(sort.Reverse(m))

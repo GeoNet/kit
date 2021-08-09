@@ -142,7 +142,7 @@ func (s *State) WriteFile(path string) error {
 		return err
 	}
 
-	if err := ioutil.WriteFile(path, data, 0644); err != nil {
+	if err := ioutil.WriteFile(path, data, 0644); err != nil { // nolint: gosec
 		return err
 	}
 

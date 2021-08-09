@@ -1,9 +1,9 @@
 syntax = "proto3";
 
-// protoc --proto_path=protobuf/fmp --go_out=fmp_pb protobuf/fmp/fmp.proto
+// protoc --proto_path=protobuf/fmp --go_out=./ protobuf/fmp/fmp.proto
 
 package fmp;
-option go_package = "fmp_pb";
+option go_package = "./fmp_pb";
 
 //A structure containing all the devices listed in the network repo.
 message Devices {

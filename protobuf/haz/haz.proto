@@ -1,9 +1,9 @@
 syntax = "proto3";
 
 package haz;
-option go_package = "haz_pb";
+option go_package = "./haz_pb";
 
-// protoc --proto_path=protobuf/haz/ --go_out=haz_pb protobuf/haz/haz.proto
+// protoc --proto_path=protobuf/haz/ --go_out=./ protobuf/haz/haz.proto
 
 // Quake is for earthquake information.
 message Quake {
