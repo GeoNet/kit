@@ -9,7 +9,7 @@ func (m MarksPriority) Len() int {
 }
 
 func (m MarksPriority) Less(i, j int) bool {
-	return (*m[i]).GetDownload().GetPriority() < (*m[j]).GetDownload().GetPriority()
+	return m[i].GetDownload().GetPriority() < m[j].GetDownload().GetPriority()
 }
 
 func (m MarksPriority) Swap(i, j int) {
