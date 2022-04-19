@@ -3,6 +3,7 @@ package sqs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 
@@ -10,7 +11,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
-	"github.com/pkg/errors"
 )
 
 type Raw struct {
@@ -29,7 +29,7 @@ type SQS struct {
 func New() (SQS, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return SQS{}, errors.WithStack(err)
+		return SQS{}, err
 	}
 	return SQS{client: sqs.NewFromConfig(cfg)}, nil
 }
@@ -39,7 +39,7 @@ func New() (SQS, error) {
 func NewWithMaxRetries(maxRetries int) (SQS, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return SQS{}, errors.WithStack(err)
+		return SQS{}, err
 	}
 	client := sqs.NewFromConfig(cfg, func(options *sqs.Options) {
 		options.Retryer = retry.AddWithMaxAttempts(options.Retryer, maxRetries)
@@ -55,7 +55,7 @@ func getConfig() (aws.Config, error) {
 	}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return aws.Config{}, errors.WithStack(err)
+		return aws.Config{}, err
 	}
 	return cfg, nil
 }
@@ -78,7 +78,7 @@ func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
 	for {
 		r, err := s.client.ReceiveMessage(context.TODO(), &input)
 		if err != nil {
-			return Raw{}, errors.WithStack(err)
+			return Raw{}, err
 		}
 
 		switch {

@@ -3,9 +3,8 @@ package sns
 
 import (
 	"context"
+	"errors"
 	"os"
-
-	"github.com/pkg/errors"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
@@ -24,7 +23,7 @@ type SNS struct {
 func New() (SNS, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return SNS{}, errors.WithStack(err)
+		return SNS{}, err
 	}
 	return SNS{client: sns.NewFromConfig(cfg)}, nil
 }
@@ -34,7 +33,7 @@ func New() (SNS, error) {
 func NewWithMaxRetries(maxRetries int) (SNS, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return SNS{}, errors.WithStack(err)
+		return SNS{}, err
 	}
 	client := sns.NewFromConfig(cfg, func(options *sns.Options) {
 		options.Retryer = retry.AddWithMaxAttempts(options.Retryer, maxRetries)
@@ -49,7 +48,7 @@ func getConfig() (aws.Config, error) {
 	}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return aws.Config{}, errors.WithStack(err)
+		return aws.Config{}, err
 	}
 	return cfg, nil
 }

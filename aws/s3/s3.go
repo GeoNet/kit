@@ -4,6 +4,7 @@ package s3
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -15,7 +16,6 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
-	"github.com/pkg/errors"
 )
 
 type S3 struct {
@@ -33,7 +33,7 @@ type Meta map[string]string
 func New() (S3, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return S3{}, errors.WithStack(err)
+		return S3{}, err
 	}
 	return S3{client: s3.NewFromConfig(cfg)}, nil
 }
@@ -43,7 +43,7 @@ func New() (S3, error) {
 func NewWithMaxRetries(maxRetries int) (S3, error) {
 	cfg, err := getConfig()
 	if err != nil {
-		return S3{}, errors.WithStack(err)
+		return S3{}, err
 	}
 	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
 		options.Retryer = retry.AddWithMaxAttempts(options.Retryer, maxRetries)
@@ -79,7 +79,7 @@ func getConfig() (aws.Config, error) {
 	}
 	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
-		return aws.Config{}, errors.WithStack(err)
+		return aws.Config{}, err
 	}
 	return cfg, nil
 }
@@ -243,11 +243,9 @@ func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 
 	result := make([]string, 0)
 
-	allFound := false
 	var continuationToken *string
 
-	for !allFound {
-
+	for {
 		input := s3.ListObjectsV2Input{
 			Bucket:            aws.String(bucket),
 			Prefix:            aws.String(prefix),
@@ -263,12 +261,10 @@ func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 		}
 		// When result is not truncated, it means all matching keys have been found.
 		if !out.IsTruncated {
-			allFound = true
-		} else {
-			continuationToken = out.NextContinuationToken
+			return result, nil
 		}
+		continuationToken = out.NextContinuationToken
 	}
-	return result, nil
 }
 
 // Returns whether there is an object in bucket with specified prefix.
@@ -284,9 +280,8 @@ func (s *S3) PrefixExists(bucket, prefix string) (bool, error) {
 	}
 	if len(out.Contents) > 0 {
 		return true, nil
-	} else {
-		return false, nil
 	}
+	return false, nil
 }
 
 // ListCommonPrefixes returns a list of ALL common prefixes (no 1000 limit).
@@ -294,11 +289,9 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.Commo
 
 	result := make([]types.CommonPrefix, 0)
 
-	allFound := false
 	var continuationToken *string
 
-	for !allFound {
-
+	for {
 		input := s3.ListObjectsV2Input{
 			Bucket:            aws.String(bucket),
 			Prefix:            aws.String(prefix),
@@ -315,12 +308,10 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.Commo
 
 		// When result is not truncated, it means all common prefixes have been found.
 		if !out.IsTruncated {
-			allFound = true
-		} else {
-			continuationToken = out.NextContinuationToken
+			return result, nil
 		}
+		continuationToken = out.NextContinuationToken
 	}
-	return result, nil
 }
 
 // ListObjects returns a list of objects (up to 1000) that match the provided prefix.

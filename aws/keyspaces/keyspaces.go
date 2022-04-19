@@ -2,19 +2,16 @@
 package keyspaces
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
 	"github.com/gocql/gocql"
-	"github.com/pkg/errors"
 )
 
 type Keyspaces struct {
 	Session *gocql.Session
 }
-
-var service_username = os.Getenv("KEYSPACE_USER")
-var service_password = os.Getenv("KEYSPACE_PW")
 
 // New returns a Keyspaces struct which wraps a Keyspaces session. certPath
 // is the path of the required Starfield digital certificate to connect
@@ -24,14 +21,14 @@ func New(certPath string) (Keyspaces, error) {
 
 	ksClient := Keyspaces{}
 
-	var region string
+	var region, service_username, service_password string
 	if region = os.Getenv("AWS_REGION"); region == "" {
 		return ksClient, errors.New("AWS_REGION is not set")
 	}
-	if service_username == "" {
+	if service_username = os.Getenv("KEYSPACE_USER"); service_username == "" {
 		return ksClient, errors.New("KEYSPACE_USER is not set")
 	}
-	if service_password == "" {
+	if service_password = os.Getenv("KEYSPACE_PW"); service_password == "" {
 		return ksClient, errors.New("KEYSPACE_PW is not set")
 	}
 
