@@ -16,6 +16,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+	"github.com/aws/smithy-go"
 )
 
 type S3 struct {
@@ -198,6 +199,7 @@ func (s *S3) PutWithMetadata(bucket, key string, object []byte, metadata Meta) e
 
 // Exists checks if an object for key already exists in the bucket.
 func (s *S3) Exists(bucket, key string) (bool, error) {
+
 	input := s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -208,9 +210,11 @@ func (s *S3) Exists(bucket, key string) (bool, error) {
 		return true, nil
 	}
 
-	var nf *types.NotFound
-	if errors.As(err, &nf) {
-		return false, nil
+	var ae smithy.APIError
+	if errors.As(err, &ae) {
+		if ae.ErrorCode() == "NotFound" {
+			return false, nil
+		}
 	}
 	return false, err
 }
