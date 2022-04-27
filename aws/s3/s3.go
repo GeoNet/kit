@@ -129,7 +129,7 @@ func (s *S3) GetWithLastModified(bucket, key, version string, b *bytes.Buffer) (
 
 	_, err = b.ReadFrom(result.Body)
 
-	return *result.LastModified, err
+	return aws.ToTime(result.LastModified), err
 }
 
 // LastModified returns the time that the specified object was last modified.
@@ -147,7 +147,7 @@ func (s *S3) LastModified(bucket, key, version string) (time.Time, error) {
 	}
 	defer result.Body.Close()
 
-	return *result.LastModified, nil
+	return aws.ToTime(result.LastModified), nil
 }
 
 // GetMeta returns the metadata for an object. Version can be zero.
@@ -236,7 +236,7 @@ func (s *S3) List(bucket, prefix string, max int32) ([]string, error) {
 
 	result := make([]string, 0)
 	for _, o := range out.Contents {
-		result = append(result, *o.Key)
+		result = append(result, aws.ToString(o.Key))
 	}
 	return result, nil
 }
@@ -261,7 +261,7 @@ func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 			return nil, err
 		}
 		for _, o := range out.Contents {
-			result = append(result, *o.Key)
+			result = append(result, aws.ToString(o.Key))
 		}
 		// When result is not truncated, it means all matching keys have been found.
 		if !out.IsTruncated {
