@@ -289,9 +289,9 @@ func (s *S3) PrefixExists(bucket, prefix string) (bool, error) {
 }
 
 // ListCommonPrefixes returns a list of ALL common prefixes (no 1000 limit).
-func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.CommonPrefix, error) {
+func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]string, error) {
 
-	result := make([]types.CommonPrefix, 0)
+	result := make([]string, 0)
 
 	var continuationToken *string
 
@@ -307,9 +307,9 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.Commo
 		if err != nil {
 			return nil, err
 		}
-
-		result = append(result, out.CommonPrefixes...)
-
+		for _, o := range out.CommonPrefixes {
+			result = append(result, aws.ToString(o.Prefix))
+		}
 		// When result is not truncated, it means all common prefixes have been found.
 		if !out.IsTruncated {
 			return result, nil
