@@ -5,13 +5,14 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"github.com/GeoNet/kit/metrics"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/GeoNet/kit/metrics"
 )
 
 var bufferPool = sync.Pool{
@@ -473,6 +474,11 @@ func HTMLError(e error, h http.Header, b *bytes.Buffer) error {
 		b.Reset()
 		h.Set("Surrogate-Control", "max-age=86400")
 		_, err = b.Write([]byte(ErrBadRequest))
+		h.Set("Content-Type", "text/html; charset=utf-8")
+	case http.StatusUnauthorized:
+		b.Reset()
+		h.Set("Surrogate-Control", "max-age=0")
+		_, err = b.Write([]byte(ErrUnauthorized))
 		h.Set("Content-Type", "text/html; charset=utf-8")
 	case http.StatusMethodNotAllowed:
 		b.Reset()

@@ -81,6 +81,27 @@ const (
 	</html>
 	`
 
+	ErrUnauthorized = `<html>
+	<head>
+	<title>GeoNet - 401</title>
+	</head>
+	<body>
+	<div id="container" class="corners-all">
+	<h1>Error 401</h1>
+
+	<p><b>401 Unauthorised</b>: '401' is standard notation indicating that you don't have authorisation to make this request. This can
+	sometimes happen if an authorization token has already been used or has expired,
+	for example when using a reCAPTCHA form. Please go back and try again.</p>
+
+	<p>If you need more information about this error please contact us directly.</p>
+
+	<p>Many thanks for your patience,<br>
+	- The GeoNet Team.</p>
+	</div>
+	</body>
+	</html>
+	`
+
 	ErrMethodNotAllowed = `<html>
 	<head>
 	<title>GeoNet - 405</title>
