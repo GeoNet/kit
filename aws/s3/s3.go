@@ -129,7 +129,7 @@ func (s *S3) GetWithLastModified(bucket, key, version string, b *bytes.Buffer) (
 
 	_, err = b.ReadFrom(result.Body)
 
-	return *result.LastModified, err
+	return aws.ToTime(result.LastModified), err
 }
 
 // LastModified returns the time that the specified object was last modified.
@@ -147,7 +147,7 @@ func (s *S3) LastModified(bucket, key, version string) (time.Time, error) {
 	}
 	defer result.Body.Close()
 
-	return *result.LastModified, nil
+	return aws.ToTime(result.LastModified), nil
 }
 
 // GetMeta returns the metadata for an object. Version can be zero.
@@ -236,7 +236,7 @@ func (s *S3) List(bucket, prefix string, max int32) ([]string, error) {
 
 	result := make([]string, 0)
 	for _, o := range out.Contents {
-		result = append(result, *o.Key)
+		result = append(result, aws.ToString(o.Key))
 	}
 	return result, nil
 }
@@ -261,7 +261,7 @@ func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 			return nil, err
 		}
 		for _, o := range out.Contents {
-			result = append(result, *o.Key)
+			result = append(result, aws.ToString(o.Key))
 		}
 		// When result is not truncated, it means all matching keys have been found.
 		if !out.IsTruncated {
@@ -289,9 +289,9 @@ func (s *S3) PrefixExists(bucket, prefix string) (bool, error) {
 }
 
 // ListCommonPrefixes returns a list of ALL common prefixes (no 1000 limit).
-func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.CommonPrefix, error) {
+func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]string, error) {
 
-	result := make([]types.CommonPrefix, 0)
+	result := make([]string, 0)
 
 	var continuationToken *string
 
@@ -307,9 +307,9 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]types.Commo
 		if err != nil {
 			return nil, err
 		}
-
-		result = append(result, out.CommonPrefixes...)
-
+		for _, o := range out.CommonPrefixes {
+			result = append(result, aws.ToString(o.Prefix))
+		}
 		// When result is not truncated, it means all common prefixes have been found.
 		if !out.IsTruncated {
 			return result, nil
