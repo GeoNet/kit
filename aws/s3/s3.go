@@ -352,6 +352,24 @@ func (s *S3) PutStream(bucket, key string, reader io.ReadCloser) error {
 	return nil
 }
 
+// Download uses the downloader to download file from bucket.
+// File is split up into parts and downloaded concurrently into an os.File,
+// so is useful for getting large files. Returns number of bytes downloaded.
+func (s *S3) Download(bucket, key string, f *os.File) (int64, error) {
+	if s.downloader == nil {
+		return 0, errors.New("error downloading from S3, downloader not initialised")
+	}
+	input := s3.GetObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}
+	numBytes, err := s.downloader.Download(context.TODO(), f, &input)
+	if err != nil {
+		return 0, err
+	}
+	return numBytes, nil
+}
+
 // Delete deletes an object from a bucket.
 func (s *S3) Delete(bucket, key string) error {
 	input := s3.DeleteObjectInput{
