@@ -137,7 +137,7 @@ Linear interpolation is used between grid points to estimate the location of eac
 pts[0] is used to decide which region to return.
 */
 func (pts Points) Medium(b *bytes.Buffer) {
-	if pts == nil || len(pts) == 0 {
+	if len(pts) == 0 {
 		b.WriteString(nzMedium)
 		return
 	}
