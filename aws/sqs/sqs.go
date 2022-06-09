@@ -122,3 +122,25 @@ func (s *SQS) Send(queueURL string, body string) error {
 
 	return err
 }
+
+// SendFifoMessage puts a message onto the given AWS SQS queue.
+func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, error) {
+	var id *string
+	if dedupe != "" {
+		id = aws.String(dedupe)
+	}
+	params := sqs.SendMessageInput{
+		MessageBody:            aws.String(string(msg)),
+		QueueUrl:               aws.String(queue),
+		MessageGroupId:         aws.String(group),
+		MessageDeduplicationId: id,
+	}
+	output, err := s.client.SendMessage(context.TODO(), &params)
+	if err != nil {
+		return "", err
+	}
+	if id := output.MessageId; id != nil {
+		return *id, nil
+	}
+	return "", nil
+}
