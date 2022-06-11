@@ -144,3 +144,18 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 	}
 	return "", nil
 }
+
+// GetQueueUrl returns an AWS SQS queue URL given its name.
+func (s *SQS) GetQueueUrl(name string) (string, error) {
+	params := sqs.GetQueueUrlInput{
+		QueueName: aws.String(name),
+	}
+	output, err := s.client.GetQueueUrl(context.TODO(), &params)
+	if err != nil {
+		return "", err
+	}
+	if url := output.QueueUrl; url != nil {
+		return aws.ToString(url), nil
+	}
+	return "", nil
+}
