@@ -53,6 +53,11 @@ func getConfig() (aws.Config, error) {
 	return cfg, nil
 }
 
+// Ready returns whether the SNS client has been initialised.
+func (s *SNS) Ready() bool {
+	return s.client != nil
+}
+
 // Publish publishes message to topicArn.
 func (s *SNS) Publish(topicArn string, message []byte) error {
 	input := sns.PublishInput{

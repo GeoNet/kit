@@ -60,6 +60,11 @@ func getConfig() (aws.Config, error) {
 	return cfg, nil
 }
 
+// Ready returns whether the SQS client has been initialised.
+func (s *SQS) Ready() bool {
+	return s.client != nil
+}
+
 // Receive receives a raw message or error from the queue.
 // After a successful receive the message will be in flight
 // until it is either deleted or the visibility timeout expires
