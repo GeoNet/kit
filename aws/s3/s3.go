@@ -380,3 +380,16 @@ func (s *S3) Delete(bucket, key string) error {
 	_, err := s.client.DeleteObject(context.TODO(), &input)
 	return err
 }
+
+// Copy copies from the source to the bucket with key as the new name.
+// source should include the bucket name eg: "mybucket/objectkey.pdf"
+func (s *S3) Copy(bucket, key, source string) error {
+	input := s3.CopyObjectInput{
+		Bucket:     aws.String(bucket),
+		Key:        aws.String(key),
+		CopySource: aws.String(source),
+	}
+	_, err := s.client.CopyObject(context.TODO(), &input)
+
+	return err
+}
