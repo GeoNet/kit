@@ -150,6 +150,19 @@ func (s *SQS) Send(queueURL string, body string) error {
 	return err
 }
 
+// SendWithDelay is the same as Send but adds a delay (in seconds) before sending.
+func (s *SQS) SendWithDelay(queueURL string, body string, delay int32) error {
+	params := sqs.SendMessageInput{
+		QueueUrl:     aws.String(queueURL),
+		MessageBody:  aws.String(body),
+		DelaySeconds: delay,
+	}
+
+	_, err := s.client.SendMessage(context.TODO(), &params)
+
+	return err
+}
+
 // SendFifoMessage puts a message onto the given AWS SQS queue.
 func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, error) {
 	var id *string
