@@ -11,11 +11,13 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
+	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
 )
 
 type Raw struct {
 	Body          string
 	ReceiptHandle string
+	Attributes    map[string]string
 }
 
 type SQS struct {
@@ -79,9 +81,28 @@ func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
+	return s.receiveMessage(&input)
+}
+
+// ReceiveWithAttributes is the same as Receive except that Queue Attributes can be requested
+// to be received with the message.
+func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+		AttributeNames:      attrs,
+	}
+	return s.receiveMessage(&input)
+}
+
+// receiveMessage is the common code used internally to receive an SQS message based
+// on the provided input.
+func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput) (Raw, error) {
 
 	for {
-		r, err := s.client.ReceiveMessage(context.TODO(), &input)
+		r, err := s.client.ReceiveMessage(context.TODO(), input)
 		if err != nil {
 			return Raw{}, err
 		}
@@ -96,6 +117,7 @@ func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
 			m := Raw{
 				Body:          aws.ToString(raw.Body),
 				ReceiptHandle: aws.ToString(raw.ReceiptHandle),
+				Attributes:    raw.Attributes,
 			}
 			return m, nil
 		case len(r.Messages) > 1:
@@ -121,6 +143,19 @@ func (s *SQS) Send(queueURL string, body string) error {
 	params := sqs.SendMessageInput{
 		QueueUrl:    aws.String(queueURL),
 		MessageBody: aws.String(body),
+	}
+
+	_, err := s.client.SendMessage(context.TODO(), &params)
+
+	return err
+}
+
+// SendWithDelay is the same as Send but adds a delay (in seconds) before sending.
+func (s *SQS) SendWithDelay(queueURL string, body string, delay int32) error {
+	params := sqs.SendMessageInput{
+		QueueUrl:     aws.String(queueURL),
+		MessageBody:  aws.String(body),
+		DelaySeconds: delay,
 	}
 
 	_, err := s.client.SendMessage(context.TODO(), &params)
