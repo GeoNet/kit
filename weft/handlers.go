@@ -58,11 +58,11 @@ var compressibleMimes = map[string]bool{
 
 var defaultCsp = map[string]string{
 	"default-src":     "'none'",
-	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://stats.g.doubleclick.net",
+	"img-src":         "'self' *.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com",
 	"font-src":        "'self' https://fonts.gstatic.com",
 	"style-src":       "'self'",
-	"script-src":      "'self'",
-	"connect-src":     "'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net",
+	"script-src":      "'self' https://*.googletagmanager.com",
+	"connect-src":     "'self' https://*.geonet.org.nz https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
 	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
 	"form-action":     "'self'",
 	"base-uri":        "'none'",
@@ -545,4 +545,24 @@ func Soh(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	b.Write([]byte("<html><head></head><body>ok</body></html>"))
 
 	return nil
+}
+
+// ReturnDefaultCSP returns the default Content Security Policy used
+// by handlers. This is a copy of the map, so can be changed safely if needed.
+func ReturnDefaultCSP() map[string]string {
+	copy := make(map[string]string)
+	for k, v := range defaultCsp {
+		copy[k] = v
+	}
+	return copy
+}
+
+// ReturnStrictCSP returns the strict Content Security Policy used by
+// error handlers. This is a copy of the map, so can be changed safely if needed.
+func ReturnStrictCSP() map[string]string {
+	copy := make(map[string]string)
+	for k, v := range strictCsp {
+		copy[k] = v
+	}
+	return copy
 }
