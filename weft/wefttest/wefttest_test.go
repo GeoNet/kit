@@ -21,7 +21,7 @@ const (
 var normalCspHeader = weft.ReturnDefaultCSP()
 
 //expected csp header for error responses
-var errorCspHeader = weft.ReturnStrictCSP()
+var errorCspHeader = weft.ReturnDefaultCSP()
 
 // test server and handlers for running the tests
 

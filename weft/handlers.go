@@ -5,13 +5,14 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"github.com/GeoNet/kit/metrics"
 	"io/ioutil"
 	"net/http"
 	"reflect"
 	"runtime"
 	"strings"
 	"sync"
+
+	"github.com/GeoNet/kit/metrics"
 )
 
 var bufferPool = sync.Pool{
@@ -161,8 +162,7 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
-			//set strict csp for error page
-			setBestPracticeHeaders(w, r, strictCsp, "")
+			setBestPracticeHeaders(w, r, defaultCsp, "")
 		} else {
 			setBestPracticeHeaders(w, r, customCsp, "")
 		}
@@ -211,8 +211,7 @@ func MakeHandlerWithCspNonce(rh RequestHandlerWithNonce, eh ErrorHandler, custom
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
-			//set strict csp for error page
-			setBestPracticeHeaders(w, r, strictCsp, nonce)
+			setBestPracticeHeaders(w, r, defaultCsp, nonce)
 		} else {
 			setBestPracticeHeaders(w, r, customCsp, nonce)
 		}
