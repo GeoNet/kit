@@ -3,12 +3,13 @@ package wefttest_test
 import (
 	"bytes"
 	"fmt"
-	"github.com/GeoNet/kit/weft"
-	wt "github.com/GeoNet/kit/weft/wefttest"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
 	"testing"
+
+	"github.com/GeoNet/kit/weft"
+	wt "github.com/GeoNet/kit/weft/wefttest"
 )
 
 const (
@@ -17,34 +18,10 @@ const (
 )
 
 //expected csp header for normal responses
-var normalCspHeader = map[string]string{
-	"default-src":     "'none'",
-	"img-src":         "'self' *.geonet.org.nz data: https://www.google-analytics.com https://stats.g.doubleclick.net",
-	"font-src":        "'self' https://fonts.gstatic.com",
-	"style-src":       "'self'",
-	"script-src":      "'self'",
-	"connect-src":     "'self' https://*.geonet.org.nz https://www.google-analytics.com https://stats.g.doubleclick.net",
-	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
-	"form-action":     "'self'",
-	"base-uri":        "'none'",
-	"frame-ancestors": "'self'",
-	"object-src":      "'none'",
-}
+var normalCspHeader = weft.ReturnDefaultCSP()
 
 //expected csp header for error responses
-var errorCspHeader = map[string]string{
-	"default-src":     "'none'",
-	"img-src":         "'self'",
-	"font-src":        "'none'",
-	"style-src":       "'none'",
-	"script-src":      "'none'",
-	"connect-src":     "'none'",
-	"frame-src":       "'none'",
-	"form-action":     "'none'",
-	"base-uri":        "'none'",
-	"frame-ancestors": "'none'",
-	"object-src":      "'none'",
-}
+var errorCspHeader = weft.ReturnDefaultCSP()
 
 // test server and handlers for running the tests
 
