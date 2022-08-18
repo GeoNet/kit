@@ -81,7 +81,7 @@ func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
-	return s.receiveMessage(&input)
+	return s.receiveMessage(&input, context.TODO())
 }
 
 // ReceiveWithAttributes is the same as Receive except that Queue Attributes can be requested
@@ -94,15 +94,28 @@ func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, at
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(&input)
+	return s.receiveMessage(&input, context.TODO())
+}
+
+// ReceiveWithContextAttributes is by context and Queue Attributes can be requested
+// to be received with the message, system stop signal can be received by the context.
+func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+		AttributeNames:      attrs,
+	}
+	return s.receiveMessage(&input, ctx)
 }
 
 // receiveMessage is the common code used internally to receive an SQS message based
 // on the provided input.
-func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput) (Raw, error) {
+func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput, ctx context.Context) (Raw, error) {
 
 	for {
-		r, err := s.client.ReceiveMessage(context.TODO(), input)
+		r, err := s.client.ReceiveMessage(ctx, input)
 		if err != nil {
 			return Raw{}, err
 		}
@@ -124,6 +137,17 @@ func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput) (Raw, error) {
 			return Raw{}, fmt.Errorf("received more than 1 message: %d", len(r.Messages))
 		}
 	}
+}
+
+//receive with context so that system stop signal can be received
+func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilityTimeout int32) (Raw, error) {
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+	}
+	return s.receiveMessage(&input, ctx)
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
