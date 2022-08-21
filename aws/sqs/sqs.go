@@ -75,30 +75,20 @@ func (s *SQS) Ready() bool {
 // Applications should be able to handle duplicate or out of order messages,
 // and should back off on Receive error.
 func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
-	input := sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 1,
-		VisibilityTimeout:   visibilityTimeout,
-		WaitTimeSeconds:     20,
-	}
-	return s.receiveMessage(&input, context.TODO())
+	return s.ReceiveWithContext(context.TODO(), queueURL, visibilityTimeout)
 }
 
 // ReceiveWithAttributes is the same as Receive except that Queue Attributes can be requested
 // to be received with the message.
 func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
-	input := sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 1,
-		VisibilityTimeout:   visibilityTimeout,
-		WaitTimeSeconds:     20,
-		AttributeNames:      attrs,
-	}
-	return s.receiveMessage(&input, context.TODO())
+	return s.ReceiveWithContextAttributes(context.TODO(), queueURL, visibilityTimeout, attrs)
 }
 
-// ReceiveWithContextAttributes is by context and Queue Attributes can be requested
-// to be received with the message, system stop signal can be received by the context.
+// ReceiveWithContextAttributes by context and Queue Attributes,
+// so that system stop signal can be received by the context.
+// to receive system stop signal, register the context with signal.NotifyContext before passing in this function,
+// when system stop signal is received, an error with message '... context canceled' will be returned
+// which can be used to safely stop the system
 func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
 	input := sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queueURL),
@@ -139,7 +129,10 @@ func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput, ctx context.Context
 	}
 }
 
-//receive with context so that system stop signal can be received
+// receive with context so that system stop signal can be received,
+// to receive system stop signal, register the context with signal.NotifyContext before passing in this function,
+// when system stop signal is received, an error with message '... context canceled' will be returned
+// which can be used to safely stop the system
 func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilityTimeout int32) (Raw, error) {
 	input := sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queueURL),
