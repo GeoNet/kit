@@ -20,9 +20,6 @@ const (
 //expected csp header for normal responses
 var normalCspHeader = weft.ReturnDefaultCSP()
 
-//expected csp header for error responses
-var errorCspHeader = weft.ReturnDefaultCSP()
-
 // test server and handlers for running the tests
 
 var ts *httptest.Server
@@ -101,7 +98,7 @@ func TestMethodNotAllowed(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = errorCspHeader //strictCsp for error response
+		v.CSP = normalCspHeader
 
 		i, err := v.MethodNotAllowed(ts.URL, []string{"GET"})
 		if err != nil {
@@ -125,7 +122,7 @@ func TestExtraParameter(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = errorCspHeader //strictCsp for error response
+		v.CSP = normalCspHeader
 
 		err := v.ExtraParameter(ts.URL, "extra", "parameter")
 		if err != nil {
@@ -152,7 +149,7 @@ func TestFuzzQuery(t *testing.T) {
 	for _, v := range routes {
 		v.Surrogate = maxAge86400
 		v.Content = errContent
-		v.CSP = errorCspHeader //strictCsp for error response
+		v.CSP = normalCspHeader
 		i, err := v.FuzzQuery(ts.URL, wt.FuzzValues)
 		if err != nil {
 			t.Errorf("TestFuzzQuery %s", err.Error())

@@ -62,26 +62,12 @@ var defaultCsp = map[string]string{
 	"img-src":         "'self' *.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com",
 	"font-src":        "'self' https://fonts.gstatic.com",
 	"style-src":       "'self'",
-	"script-src":      "'self' https://*.googletagmanager.com",
+	"script-src":      "'self'",
 	"connect-src":     "'self' https://*.geonet.org.nz https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
 	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
 	"form-action":     "'self'",
 	"base-uri":        "'none'",
 	"frame-ancestors": "'self'",
-	"object-src":      "'none'",
-}
-
-var strictCsp = map[string]string{
-	"default-src":     "'none'",
-	"img-src":         "'self'",
-	"font-src":        "'none'",
-	"style-src":       "'none'",
-	"script-src":      "'none'",
-	"connect-src":     "'none'",
-	"frame-src":       "'none'",
-	"form-action":     "'none'",
-	"base-uri":        "'none'",
-	"frame-ancestors": "'none'",
 	"object-src":      "'none'",
 }
 
@@ -551,16 +537,6 @@ func Soh(r *http.Request, h http.Header, b *bytes.Buffer) error {
 func ReturnDefaultCSP() map[string]string {
 	copy := make(map[string]string)
 	for k, v := range defaultCsp {
-		copy[k] = v
-	}
-	return copy
-}
-
-// ReturnStrictCSP returns the strict Content Security Policy used by
-// error handlers. This is a copy of the map, so can be changed safely if needed.
-func ReturnStrictCSP() map[string]string {
-	copy := make(map[string]string)
-	for k, v := range strictCsp {
 		copy[k] = v
 	}
 	return copy
