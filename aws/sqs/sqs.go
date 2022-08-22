@@ -75,18 +75,21 @@ func (s *SQS) Ready() bool {
 // Applications should be able to handle duplicate or out of order messages,
 // and should back off on Receive error.
 func (s *SQS) Receive(queueURL string, visibilityTimeout int32) (Raw, error) {
-	input := sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 1,
-		VisibilityTimeout:   visibilityTimeout,
-		WaitTimeSeconds:     20,
-	}
-	return s.receiveMessage(&input)
+	return s.ReceiveWithContext(context.TODO(), queueURL, visibilityTimeout)
 }
 
 // ReceiveWithAttributes is the same as Receive except that Queue Attributes can be requested
 // to be received with the message.
 func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
+	return s.ReceiveWithContextAttributes(context.TODO(), queueURL, visibilityTimeout, attrs)
+}
+
+// ReceiveWithContextAttributes by context and Queue Attributes,
+// so that system stop signal can be received by the context.
+// to receive system stop signal, register the context with signal.NotifyContext before passing in this function,
+// when system stop signal is received, an error with message '... context canceled' will be returned
+// which can be used to safely stop the system
+func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
 	input := sqs.ReceiveMessageInput{
 		QueueUrl:            aws.String(queueURL),
 		MaxNumberOfMessages: 1,
@@ -94,15 +97,15 @@ func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, at
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(&input)
+	return s.receiveMessage(&input, ctx)
 }
 
 // receiveMessage is the common code used internally to receive an SQS message based
 // on the provided input.
-func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput) (Raw, error) {
+func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput, ctx context.Context) (Raw, error) {
 
 	for {
-		r, err := s.client.ReceiveMessage(context.TODO(), input)
+		r, err := s.client.ReceiveMessage(ctx, input)
 		if err != nil {
 			return Raw{}, err
 		}
@@ -124,6 +127,20 @@ func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput) (Raw, error) {
 			return Raw{}, fmt.Errorf("received more than 1 message: %d", len(r.Messages))
 		}
 	}
+}
+
+// receive with context so that system stop signal can be received,
+// to receive system stop signal, register the context with signal.NotifyContext before passing in this function,
+// when system stop signal is received, an error with message '... context canceled' will be returned
+// which can be used to safely stop the system
+func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilityTimeout int32) (Raw, error) {
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 1,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+	}
+	return s.receiveMessage(&input, ctx)
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
