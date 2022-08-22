@@ -71,20 +71,6 @@ var defaultCsp = map[string]string{
 	"object-src":      "'none'",
 }
 
-var strictCsp = map[string]string{
-	"default-src":     "'none'",
-	"img-src":         "'self'",
-	"font-src":        "'none'",
-	"style-src":       "'none'",
-	"script-src":      "'none'",
-	"connect-src":     "'none'",
-	"frame-src":       "'none'",
-	"form-action":     "'none'",
-	"base-uri":        "'none'",
-	"frame-ancestors": "'none'",
-	"object-src":      "'none'",
-}
-
 /**
  * RequestHandler should write the response for r into b and adjust h as required
  */
@@ -551,16 +537,6 @@ func Soh(r *http.Request, h http.Header, b *bytes.Buffer) error {
 func ReturnDefaultCSP() map[string]string {
 	copy := make(map[string]string)
 	for k, v := range defaultCsp {
-		copy[k] = v
-	}
-	return copy
-}
-
-// ReturnStrictCSP returns the strict Content Security Policy used by
-// error handlers. This is a copy of the map, so can be changed safely if needed.
-func ReturnStrictCSP() map[string]string {
-	copy := make(map[string]string)
-	for k, v := range strictCsp {
 		copy[k] = v
 	}
 	return copy
