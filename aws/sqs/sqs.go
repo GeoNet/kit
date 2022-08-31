@@ -6,12 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sqs"
 	"github.com/aws/aws-sdk-go-v2/service/sqs/types"
+	smithy "github.com/aws/smithy-go"
 )
 
 type Raw struct {
@@ -215,4 +217,12 @@ func (s *SQS) GetQueueUrl(name string) (string, error) {
 		return aws.ToString(url), nil
 	}
 	return "", nil
+}
+
+func Cancelled(err error) bool {
+	var opErr *smithy.OperationError
+	if errors.As(err, &opErr) {
+		return opErr.Service() == "SQS" && strings.Contains(opErr.Unwrap().Error(), "context canceled")
+	}
+	return false
 }
