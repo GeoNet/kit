@@ -1,0 +1,169 @@
+{{define "header"}}
+<nav class="navbar navbar-expand-lg navbar-light flex-column bg-primary">
+    <div class="container-fluid pb-2 pt-2">
+        <div class="ms-2">
+          <a href="{{.Origin}}/">
+            {{.GeoNetLogo}}
+          </a>
+        </div>
+        <div class="d-none d-lg-block">
+          <div class="d-flex align-items-center justify-content-end">
+            <a href="http://www.eqc.govt.nz/" class="external-link text-white ms-4" rel="external" target="_blank">Toka Tū Ake EQC</a>
+            <a href="http://www.gns.cri.nz/" class="external-link text-white ms-4 me-4" rel="external" target="_blank">GNS Science</a>
+            <a href="{{.Origin}}/news" class="text-white">
+              <span>{{$.NewsIcon}}News</span>
+            </a>
+            <form id="search_form" class="d-flex justify-content-end navbar-form navbar-toggler-right ms-4" aria-label="search" role="search" method="POST" action="{{.Origin}}/search">
+              <div id="searchContainer" class="form-group input-group-sm collapse collapse-horizontal">
+                <input id="search_query" name="q" type="text" class="form-control searchInput" placeholder="Search">
+                <input type="hidden" name="page" value="1">
+              </div>
+              <button id="searchBtn" class="btn searchInputBtn collapsed" type="submit" data-bs-toggle="collapse" data-bs-target="#searchContainer" aria-expanded="false" aria-controls="searchContainer">
+                <span class="fa fa-search text-white"></span>
+              </button>
+            </form>
+          </div>
+        </div>
+        <div class="d-block d-lg-none">
+          <button class="navbar-toggler navbar-toggler-right" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+          </button>
+        </div>
+    </div>
+    <div class="container-fluid d-none d-lg-block">
+      <hr class="text-white w-100 mb-0 mt-2">
+    </div>
+    <div class="container-fluid">
+      <div class="navbar-collapse collapse" id="navbarSupportedContent">
+        <ul class="navbar-nav me-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="{{.Origin}}/" title="Home">
+              <span class="d-inline-flex align-items-center">{{$.HomeIcon}}</span>
+              <span class="d-lg-none">Home</span>
+            </a>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.Earthquake}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Earthquake"> Earthquake </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/drums"> Drums </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/weak"> Earthquakes </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/forecast"> Forecasts </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/story"> Historical Events </a>
+              <a class="dropdown-item" href="https://quakesearch.geonet.org.nz"> Search </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/sse/hikurangi"> Slow Slip </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/statistics"> Statistics </a>
+              <a class="dropdown-item" href="{{.Origin}}/strong"> Strong Motion </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/faq"> FAQ </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/gallery"> Gallery </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/glossary"> Glossary </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/how"> How </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/intensity"> Intensity </a>
+              <a class="dropdown-item" href="{{.Origin}}/earthquake/videos"> Videos </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.Landslide}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Landslide"> Landslide </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/landslide/dam"> Dams </a>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/projects"> Projects </a>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/reports"> Reports </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/faq"> FAQ </a>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/glossary"> Glossary </a>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/how"> How </a>
+              <a class="dropdown-item" href="{{.Origin}}/landslide/videos"> Videos </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.Tsunami}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Tsunami"> Tsunami </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/tsunami"> Gauges </a>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/dart"> DART Network </a>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/story"> Historical Events </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/faq"> FAQ </a>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/glossary"> Glossary </a>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/how"> How </a>
+              <a class="dropdown-item" href="{{.Origin}}/tsunami/videos"> Videos </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.Volcano}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Volcano"> Volcano </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/volcano/vab"> Alert Bulletins </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano"> Alert Levels </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/acc"> Aviation Colour Codes </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/cameras"> Cameras </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/drums"> Drums </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/rsamssam"> RSAM & SSAM </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/ruapehu"> Volcanoes </a>
+              <div class="dropdown-divider"></div>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/faq"> FAQ </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/gallery"> Gallery </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/glossary"> Glossary </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/how"> How </a>
+              <a class="dropdown-item" href="{{.Origin}}/volcano/videos"> Videos </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.DataDiscovery}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Data Discovery"> Data Discovery </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/data/network/sensor/search"> Sensor&nbsp;Map </a>
+              <a class="dropdown-item" href="https://quakesearch.geonet.org.nz"> Quake Search </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/gnss/map"> Geodetic&nbsp;Map</a>
+              <a class="dropdown-item external-link d-none d-md-block" href="https://strongmotion.geonet.org.nz" rel="external" target="_blank"> Strong&nbsp;Motion </a>
+              <a class="dropdown-item external-link" href="https://tilde.geonet.org.nz/ui/data-exploration" rel="external" target="_blank"> Tilde&nbsp;Data&nbsp;Discovery </a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.DataTypes}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Data Types"> Data Types </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/data/types/geodetic"> Geodetic </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/camera"> Cameras </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/eq_catalogue"> Earthquake&nbsp;Catalogue </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/felt"> Felt&nbsp;Reports </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/seismic_waveforms"> Seismic&nbsp;Waveforms </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/strong_motion"> Strong&nbsp;Motion&nbsp;Data&nbsp;Products </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/structural_arrays"> Structural&nbsp;Arrays </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/types/volcano_monitoring"> Volcano&nbsp;Monitoring </a>
+              <!-- <a class="dropdown-item" href="">Environmental Data</a> TODO: Once UI done: https://github.com/GeoNet/tickets/issues/9573-->
+              <a class="dropdown-item external-link" href="https://shakinglayer.geonet.org.nz" rel="external" target="_blank">Shaking Layers Data</a>
+            </div>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle {{if .Active.DataAccess}}active-menu{{end}}" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title="Data Access"> Data Access </a>
+            <div class="dropdown-menu">
+              <a class="dropdown-item" href="{{.Origin}}/data/tools/FITS"> FITS </a>
+              <a class="dropdown-item" href="{{.Origin}}/data/tools/FDSN"> FDSN </a>
+              <a class="dropdown-item external-link" href="https://wfs.geonet.org.nz" rel="external" target="_blank"> WFS </a>
+              <a class="dropdown-item external-link" href="https://api.geonet.org.nz" rel="external" target="_blank"> GeoNet API </a>
+              <a class="dropdown-item external-link" href="https://tilde.geonet.org.nz" rel="external" target="_blank"> Tilde API </a>
+              <a class="dropdown-item external-link" href="https://shakinglayer.geonet.org.nz/api" rel="external" target="_blank"> Shaking Layers API </a>
+              <!-- <a class="dropdown-item" href=""> Big Data </a> TODO: Page to be created-->
+              <!-- <a class="dropdown-item" href=""> Data Support </a>  TODO: Page to be created-->
+              <a class="dropdown-item" href="{{.Origin}}/data/tools/Tutorials"> Data Tutorials </a>
+            </div>
+          </li>
+          <li id="mobile-search-item" class="nav-item d-lg-none p-3">
+            <form id="search_form_2" class="navbar-form" aria-label="search" role="search" method="POST" action="{{.Origin}}/search">
+              <div class="d-flex flex-wrap">
+                <div class="form-group input-group-sm d-flex justify-content-start">
+                  <input id="search_query_2" type="text" name="q" class="form-control searchInput" placeholder="Search">
+                  <input type="hidden" name="page" value="1">
+                  <button class="btn searchInputBtn" type="submit">
+                    <span class="fa fa-search text-white"></span>
+                  </button>
+                </div>
+                <div class="d-flex align-items-center mobile-menu-link-panel">
+                  <span class="mobile-menu-link d-flex align-items-center"><a href="http://www.eqc.govt.nz/" rel="external" target="_blank">EQC</a></span>
+                  <span class="mobile-menu-link d-flex align-items-center"><a href="http://www.gns.cri.nz/" rel="external" target="_blank">GNS Science</a></span>
+                </div>
+              </div>
+            </form>
+          </li>
+        </ul>
+      </div>
+    </div>
+</nav>
+{{end}}

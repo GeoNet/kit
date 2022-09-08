@@ -1,0 +1,13 @@
+/* Projects that import the GeoNet header must contain the following CSS in
+the HTML files that use it. These are extra styles on top of the standard
+GeoNet Bootstrap.css file (which also needs to be present) */
+
+/* Bootstrap overrides - this should be changed in the main Bootstrap file at some point*/
+#footer .row {
+    width: auto !important;
+}
+.footer {
+    margin-top: 20px;
+    padding: 20px 0 20px;
+    border-top: 1px solid #e5e5e5;
+}
