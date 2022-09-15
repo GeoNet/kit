@@ -95,7 +95,8 @@ message Story {
     string link = 2;
     Timestamp published = 3;
     string type = 4;
-    int32 val = 5;
+    string tag = 5;
+    int32 val = 6;
 }
 
 message News {
