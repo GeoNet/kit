@@ -94,10 +94,15 @@ message Story {
     string Title = 1;
     string link = 2;
     Timestamp published = 3;
+    string type = 4;
+    string tag = 5;
+    int32 val = 6;
 }
 
 message News {
     repeated Story stories = 1;
+    int32 page = 2;
+    int32 total = 3;
 }
 
 message Rate {
