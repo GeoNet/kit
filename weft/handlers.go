@@ -113,6 +113,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		n, err := rh(r, w)
 		if err == nil { //all good, return
 			metrics.StatusOK()
+			metrics.Request()
 			metrics.Written(n)
 
 			if er := t.Track(name + "." + r.Method); er != nil {
@@ -122,6 +123,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 			return
 		}
 
+		//everything below are for error responses
 		//set csp headers
 		setBestPracticeHeaders(w, r, nil, "")
 		logRequest(r)
