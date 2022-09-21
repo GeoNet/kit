@@ -1,4 +1,5 @@
 .idea
+.DS_Store
 cvendor/libmseed/*.o
 cvendor/libmseed/*.a
 cvendor/libslink/*.o
