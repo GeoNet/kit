@@ -65,7 +65,7 @@ var defaultCsp = map[string]string{
 	"script-src":      "'self'",
 	"connect-src":     "'self' https://*.geonet.org.nz https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
 	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
-	"form-action":     "'self'",
+	"form-action":     "'self' https://*.geonet.org.nz",
 	"base-uri":        "'none'",
 	"frame-ancestors": "'self'",
 	"object-src":      "'none'",
