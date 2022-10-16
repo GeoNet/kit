@@ -1,0 +1,21 @@
+/* Projects that import the GeoNet header basic must contain the following CSS in
+the HTML files that use it. These are extra styles on top of the standard
+GeoNet Bootstrap.css file (which also needs to be present) */
+
+.external-link::after {
+    font-family:FontAwesome;
+    content:"\f08e";
+    font-size:12px;
+    color:#fff;
+    vertical-align:middle;
+    padding: 0px 5px 0px 5px;
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+/* Bootstrap overrides - this should be changed in the main Bootstrap file at some point*/
+@media (min-width: 768px){
+    .navbar-toggler {
+        margin-top: 0px;
+    }
+}

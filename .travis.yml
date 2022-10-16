@@ -1,6 +1,6 @@
 language: go
 go:
-- 1.15.7
+- 1.16.13
 
 # dependencies for kit are not vendored and should always build with the latest version.
 install:
@@ -9,7 +9,7 @@ install:
   - go get github.com/golang/groupcache
 
 before_script:
- - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin 
+ - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin
 
 script:
   - make -C cvendor/libmseed

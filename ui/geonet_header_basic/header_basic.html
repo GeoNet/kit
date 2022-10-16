@@ -1,0 +1,34 @@
+{{define "headerbasic"}}
+<nav class="navbar navbar-expand-lg navbar-light flex-column bg-primary">
+    <div class="container-fluid d-flex align-items-lg-end">
+        <div class="p-2">
+            <a class="text-white" href="https://www.geonet.org.nz">
+              {{.Logo}}
+            </a>
+        </div>
+        <button class="navbar-toggler navbar-toggler-right mt-2 mb-2" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+                aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-collapse collapse" id="navbarSupportedContent">
+            <ul class="navbar-nav ms-auto">
+
+                {{range $index,$link := .Links }}
+                <li class="nav-item">
+                    <a
+                        class="nav-link{{if $link.IsExternal}} external-link{{end}}"
+                        href="{{$link.URL}}"
+                        rel="{{if $link.IsExternal}}external{{end}}"
+                        title="{{$link.Title}}"
+                    >
+                        {{if eq $index 0}}
+                        <span class="d-inline-flex align-items-center">{{$.HomeIcon}}</span>{{end}}
+                        {{$link.Title}}
+                    </a>
+                </li>
+                {{end}}
+            </ul>
+        </div>
+    </div>
+</nav>
+{{end}}

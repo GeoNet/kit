@@ -1,0 +1,122 @@
+{{define "footer"}}
+<div class="container">
+    <div class="footer">
+        <div class="row d-flex">
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/about">About&nbsp;GeoNet</a></div>
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/contact">Contact{{if .Basic}}&nbsp;GeoNet{{end}}</a></div>
+            {{if not .Basic}}
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/ngmc">NGMC</a></div>
+            {{end}}
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/policy">{{if .Basic}}GeoNet&nbsp;{{end}}Data&nbsp;Policy</a></div>
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/disclaimer">{{if .Basic}}GeoNet&nbsp;{{end}}Disclaimer</a></div>
+            <div class="col-xs-12 col-md"><a href="https://gns.cri.nz/Home/Contact-Us/Privacy-Policy" target="_blank" rel="external">{{if .Basic}}GeoNet&nbsp;{{end}}Privacy</a></div>
+            {{if not .Basic}}
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/sponsors">Sponsors</a></div>
+            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/reviews">Strategic&nbsp;Review</a></div>
+            {{end}}
+            <div id="appLinkContainer" class="col-12 d-md-none"><a id="appLink" href="" rel="external">Get&nbsp;our&nbsp;GeoNet&nbsp;App
+                <i id="osIcon" aria-hidden="true"></i></a>
+            </div>
+        </div>
+    </div>
+    <div id="footer" class="footer">
+        <div class="row">
+            <div class="col-12 d-md-none pt-1 pb-4">
+                <a target="_blank" href="https://www.geonet.org.nz">
+                    {{.GeoNetLogo}}
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 d-md-none pb-4">
+                <a target="_blank" href="http://www.gns.cri.nz" rel="external">
+                    {{.GnsLogo}}
+                </a>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-12 d-md-none pb-4">
+                <a target="_blank" href="http://www.eqc.govt.nz" rel="external">
+                    {{.EqcLogo}}
+                </a>
+            </div>
+        </div>
+        {{range $index,$logo := .ExtraLogos }}
+        <div class="row">
+            <div class="col-12 d-md-none pb-4">
+                <a target="_blank" href="{{$logo.URL}}" rel="external">
+                    <img src="{{$logo.LogoURL}}" width="150px">
+                </a>
+            </div>
+        </div>
+        {{end}}
+        <div class="row">
+            <div class="col-md-3 d-none d-md-flex justify-content-center">
+                    <a target="_blank" href="https://www.geonet.org.nz">
+                        {{.GeoNetLogo}}
+                    </a>
+            </div>
+            <div class="col-sm-12 col-md-6 footer-middle-col">
+                <p>GeoNet is a collaboration between <a target="_blank" href="http://www.eqc.govt.nz" rel="external">Toka Tū Ake EQC</a>
+                    and <a target="_blank" href="http://www.gns.cri.nz" rel="external">GNS Science</a>.</p>
+                <p>GeoNet content is copyright <a target="_blank" href="http://www.gns.cri.nz" rel="external">GNS Science</a> and is
+                    licensed under a <a rel="license" target="_blank"
+                                        href="http://creativecommons.org/licenses/by/3.0/nz/" rel="external">Creative Commons
+                        Attribution 3.0 New Zealand License</a></p>
+            </div>
+            <div class="col-md-3 d-none d-md-block">
+                <div class="row d-flex align-items-end">
+                    <div class="col-xl-6 col-12">
+                        <a target="_blank" href="http://www.gns.cri.nz">
+                            {{.GnsLogo}}
+                        </a>
+                    </div>
+                    <div class="col-xl-6 col-12">
+                        <a class="d-none d-xl-block" target="_blank" href="http://www.eqc.govt.nz" rel="external">
+                            {{.EqcLogoStacked}}
+                        </a>
+                        <a class="d-block d-xl-none pt-3" target="_blank" href="http://www.eqc.govt.nz" rel="external">
+                            {{.EqcLogo}}
+                        </a>
+                    </div>
+                </div>
+                {{range $index,$logo := .ExtraLogos }}
+                <div class="row">
+                    <div class="col-12">
+                        <a target="_blank" href="{{$logo.URL}}" rel="external">
+                            <img src="{{$logo.LogoURL}}" class="pt-3" width="100%">
+                        </a>
+                    </div>
+                </div>
+                {{end}}
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-4"></div>
+            <div class="col-4 d-none d-md-block social-icon">
+                <div class="row d-flex justify-content-center">
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://twitter.com/geonet" rel="external">
+                        <i class="fa-brands fa-twitter-square fa-2" aria-hidden="true"></i>
+                    </a>
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://www.facebook.com/geonetnz/" rel="external">
+                        <i class="fa-brands fa-facebook-square fa-2" aria-hidden="true"></i>
+                    </a>
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://github.com/GeoNet" rel="external">
+                        <i class="fa-brands fa-github fa-2" aria-hidden="true"></i>
+                    </a>
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://www.youtube.com/user/GeoNetNZ" rel="external">
+                        <i class="fa-brands fa-youtube-square fa-2" aria-hidden="true"></i>
+                    </a>
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://play.google.com/store/apps/details?id=nz.org.geonet.quake&hl=en" rel="external">
+                        <i class="fa-brands fa-android fa-2" aria-hidden="true"></i>
+                    </a>
+                    <a target="_blank" class="m-1 p-0 w-auto" href="https://itunes.apple.com/nz/app/geonet-quake/id533054360?mt=8" rel="external">
+                        <i class="fa-brands fa-apple fa-2" aria-hidden="true"></i>
+                    </a>
+                </div>
+            </div>
+            <div class="col-4"></div>
+        </div>
+    </div>
+</div>
+{{end}}

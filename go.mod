@@ -1,6 +1,6 @@
 module github.com/GeoNet/kit
 
-go 1.15
+go 1.16
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.16.2
