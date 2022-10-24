@@ -18,7 +18,7 @@
                     <a
                         class="nav-link{{if $link.IsExternal}} external-link{{end}}"
                         href="{{$link.URL}}"
-                        rel="{{if $link.IsExternal}}external{{end}}"
+                        rel="{{if $link.IsExternal}}external noopener noreferrer{{end}}"
                         title="{{$link.Title}}"
                         target="{{if $link.IsExternal}}_blank{{else}}_self{{end}}"
                     >
