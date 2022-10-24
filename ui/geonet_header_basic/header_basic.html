@@ -20,6 +20,7 @@
                         href="{{$link.URL}}"
                         rel="{{if $link.IsExternal}}external{{end}}"
                         title="{{$link.Title}}"
+                        target="{{if $link.IsExternal}}_blank{{else}}_self{{end}}"
                     >
                         {{if eq $index 0}}
                         <span class="d-inline-flex align-items-center">{{$.HomeIcon}}</span>{{end}}
