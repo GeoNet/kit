@@ -17,11 +17,11 @@ function setLinkToApp() {
     switch(os) {
         case "Android":
             linkEl.setAttribute('href', 'https://play.google.com/store/apps/details?id=nz.org.geonet.quake&hl=en');
-            osIconEl.classList = 'fa fa-android fa-1';
+            osIconEl.classList = 'fa-brands fa-android fa-1';
             break;
         case "iOS":
             linkEl.setAttribute('href', 'https://itunes.apple.com/nz/app/geonet-quake/id533054360?mt=8');
-            osIconEl.classList = 'fa fa-apple fa-1';
+            osIconEl.classList = 'fa-brands fa-apple fa-1';
             break;
         default:
             linkContainer.classList.replace("d-md-none", "d-none");

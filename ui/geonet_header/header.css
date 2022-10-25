@@ -59,6 +59,9 @@ GeoNet Bootstrap.css file (which also needs to be present) */
     .navbar .navbar-collapse .navbar-nav .nav-item a {
         margin-right: 10px;
     }
+    .navbar .navbar-collapse .navbar-nav .nav-item:nth-last-child(2) a {
+        margin-right: 0px;
+    }
 }
 @media (min-width: 1200px) {
     .navbar .navbar-collapse .navbar-nav .nav-item a {
