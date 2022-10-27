@@ -33,7 +33,7 @@ document.addEventListener("DOMContentLoaded", function() {
         // field, don't search.
         const searchBtn = document.getElementById("searchBtn");
         searchBtn.dataset.bsTarget = "#searchContainer";
-        const collapsibleInstance = bootstrap.Collapse.getInstance(searchContainer);
+        const collapsibleInstance = bootstrap.Collapse.getOrCreateInstance(searchContainer);
         collapsibleInstance.hide();
         return false;
     }
@@ -45,7 +45,7 @@ document.addEventListener("DOMContentLoaded", function() {
         if (event.target.visibilityState == "hidden") {
             const searchBtn = document.getElementById("searchBtn");
             searchBtn.dataset.bsTarget = "#searchContainer";
-            const collapsibleInstance = bootstrap.Collapse.getInstance(searchContainer);
+            const collapsibleInstance = bootstrap.Collapse.getOrCreateInstance(searchContainer);
             collapsibleInstance.hide();
         }
     });

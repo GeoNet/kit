@@ -1,9 +1,6 @@
 /* Projects that import the GeoNet header must contain the following CSS in
 the HTML files that use it. These are extra styles on top of the standard
 GeoNet Bootstrap.css file (which also needs to be present) */
-.font-weight-500 {
-    font-weight: 500;
-}
 .searchInput, .searchInputBtn {
     height: 34px;
 }
