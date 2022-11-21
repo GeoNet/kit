@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
@@ -206,35 +205,42 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 }
 
 // Leverage the sendbatch api for uploading large numbers of messages
-func (s *SQS) SendBatch(ctx context.Context, queueURL string, Bodies []string) error {
-	var (
-		BodiesLen = len(Bodies)
-		maxlen    = 10
-		times     = BodiesLen / maxlen
-	)
-	var err error
-	var output *sqs.SendMessageBatchOutput
-	for i := 0; i < times; i++ {
-		var bodies = Bodies[maxlen*i : maxlen*(i+1)]
-		entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
-		for j, body := range bodies {
-			entries[j] = types.SendMessageBatchRequestEntry{
-				Id:          aws.String(fmt.Sprintf("gamitjob%d", i*j)),
-				MessageBody: aws.String(body),
-			}
-		}
-		output, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
-			Entries:  entries,
-			QueueUrl: &queueURL,
-		})
+func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) error {
+	if len(bodies) > 11 {
+		return errors.New("too many messages to batch")
 	}
-	if len(output.Failed) > 0 {
-		for i := 0; i < len(output.Failed); i++ {
-			failed_msg := output.Failed[i]
-			log.Printf("failed to send message: %s with value: %s client side error: %t", *failed_msg.Id, *failed_msg.Message, failed_msg.SenderFault)
+	var err error
+	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
+	for j, body := range bodies {
+		entries[j] = types.SendMessageBatchRequestEntry{
+			Id:          aws.String(fmt.Sprintf("gamitjob%d", j)),
+			MessageBody: aws.String(body),
 		}
+	}
+	_, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: &queueURL,
+	})
+	if err != nil {
+		return err
 	}
 	return err
+}
+
+func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
+	var (
+		bodiesLen = len(bodies)
+		maxlen    = 10
+		times     = bodiesLen / maxlen
+	)
+	for i := 0; i <= times; i++ {
+		var bodies_batch = bodies[maxlen*i : maxlen*(i+1)]
+		err := s.SendBatch(ctx, queueURL, bodies_batch)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.
