@@ -206,7 +206,7 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 }
 
 // Leverage the sendbatch api for uploading large numbers of messages
-func (s *SQS) SendBatch(queueURL string, Bodies []string, ctx context.Context) error {
+func (s *SQS) SendBatch(ctx context.Context, queueURL string, Bodies []string) error {
 	var (
 		BodiesLen = len(Bodies)
 		maxlen    = 10
