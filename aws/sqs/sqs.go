@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -202,6 +203,38 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 		return *id, nil
 	}
 	return "", nil
+}
+
+// Leverage the sendbatch api for uploading large numbers of messages
+func (s *SQS) SendBatch(queueURL string, Bodies []string, ctx context.Context) error {
+	var (
+		BodiesLen = len(Bodies)
+		maxlen    = 10
+		times     = BodiesLen / maxlen
+	)
+	var err error
+	var output *sqs.SendMessageBatchOutput
+	for i := 0; i < times; i++ {
+		var bodies = Bodies[maxlen*i : maxlen*(i+1)]
+		entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
+		for j, body := range bodies {
+			entries[j] = types.SendMessageBatchRequestEntry{
+				Id:          aws.String(fmt.Sprintf("gamitjob%d", i*j)),
+				MessageBody: aws.String(body),
+			}
+		}
+		output, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+			Entries:  entries,
+			QueueUrl: &queueURL,
+		})
+	}
+	if len(output.Failed) > 0 {
+		for i := 0; i < len(output.Failed); i++ {
+			failed_msg := output.Failed[i]
+			log.Printf("failed to send message: %s with value: %s client side error: %t", *failed_msg.Id, *failed_msg.Message, failed_msg.SenderFault)
+		}
+	}
+	return err
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.
