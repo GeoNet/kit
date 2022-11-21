@@ -99,12 +99,12 @@ func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string,
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(&input, ctx)
+	return s.receiveMessage(ctx, &input)
 }
 
 // receiveMessage is the common code used internally to receive an SQS message based
 // on the provided input.
-func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput, ctx context.Context) (Raw, error) {
+func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput) (Raw, error) {
 
 	for {
 		r, err := s.client.ReceiveMessage(ctx, input)
@@ -142,7 +142,7 @@ func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilit
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
-	return s.receiveMessage(&input, ctx)
+	return s.receiveMessage(ctx, &input)
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
