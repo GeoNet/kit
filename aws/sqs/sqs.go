@@ -221,9 +221,6 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 		Entries:  entries,
 		QueueUrl: &queueURL,
 	})
-	if err != nil {
-		return err
-	}
 	return err
 }
 
