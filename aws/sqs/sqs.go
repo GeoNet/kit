@@ -99,12 +99,12 @@ func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string,
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(&input, ctx)
+	return s.receiveMessage(ctx, &input)
 }
 
 // receiveMessage is the common code used internally to receive an SQS message based
 // on the provided input.
-func (s *SQS) receiveMessage(input *sqs.ReceiveMessageInput, ctx context.Context) (Raw, error) {
+func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput) (Raw, error) {
 
 	for {
 		r, err := s.client.ReceiveMessage(ctx, input)
@@ -142,7 +142,7 @@ func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilit
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
-	return s.receiveMessage(&input, ctx)
+	return s.receiveMessage(ctx, &input)
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
@@ -202,6 +202,42 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 		return *id, nil
 	}
 	return "", nil
+}
+
+// Leverage the sendbatch api for uploading large numbers of messages
+func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) error {
+	if len(bodies) > 11 {
+		return errors.New("too many messages to batch")
+	}
+	var err error
+	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
+	for j, body := range bodies {
+		entries[j] = types.SendMessageBatchRequestEntry{
+			Id:          aws.String(fmt.Sprintf("gamitjob%d", j)),
+			MessageBody: aws.String(body),
+		}
+	}
+	_, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: &queueURL,
+	})
+	return err
+}
+
+func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
+	var (
+		bodiesLen = len(bodies)
+		maxlen    = 10
+		times     = bodiesLen / maxlen
+	)
+	for i := 0; i <= times; i++ {
+		var bodies_batch = bodies[maxlen*i : maxlen*(i+1)]
+		err := s.SendBatch(ctx, queueURL, bodies_batch)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.
