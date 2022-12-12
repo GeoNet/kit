@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -228,9 +229,9 @@ func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) 
 	var (
 		bodiesLen = len(bodies)
 		maxlen    = 10
-		times     = bodiesLen / maxlen
+		times     = int(math.Ceil(float64(bodiesLen) / float64(maxlen)))
 	)
-	for i := 0; i <= times; i++ {
+	for i := 0; i < times; i++ {
 		batch_end := maxlen * (i + 1)
 		if maxlen*(i+1) > bodiesLen {
 			batch_end = bodiesLen
