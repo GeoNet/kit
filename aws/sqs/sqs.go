@@ -231,7 +231,11 @@ func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) 
 		times     = bodiesLen / maxlen
 	)
 	for i := 0; i <= times; i++ {
-		var bodies_batch = bodies[maxlen*i : maxlen*(i+1)]
+		batch_end := maxlen * (i + 1)
+		if maxlen*(i+1) > bodiesLen {
+			batch_end = bodiesLen
+		}
+		var bodies_batch = bodies[maxlen*i : batch_end]
 		err := s.SendBatch(ctx, queueURL, bodies_batch)
 		if err != nil {
 			return err
