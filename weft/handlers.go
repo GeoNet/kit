@@ -125,7 +125,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 
 		//everything below are for error responses
 		//set csp headers
-		setBestPracticeHeaders(w, r, nil, "")
+		SetBestPracticeHeaders(w, r, nil, "")
 		logRequest(r)
 		t.Stop()
 
@@ -165,9 +165,9 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
-			setBestPracticeHeaders(w, r, defaultCsp, "")
+			SetBestPracticeHeaders(w, r, defaultCsp, "")
 		} else {
-			setBestPracticeHeaders(w, r, customCsp, "")
+			SetBestPracticeHeaders(w, r, customCsp, "")
 		}
 
 		logRequest(r)
@@ -214,9 +214,9 @@ func MakeHandlerWithCspNonce(rh RequestHandlerWithNonce, eh ErrorHandler, custom
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
-			setBestPracticeHeaders(w, r, defaultCsp, nonce)
+			SetBestPracticeHeaders(w, r, defaultCsp, nonce)
 		} else {
-			setBestPracticeHeaders(w, r, customCsp, nonce)
+			SetBestPracticeHeaders(w, r, customCsp, nonce)
 		}
 
 		logRequest(r)
@@ -313,7 +313,7 @@ func writeResponseAndLogMetrics(err error, w http.ResponseWriter, r *http.Reques
  * NOTE: customCsp should include the whole set of an item as it override that in defaultCsp
  * @param nonce: string to be added to script CSP, refer: https://csp.withgoogle.com/docs/strict-csp.html
  */
-func setBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp map[string]string, nonce string) {
+func SetBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp map[string]string, nonce string) {
 	var csp strings.Builder
 	for k, v := range defaultCsp {
 		s := v
