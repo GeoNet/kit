@@ -108,7 +108,8 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		// ErrorHandler to set the error content and header.
 		t := metrics.Start()
 		// note: the ending `writeResponseAndLogMetrics` calls t.Track which will stop the metric timer, too
-
+		//set csp headers
+		SetBestPracticeHeaders(w, r, nil, "")
 		//run request handler
 		n, err := rh(r, w)
 		if err == nil { //all good, return
@@ -124,8 +125,6 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		}
 
 		//everything below are for error responses
-		//set csp headers
-		SetBestPracticeHeaders(w, r, nil, "")
 		logRequest(r)
 		t.Stop()
 
