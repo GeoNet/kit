@@ -172,6 +172,21 @@ func (s *S3) GetMeta(bucket, key, version string) (Meta, error) {
 	return res.Metadata, nil
 }
 
+// GetContentSize returns the content length of the specified key
+func (s *S3) GetContentSize(bucket, key string) (int64, error) {
+	input := s3.HeadObjectInput{
+		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
+	}
+
+	o, err := s.client.HeadObject(context.TODO(), &input)
+	if err != nil {
+		return 0, err
+	}
+
+	return o.ContentLength, nil
+}
+
 // Put puts the object in bucket using specified key.
 func (s *S3) Put(bucket, key string, object []byte) error {
 	input := s3.PutObjectInput{
