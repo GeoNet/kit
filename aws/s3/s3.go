@@ -172,8 +172,10 @@ func (s *S3) GetMeta(bucket, key, version string) (Meta, error) {
 	return res.Metadata, nil
 }
 
-// GetContentSize returns the content length of the specified key
-func (s *S3) GetContentSize(bucket, key string) (int64, error) {
+// GetContentSize returns the content length and last modified time of the specified key
+func (s *S3) GetContentSizeTime(bucket, key string) (int64, time.Time, error) {
+	var size int64
+	var mt time.Time
 	input := s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
@@ -181,10 +183,9 @@ func (s *S3) GetContentSize(bucket, key string) (int64, error) {
 
 	o, err := s.client.HeadObject(context.TODO(), &input)
 	if err != nil {
-		return 0, err
+		return size, mt, err
 	}
-
-	return o.ContentLength, nil
+	return o.ContentLength, *o.LastModified, nil
 }
 
 // Put puts the object in bucket using specified key.
