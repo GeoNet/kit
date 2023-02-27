@@ -321,11 +321,13 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]string, err
 	}
 }
 
-// ListObjects returns a list of objects (up to 1000) that match the provided prefix.
-func (s *S3) ListObjects(bucket, prefix string) ([]types.Object, error) {
+// ListObjects returns a list of objects that match the provided prefix.
+// It will not return more than the specified max number of keys.
+func (s *S3) ListObjects(bucket, prefix string, max int32) ([]types.Object, error) {
 	input := s3.ListObjectsV2Input{
-		Bucket: aws.String(bucket),
-		Prefix: aws.String(prefix),
+		Bucket:  aws.String(bucket),
+		Prefix:  aws.String(prefix),
+		MaxKeys: max,
 	}
 
 	out, err := s.client.ListObjectsV2(context.TODO(), &input)
