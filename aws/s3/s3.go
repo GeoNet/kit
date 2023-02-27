@@ -349,6 +349,35 @@ func (s *S3) ListObjects(bucket, prefix string) ([]types.Object, error) {
 	return out.Contents, nil
 }
 
+// ListAllObjects returns a list of ALL objects that match the provided prefix.
+// Keys are in alphabetical order.
+func (s *S3) ListAllObjects(bucket, prefix string) ([]types.Object, error) {
+
+	result := make([]types.Object, 0)
+
+	var continuationToken *string
+
+	for {
+		input := s3.ListObjectsV2Input{
+			Bucket:            aws.String(bucket),
+			Prefix:            aws.String(prefix),
+			ContinuationToken: continuationToken,
+		}
+
+		out, err := s.client.ListObjectsV2(context.TODO(), &input)
+		if err != nil {
+			return nil, err
+		}
+		result = append(result, out.Contents...)
+
+		// When result is not truncated, it means all matching keys have been found.
+		if !out.IsTruncated {
+			return result, nil
+		}
+		continuationToken = out.NextContinuationToken
+	}
+}
+
 // PutStream puts the data stream to key in bucket.
 func (s *S3) PutStream(bucket, key string, reader io.ReadCloser) error {
 	defer reader.Close()
