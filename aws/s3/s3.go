@@ -280,30 +280,17 @@ func (s *S3) List(bucket, prefix string, max int32) ([]string, error) {
 // Keys are in alphabetical order.
 func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 
+	objects, err := s.ListAllObjects(bucket, prefix)
+	if err != nil {
+		return nil, err
+	}
+
 	result := make([]string, 0)
 
-	var continuationToken *string
-
-	for {
-		input := s3.ListObjectsV2Input{
-			Bucket:            aws.String(bucket),
-			Prefix:            aws.String(prefix),
-			ContinuationToken: continuationToken,
-		}
-
-		out, err := s.client.ListObjectsV2(context.TODO(), &input)
-		if err != nil {
-			return nil, err
-		}
-		for _, o := range out.Contents {
-			result = append(result, aws.ToString(o.Key))
-		}
-		// When result is not truncated, it means all matching keys have been found.
-		if !out.IsTruncated {
-			return result, nil
-		}
-		continuationToken = out.NextContinuationToken
+	for _, o := range objects {
+		result = append(result, aws.ToString(o.Key))
 	}
+	return result, nil
 }
 
 // Returns whether there is an object in bucket with specified prefix.
