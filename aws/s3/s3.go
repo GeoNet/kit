@@ -239,19 +239,15 @@ func (s *S3) Exists(bucket, key string) (bool, error) {
 // It will not return more than the specified max number of keys.
 // Keys are in alphabetical order.
 func (s *S3) List(bucket, prefix string, max int32) ([]string, error) {
-	input := s3.ListObjectsV2Input{
-		Bucket:  aws.String(bucket),
-		Prefix:  aws.String(prefix),
-		MaxKeys: max,
-	}
 
-	out, err := s.client.ListObjectsV2(context.TODO(), &input)
+	objects, err := s.ListObjects(bucket, prefix, max)
 	if err != nil {
 		return nil, err
 	}
 
 	result := make([]string, 0)
-	for _, o := range out.Contents {
+
+	for _, o := range objects {
 		result = append(result, aws.ToString(o.Key))
 	}
 	return result, nil
