@@ -9,13 +9,11 @@ func TestLoadAssets(t *testing.T) {
 	testData := []struct {
 		testName       string
 		filename       string
-		prefix         string
 		expectedResult *asset
 	}{
 		{
 			"Load CSS file",
 			"testdata/leaflet.css",
-			"testdata",
 			&asset{
 				path:       "/leaflet.css",
 				hashedPath: "/07800b98-leaflet.css",
@@ -27,7 +25,6 @@ func TestLoadAssets(t *testing.T) {
 		{
 			"Load JS file",
 			"testdata/gnss-map-plot.js",
-			"testdata",
 			&asset{
 				path:       "/gnss-map-plot.js",
 				hashedPath: "/e83a0b0f-gnss-map-plot.js",
@@ -39,7 +36,6 @@ func TestLoadAssets(t *testing.T) {
 		{
 			"Load MJS file",
 			"testdata/test.mjs",
-			"testdata",
 			&asset{
 				path:       "/test.mjs",
 				hashedPath: "/3616e4a4-test.mjs",
@@ -56,7 +52,7 @@ func TestLoadAssets(t *testing.T) {
 
 		t.Run(d.testName, func(t *testing.T) {
 
-			a, err := loadAsset(d.filename, d.prefix)
+			a, err := loadAsset(d.filename, "testdata")
 			if err != nil {
 				t.Error(err)
 			}
