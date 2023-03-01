@@ -23,6 +23,17 @@ func TestLoadAssets(t *testing.T) {
 				sri:        "sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4",
 			},
 		},
+		{
+			"Load JS file",
+			"testdata/gnss-map-plot.js",
+			"testdata",
+			&asset{
+				path:       "/gnss-map-plot.js",
+				hashedPath: "/e83a0b0f-gnss-map-plot.js",
+				mime:       "text/javascript",
+				sri:        "sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1",
+			},
+		},
 	}
 	// SRI hash calculated with `openssl dgst -sha384 -binary leaflet.css | openssl base64 -A`
 	// from https://www.srihash.org/
