@@ -4,27 +4,54 @@ import (
 	"testing"
 )
 
-func TestLoadAsset(t *testing.T) {
-	a, err := loadAsset("testdata/leaflet.css", "testdata")
-	if err != nil {
-		t.Error(err)
-	}
+func TestLoadAssets(t *testing.T) {
 
-	if a.path != "/leaflet.css" {
-		t.Errorf("expected path /leaflet.css got %s", a.path)
+	testData := []struct {
+		testName       string
+		filename       string
+		prefix         string
+		expectedResult *asset
+	}{
+		{
+			"Load CSS file",
+			"testdata/leaflet.css",
+			"testdata",
+			&asset{
+				path:       "/leaflet.css",
+				hashedPath: "/07800b98-leaflet.css",
+				mime:       "text/css",
+				sri:        "sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4",
+			},
+		},
 	}
+	// SRI hash calculated with `openssl dgst -sha384 -binary leaflet.css | openssl base64 -A`
+	// from https://www.srihash.org/
 
-	if a.hashedPath != "/07800b98-leaflet.css" {
-		t.Errorf("expected hashed path /07800b98-leaflet.css got %s", a.hashedPath)
-	}
+	for _, d := range testData {
 
-	if a.mime != "text/css" {
-		t.Errorf("expected mime text/css got %s", a.mime)
-	}
+		t.Run(d.testName, func(t *testing.T) {
 
-	// Comparison calculated with `openssl dgst -sha384 -binary leaflet.css | openssl base64 -A` from https://www.srihash.org/
-	if a.sri != "sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4" {
-		t.Errorf("got sri hash '%v' expected 'sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4'", a.sri)
+			a, err := loadAsset(d.filename, d.prefix)
+			if err != nil {
+				t.Error(err)
+			}
+
+			if a.path != d.expectedResult.path {
+				t.Errorf("expected path %s instead got %s", d.expectedResult.path, a.path)
+			}
+
+			if a.hashedPath != d.expectedResult.hashedPath {
+				t.Errorf("expected hashed path %s instead got %s", d.expectedResult.hashedPath, a.hashedPath)
+			}
+
+			if a.mime != d.expectedResult.mime {
+				t.Errorf("expected mime %s instead got %s", d.expectedResult.mime, a.mime)
+			}
+
+			if a.sri != d.expectedResult.sri {
+				t.Errorf("expected sri hash %s instead got %s", d.expectedResult.sri, a.sri)
+			}
+		})
 	}
 }
 
