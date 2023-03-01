@@ -130,6 +130,29 @@ func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
 	return err
 }
 
+// GetByteRange gets the specified byte range of an object referred to by key and version
+// from bucket and writes it into b. Version can be zero.
+// See https://www.rfc-editor.org/rfc/rfc9110.html#name-byte-ranges for examples
+func (s *S3) GetByteRange(bucket, key, version, byteRange string, b *bytes.Buffer) error {
+	input := s3.GetObjectInput{
+		Key:    aws.String(key),
+		Bucket: aws.String(bucket),
+		Range:  aws.String(byteRange),
+	}
+	if version != "" {
+		input.VersionId = aws.String(version)
+	}
+	result, err := s.client.GetObject(context.TODO(), &input)
+	if err != nil {
+		return err
+	}
+	defer result.Body.Close()
+
+	_, err = b.ReadFrom(result.Body)
+
+	return err
+}
+
 // GetWithLastModified behaves the same as Get(), but also returns the time that
 // the object was last modified.
 func (s *S3) GetWithLastModified(bucket, key, version string, b *bytes.Buffer) (time.Time, error) {
