@@ -10,6 +10,7 @@ func TestLoadAssets(t *testing.T) {
 		testName       string
 		filename       string
 		expectedResult *asset
+		expectedBytes  int
 	}{
 		{
 			"Load CSS file",
@@ -21,6 +22,7 @@ func TestLoadAssets(t *testing.T) {
 				fileType:   "css",
 				sri:        "sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4",
 			},
+			13429,
 		},
 		{
 			"Load JS file",
@@ -32,6 +34,7 @@ func TestLoadAssets(t *testing.T) {
 				fileType:   "js",
 				sri:        "sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1",
 			},
+			8513,
 		},
 		{
 			"Load MJS file",
@@ -43,6 +46,7 @@ func TestLoadAssets(t *testing.T) {
 				fileType:   "mjs",
 				sri:        "sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r",
 			},
+			64,
 		},
 	}
 	// SRI hash calculated with `openssl dgst -sha384 -binary leaflet.css | openssl base64 -A`
@@ -75,6 +79,10 @@ func TestLoadAssets(t *testing.T) {
 
 			if a.sri != d.expectedResult.sri {
 				t.Errorf("expected sri hash %s instead got %s", d.expectedResult.sri, a.sri)
+			}
+
+			if len(a.b) != d.expectedBytes {
+				t.Errorf("expected %v bytes instead got %v", d.expectedBytes, len(a.b))
 			}
 		})
 	}
