@@ -20,6 +20,7 @@ type asset struct {
 	path       string
 	hashedPath string
 	mime       string
+	fileType   string
 	b          []byte
 	sri        string
 }
@@ -75,14 +76,20 @@ func getCspNonce(len int) (string, error) {
  * @param nonce: nonce to be added as script attribute
  */
 func createSubResourceTag(a *asset, nonce string) (string, error) {
-	switch a.mime {
-	case "text/javascript":
+	switch a.fileType {
+	case "js":
 		if nonce != "" {
 			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s" nonce="%s"></script>`, a.hashedPath, a.sri, nonce), nil
 		} else {
 			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s"></script>`, a.hashedPath, a.sri), nil
 		}
-	case "text/css":
+	case "mjs":
+		if nonce != "" {
+			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s" nonce="%s"></script>`, a.hashedPath, a.sri, nonce), nil
+		} else {
+			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s"></script>`, a.hashedPath, a.sri), nil
+		}
+	case "css", "map":
 		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s">`, a.hashedPath, a.sri), nil
 	default:
 		return "", fmt.Errorf("cannot create an embedded resource tag for mime: '%v'", a.mime)
@@ -177,11 +184,12 @@ func loadAsset(file, prefix string) (*asset, error) {
 	l := strings.LastIndex(a.path, ".")
 	if l > -1 && l < len(a.path) {
 		suffix = strings.ToLower(a.path[l+1:])
+		a.fileType = suffix
 	}
 
 	// these types should appear in weft.compressibleMimes as appropriate
 	switch suffix {
-	case "js":
+	case "js", "mjs":
 		a.mime = "text/javascript"
 	case "css", "map":
 		a.mime = "text/css"
