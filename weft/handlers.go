@@ -89,7 +89,7 @@ type DirectRequestHandler func(r *http.Request, w http.ResponseWriter) (int64, e
 
 // ErrorHandler should write the error for err into b and adjust h as required.
 // err can be nil
-type ErrorHandler func(err error, h http.Header, b *bytes.Buffer) error
+type ErrorHandler func(err error, h http.Header, b *bytes.Buffer, nonce string) error
 
 // MakeDirectHandler executes rh.  The caller should write directly to w for success (200) only.
 // In the case of an rh returning an error ErrorHandler is executed and the response written to the client.
@@ -129,7 +129,7 @@ func MakeDirectHandler(rh DirectRequestHandler, eh ErrorHandler) http.HandlerFun
 		t.Stop()
 
 		//run error handler
-		e := eh(err, w.Header(), b)
+		e := eh(err, w.Header(), b, "")
 		if e != nil {
 			logger.Printf("setting error: %s", e.Error())
 		}
@@ -160,7 +160,7 @@ func MakeHandlerWithCsp(rh RequestHandler, eh ErrorHandler, customCsp map[string
 		err := rh(r, w.Header(), b)
 		if err != nil {
 			//run error handler
-			e := eh(err, w.Header(), b)
+			e := eh(err, w.Header(), b, "")
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
@@ -209,7 +209,7 @@ func MakeHandlerWithCspNonce(rh RequestHandlerWithNonce, eh ErrorHandler, custom
 		}
 		if err != nil {
 			//run error handler
-			e := eh(err, w.Header(), b)
+			e := eh(err, w.Header(), b, nonce)
 			if e != nil {
 				logger.Printf("2 error from error handler: %s", e.Error())
 			}
@@ -361,7 +361,7 @@ func logRequest(r *http.Request) {
 // Headers are set for intermediate caches.
 //
 // Implements ErrorHandler
-func TextError(e error, h http.Header, b *bytes.Buffer) error {
+func TextError(e error, h http.Header, b *bytes.Buffer, nonce string) error {
 	if b == nil {
 		return errors.New("nil *bytes.Buffer")
 	}
@@ -412,7 +412,7 @@ func TextError(e error, h http.Header, b *bytes.Buffer) error {
 // The content of b is not changed.
 //
 // Implements ErrorHandler
-func UseError(e error, h http.Header, b *bytes.Buffer) error {
+func UseError(e error, h http.Header, b *bytes.Buffer, nonce string) error {
 	switch Status(e) {
 	case http.StatusOK:
 	case http.StatusNoContent:
@@ -443,7 +443,7 @@ func UseError(e error, h http.Header, b *bytes.Buffer) error {
 // Headers are set for intermediate caches.
 //
 // Implements ErrorHandler
-func HTMLError(e error, h http.Header, b *bytes.Buffer) error {
+func HTMLError(e error, h http.Header, b *bytes.Buffer, nonce string) error {
 	if b == nil {
 		return errors.New("nil *bytes.Buffer")
 	}
