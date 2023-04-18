@@ -78,7 +78,26 @@ func getConfig() (aws.Config, error) {
 	if os.Getenv("AWS_REGION") == "" {
 		return aws.Config{}, errors.New("AWS_REGION is not set")
 	}
-	cfg, err := config.LoadDefaultConfig(context.TODO())
+
+	var cfg aws.Config
+	var err error
+
+	if awsEndpoint := os.Getenv("CUSTOM_AWS_ENDPOINT_URL"); awsEndpoint != "" {
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				PartitionID:       "aws",
+				URL:               awsEndpoint,
+				HostnameImmutable: true,
+			}, nil
+		})
+
+		cfg, err = config.LoadDefaultConfig(
+			context.TODO(),
+			config.WithEndpointResolverWithOptions(customResolver))
+	} else {
+		cfg, err = config.LoadDefaultConfig(context.TODO())
+	}
+
 	if err != nil {
 		return aws.Config{}, err
 	}
