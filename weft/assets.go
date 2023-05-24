@@ -27,6 +27,9 @@ type asset struct {
 
 // assets is populated during init and then is only used for reading.
 var assets = make(map[string]*asset)
+
+// assetHashes maps asset filename to the corresponding hash-prefixed asset pathname.
+var assetHashes = make(map[string]string)
 var assetError error
 
 func init() {
@@ -108,9 +111,13 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 	if len(args) > 1 {
 		nonce = args[1]
 	}
-	a, ok := assets[args[0]]
+	hashedPath, ok := assetHashes[args[0]]
 	if !ok {
-		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", args[0])
+		return template.HTML(""), fmt.Errorf("hashed pathname for asset not found for '%s", args[0])
+	}
+	a, ok := assets[hashedPath]
+	if !ok {
+		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", hashedPath)
 	}
 
 	s, err := createSubResourceTag(a, nonce)
@@ -249,8 +256,14 @@ func initAssets(dir, prefix string) error {
 				return err
 			}
 
-			assets[a.path] = a
-			assets[a.hashedPath] = a
+			switch a.fileType {
+			case "js", "mjs", "css":
+				assets[a.hashedPath] = a
+			default:
+				assets[a.hashedPath] = a
+				assets[a.path] = a
+			}
+			assetHashes[a.path] = a.hashedPath
 		}
 	}
 
