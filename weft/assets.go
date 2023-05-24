@@ -151,16 +151,6 @@ func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	return nil
 }
 
-// AssetPath returns the finger printed path for path e.g., `/assets/bootstrap/hello.css`
-// returns `/assets/bootstrap/1fdd2266-hello.css`.
-func AssetPath(path string) string {
-	return assets[path].path
-}
-
-func SRIforPath(path string) string {
-	return assets[path].path
-}
-
 // loadAsset loads file and finger prints it with a sha256 hash.  prefix is stripped
 // from path members in the returned asset.
 func loadAsset(file, prefix string) (*asset, error) {
