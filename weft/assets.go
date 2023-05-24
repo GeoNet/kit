@@ -89,8 +89,10 @@ func createSubResourceTag(a *asset, nonce string) (string, error) {
 		} else {
 			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s"></script>`, a.hashedPath, a.sri), nil
 		}
-	case "css", "map":
+	case "css":
 		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s">`, a.hashedPath, a.sri), nil
+	case "map":
+		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s">`, a.path, a.sri), nil
 	default:
 		return "", fmt.Errorf("cannot create an embedded resource tag for mime: '%v'", a.mime)
 	}
