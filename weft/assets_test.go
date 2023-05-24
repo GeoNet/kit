@@ -132,3 +132,42 @@ func TestCreateSubResourceTag(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateSubResourcePreloadTag(t *testing.T) {
+	err := initAssets("testdata", "testdata")
+	if err != nil {
+		t.Error(err)
+	}
+
+	work := []struct {
+		nonce    string
+		path     string
+		expected string
+	}{
+		{"",
+			"testdata/test.mjs",
+			`<link rel="modulepreload" href="/3616e4a4-test.mjs" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r"/>`,
+		},
+		{"abcdefg",
+			"testdata/test.mjs",
+			`<link rel="modulepreload" href="/3616e4a4-test.mjs" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="abcdefg"/>`,
+		},
+	}
+
+	for _, w := range work {
+		t.Run(w.path, func(t *testing.T) {
+
+			a, err := loadAsset(w.path, "testdata")
+			if err != nil {
+				t.Fatal(err)
+			}
+			tag, err := createSubResourcePreloadTag(a, w.nonce)
+			if err != nil {
+				t.Errorf("Couldn't create embedded resource preload tag: %v", err)
+			}
+			if tag != w.expected {
+				t.Errorf("output tag '%v' did not equal epected '%v'", tag, w.expected)
+			}
+		})
+	}
+}

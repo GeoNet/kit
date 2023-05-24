@@ -6,6 +6,7 @@ import (
 	"crypto/sha256"
 	"crypto/sha512"
 	"encoding/base64"
+	"errors"
 	"fmt"
 	"html/template"
 	"io"
@@ -101,6 +102,18 @@ func createSubResourceTag(a *asset, nonce string) (string, error) {
 	}
 }
 
+// createSubResourcePreloadTag returns a <link> module preload tag for a .mjs file.
+func createSubResourcePreloadTag(a *asset, nonce string) (string, error) {
+	if a.fileType != "mjs" {
+		return "", errors.New("can only create module preload tag for module scripts")
+	}
+	if nonce != "" {
+		return fmt.Sprintf(`<link rel="modulepreload" href="%s" integrity="%s" nonce="%s"/>`, a.hashedPath, a.sri, nonce), nil
+	} else {
+		return fmt.Sprintf(`<link rel="modulepreload" href="%s" integrity="%s"/>`, a.hashedPath, a.sri), nil
+	}
+}
+
 /*
  * Generates a tag for a resource with the hashed path and SRI hash.
  * Returns a template.HTML so it won't throw warnings with golangci-lint
@@ -123,6 +136,28 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 	s, err := createSubResourceTag(a, nonce)
 
 	return template.HTML(s), err //nolint:gosec //We're writing these ourselves, any changes will be reviewd, acceptable risk. (Could add URLencoding if there's any concern)
+}
+
+// CreateSubResourcePreload generates a tag that preloads a JavaScript module file. This is helpful to
+// allow the file to be fetched in parallel with the module file that imports it, and also allows us
+// to set the SRI attribute of imported modules.
+func CreateSubResourcePreload(args ...string) (template.HTML, error) {
+	var nonce string
+	if len(args) > 1 {
+		nonce = args[1]
+	}
+	hashedPath, ok := assetHashes[args[0]]
+	if !ok {
+		return template.HTML(""), fmt.Errorf("hashed pathname for asset not found for '%s", args[0])
+	}
+	a, ok := assets[hashedPath]
+	if !ok {
+		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", hashedPath)
+	}
+
+	s, err := createSubResourcePreloadTag(a, nonce)
+
+	return template.HTML(s), err //nolint:gosec
 }
 
 // AssetHandler serves assets from the local directory `assets/assets`.  Assets are loaded from this
