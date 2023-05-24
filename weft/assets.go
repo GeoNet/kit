@@ -34,10 +34,10 @@ func init() {
 }
 
 /*
-	As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
-	This should only be used for files that are stored alongside the server, as remote files could be tampered with and we'd still
-	just calculate the hash.
-	Externally hosted files should have a precalculated SRI
+As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
+This should only be used for files that are stored alongside the server, as remote files could be tampered with and we'd still
+just calculate the hash.
+Externally hosted files should have a precalculated SRI
 */
 func calcSRIhash(b []byte) (string, error) {
 	var buf bytes.Buffer
@@ -121,8 +121,8 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 // Assets are served at the path `/assets/...` and can be also be served with a hashed path which finger prints the asset
 // for uniqueness for caching e.g.,
 //
-//    /assets/bootstrap/hello.css
-//    /assets/bootstrap/1fdd2266-hello.css
+//	/assets/bootstrap/hello.css
+//	/assets/bootstrap/1fdd2266-hello.css
 //
 // The finger printed path can be looked up with AssetPath.
 func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
@@ -189,9 +189,9 @@ func loadAsset(file, prefix string) (*asset, error) {
 
 	// these types should appear in weft.compressibleMimes as appropriate
 	switch suffix {
-	case "js", "mjs":
+	case "js", "mjs", "map":
 		a.mime = "text/javascript"
-	case "css", "map":
+	case "css":
 		a.mime = "text/css"
 	case "jpeg", "jpg":
 		a.mime = "image/jpeg"
