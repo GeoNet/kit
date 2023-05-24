@@ -13,6 +13,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 )
@@ -158,6 +159,33 @@ func CreateSubResourcePreload(args ...string) (template.HTML, error) {
 	s, err := createSubResourcePreloadTag(a, nonce)
 
 	return template.HTML(s), err //nolint:gosec
+}
+
+// CreateImportMap generates an import map script tag which maps asset filenames to their
+// respectful hash-prefixed path name. eg:
+//
+//	<script type="importmap" nonce="abcdefghijklmnop">
+//		{
+//			"imports":{
+//				"geonet-map.mjs":"/assets/js/77da7c4e-geonet-map.mjs"
+//			}
+//		}
+//	</script>
+func CreateImportMap(nonce string) (template.HTML, error) {
+
+	importMap := fmt.Sprintf("<script type=\"importmap\" nonce=\"%s\">\n\t\t{\n\t\t\t\"imports\":{", nonce)
+
+	for k, v := range assetHashes {
+		if !strings.HasSuffix(k, ".mjs") {
+			continue
+		}
+		filename := path.Base(k)
+		importMap += fmt.Sprintf("\n\t\t\t\t\"%s\":\"%s\",", filename, v)
+	}
+	importMap = strings.TrimSuffix(importMap, ",")
+	importMap += "\n\t\t\t}\n\t\t}\n\t</script>"
+
+	return template.HTML(importMap), nil
 }
 
 // AssetHandler serves assets from the local directory `assets/assets`.  Assets are loaded from this
