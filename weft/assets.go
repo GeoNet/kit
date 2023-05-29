@@ -160,31 +160,51 @@ func CreateSubResourcePreload(args ...string) (template.HTML, error) {
 	return template.HTML(s), err //nolint:gosec
 }
 
-// CreateImportMap generates an import map script tag which maps asset filenames to their
+// CreateImportMap generates an import map script tag which maps JS module asset filenames to their
 // respectful hash-prefixed path name. eg:
 //
 //	<script type="importmap" nonce="abcdefghijklmnop">
-//		{
-//			"imports":{
-//				"geonet-map.mjs":"/assets/js/77da7c4e-geonet-map.mjs"
-//			}
+//	{
+//		"imports":{
+//			"geonet-map.mjs":"/assets/js/77da7c4e-geonet-map.mjs"
 //		}
+//	}
 //	</script>
 func CreateImportMap(nonce string) (template.HTML, error) {
 
-	importMap := fmt.Sprintf("<script type=\"importmap\" nonce=\"%s\">\n\t\t{\n\t\t\t\"imports\":{", nonce)
-
+	importMapping := make(map[string]string, 0)
 	for k, v := range assetHashes {
 		if !strings.HasSuffix(k, ".mjs") {
 			continue
 		}
 		filename := path.Base(k)
-		importMap += fmt.Sprintf("\n\t\t\t\t\"%s\":\"%s\",", filename, v)
+		importMapping[filename] = v
 	}
-	importMap = strings.TrimSuffix(importMap, ",")
-	importMap += "\n\t\t\t}\n\t\t}\n\t</script>"
+	if len(importMapping) == 0 {
+		return template.HTML(""), errors.New("no module files found, import map not required.")
+	}
+	importMap := createImportMapTag(importMapping, nonce)
 
 	return template.HTML(importMap), nil //nolint:gosec
+}
+
+// createImportMapTag returns the <script> tag of type "importmap" to faciliate browser with
+// module resolution. Formatted to make readable in resulting source file.
+func createImportMapTag(importMapping map[string]string, nonce string) string {
+
+	importMap := "<script type=\"importmap\""
+	if nonce != "" {
+		importMap += fmt.Sprintf(" nonce=\"%s\"", nonce)
+	}
+	importMap += ">\n{\n\t\"imports\":{"
+
+	for k, v := range importMapping {
+		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", k, v)
+	}
+	importMap = strings.TrimSuffix(importMap, ",")
+	importMap += "\n\t}\n}\n</script>"
+
+	return importMap
 }
 
 // AssetHandler serves assets from the local directory `assets/assets`.  Assets are loaded from this

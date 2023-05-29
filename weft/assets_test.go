@@ -175,3 +175,57 @@ func TestCreateSubResourcePreloadTag(t *testing.T) {
 		})
 	}
 }
+
+func TestCreateImportTag(t *testing.T) {
+	err := initAssets("testdata", "testdata")
+	if err != nil {
+		t.Error(err)
+	}
+
+	work := []struct {
+		testName      string
+		nonce         string
+		importMapping map[string]string
+		expected      string
+	}{
+		{
+			"No nonce, one module file",
+			"",
+			map[string]string{
+				"test.mjs": "/assets/js/hashprefix-test.mjs",
+			},
+			`<script type="importmap">
+{
+	"imports":{
+		"test.mjs":"/assets/js/hashprefix-test.mjs"
+	}
+}
+</script>`,
+		},
+		{
+			"Nonce present, two module files",
+			"abcdefg",
+			map[string]string{
+				"test1.mjs": "/assets/js/hashprefix-test1.mjs",
+				"test2.mjs": "/assets/js/hashprefix-test2.mjs",
+			},
+			`<script type="importmap" nonce="abcdefg">
+{
+	"imports":{
+		"test1.mjs":"/assets/js/hashprefix-test1.mjs",
+		"test2.mjs":"/assets/js/hashprefix-test2.mjs"
+	}
+}
+</script>`,
+		},
+	}
+
+	for _, w := range work {
+		t.Run(w.testName, func(t *testing.T) {
+			tag := createImportMapTag(w.importMapping, w.nonce)
+			if tag != w.expected {
+				t.Errorf("import map tag\n '%v' did not equal expected\n '%v'", tag, w.expected)
+			}
+		})
+	}
+}
