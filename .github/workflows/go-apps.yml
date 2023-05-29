@@ -1,0 +1,20 @@
+name: go apps
+on:
+  push: {}
+  pull_request: {}
+  schedule:
+    - cron: "0 0 * * *"
+  release:
+    types: [published]
+  workflow_dispatch: {}
+permissions:
+  actions: read
+  contents: write
+  pull-requests: write
+  id-token: write
+  security-events: write
+  statuses: write
+  checks: write
+jobs:
+  go-apps:
+    uses: GeoNet/Actions/.github/workflows/reusable-go-apps.yml@main
