@@ -193,7 +193,7 @@ func CreateImportMap(nonce string) (template.HTML, error) {
 	importMap = strings.TrimSuffix(importMap, ",")
 	importMap += "\n\t\t\t}\n\t\t}\n\t</script>"
 
-	return template.HTML(importMap), nil
+	return template.HTML(importMap), nil //nolint:gosec
 }
 
 // AssetHandler serves assets from the local directory `assets/assets`.  Assets are loaded from this
