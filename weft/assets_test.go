@@ -96,20 +96,24 @@ func TestCreateSubResourceTag(t *testing.T) {
 
 	work := []struct {
 		nonce    string
+		attr     string
 		path     string
 		expected string
 	}{
 		{"",
+			"",
 			"testdata/leaflet.css",
-			`<link rel="stylesheet" href="/07800b98-leaflet.css" integrity="sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4">`,
+			`<link rel="stylesheet" href="/07800b98-leaflet.css" integrity="sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4" >`,
 		},
 		{"abcdefgh",
+			"async",
 			"testdata/gnss-map-plot.js",
-			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1" nonce="abcdefgh"></script>`,
+			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1" nonce="abcdefgh" async></script>`,
 		},
 		{"ijklmnop",
+			"defer",
 			"testdata/test.mjs",
-			`<script src="/3616e4a4-test.mjs" type="module" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="ijklmnop"></script>`,
+			`<script src="/3616e4a4-test.mjs" type="module" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="ijklmnop" defer></script>`,
 		},
 	}
 
@@ -121,7 +125,7 @@ func TestCreateSubResourceTag(t *testing.T) {
 				t.Error(err)
 			}
 
-			tag, err := createSubResourceTag(a, w.nonce)
+			tag, err := createSubResourceTag(a, w.nonce, w.attr)
 			if err != nil {
 				t.Fatalf("Couldn't create embedded resource tag: %v", err)
 			}

@@ -79,25 +79,26 @@ func getCspNonce(len int) (string, error) {
 /**
  * Wrapped by the following function to allow testing
  * @param nonce: nonce to be added as script attribute
+ * @param attr: "defer" or "async" attribute.
  */
-func createSubResourceTag(a *asset, nonce string) (string, error) {
+func createSubResourceTag(a *asset, nonce, attr string) (string, error) {
 	switch a.fileType {
 	case "js":
 		if nonce != "" {
-			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s" nonce="%s"></script>`, a.hashedPath, a.sri, nonce), nil
+			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s" nonce="%s" %s></script>`, a.hashedPath, a.sri, nonce, attr), nil
 		} else {
-			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s"></script>`, a.hashedPath, a.sri), nil
+			return fmt.Sprintf(`<script src="%s" type="text/javascript" integrity="%s" %s></script>`, a.hashedPath, a.sri, attr), nil
 		}
 	case "mjs":
 		if nonce != "" {
-			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s" nonce="%s"></script>`, a.hashedPath, a.sri, nonce), nil
+			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s" nonce="%s" %s></script>`, a.hashedPath, a.sri, nonce, attr), nil
 		} else {
-			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s"></script>`, a.hashedPath, a.sri), nil
+			return fmt.Sprintf(`<script src="%s" type="module" integrity="%s" %s></script>`, a.hashedPath, a.sri, attr), nil
 		}
 	case "css":
-		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s">`, a.hashedPath, a.sri), nil
+		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s" %s>`, a.hashedPath, a.sri, attr), nil
 	case "map":
-		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s">`, a.path, a.sri), nil
+		return fmt.Sprintf(`<link rel="stylesheet" href="%s" integrity="%s" %s>`, a.path, a.sri, attr), nil
 	default:
 		return "", fmt.Errorf("cannot create an embedded resource tag for mime: '%v'", a.mime)
 	}
@@ -118,12 +119,19 @@ func createSubResourcePreloadTag(a *asset, nonce string) (string, error) {
 /*
  * Generates a tag for a resource with the hashed path and SRI hash.
  * Returns a template.HTML so it won't throw warnings with golangci-lint
- * @param args: 1~2 strings: 1. the asset path, 2. nonce for script attribute
+ * @param args: 1~3 strings: 1. the asset path, 2. nonce for script attribute,
+ * 3. additional script loading attribute ("defer" or "async")
  */
 func CreateSubResourceTag(args ...string) (template.HTML, error) {
 	var nonce string
 	if len(args) > 1 {
 		nonce = args[1]
+	}
+	var attr string
+	if len(args) > 2 {
+		if args[2] == "defer" || args[2] == "async" {
+			attr = args[2]
+		}
 	}
 	hashedPath, ok := assetHashes[args[0]]
 	if !ok {
@@ -134,7 +142,7 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", hashedPath)
 	}
 
-	s, err := createSubResourceTag(a, nonce)
+	s, err := createSubResourceTag(a, nonce, attr)
 
 	return template.HTML(s), err //nolint:gosec //We're writing these ourselves, any changes will be reviewd, acceptable risk. (Could add URLencoding if there's any concern)
 }
