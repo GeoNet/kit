@@ -38,12 +38,10 @@ func init() {
 	assetError = initAssets("assets/assets", "assets")
 }
 
-/*
-As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
-This should only be used for files that are stored alongside the server, as remote files could be tampered with and we'd still
-just calculate the hash.
-Externally hosted files should have a precalculated SRI
-*/
+// As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
+// This should only be used for files that are stored alongside the server, as remote files could be tampered with and we'd still
+// just calculate the hash.
+// Externally hosted files should have a precalculated SRI
 func calcSRIhash(b []byte) (string, error) {
 	var buf bytes.Buffer
 
@@ -58,9 +56,7 @@ func calcSRIhash(b []byte) (string, error) {
 	return "sha384-" + buf.String(), nil
 }
 
-/**
- * create a random nonce string of specified length
- */
+// getCspNonce creates a random nonce string of specified length.
 func getCspNonce(len int) (string, error) {
 	b := make([]byte, len)
 	if _, err := io.ReadFull(rand.Reader, b); err != nil {
@@ -76,11 +72,8 @@ func getCspNonce(len int) (string, error) {
 	return buf.String(), nil
 }
 
-/**
- * Wrapped by the following function to allow testing
- * @param nonce: nonce to be added as script attribute
- * @param attr: "defer" or "async" attribute.
- */
+// createSubResourceTag returns a script tag as a string, based on the given
+// asset, nonce, and script loading attribute (ie: "defer" or "async")
 func createSubResourceTag(a *asset, nonce, attr string) (string, error) {
 	switch a.fileType {
 	case "js":
@@ -116,12 +109,10 @@ func createSubResourcePreloadTag(a *asset, nonce string) (string, error) {
 	}
 }
 
-/*
- * Generates a tag for a resource with the hashed path and SRI hash.
- * Returns a template.HTML so it won't throw warnings with golangci-lint
- * @param args: 1~3 strings: 1. the asset path, 2. nonce for script attribute,
- * 3. additional script loading attribute ("defer" or "async")
- */
+// CreateSubResourceTag generates a tag for a resource with the hashed path and SRI hash.
+// Returns a template.HTML so it won't throw warnings with golangci-lint.
+// args can be 1~3 strings: 1. the asset path, 2. nonce for script attribute,
+// 3. script loading attribute ("defer" or "async").
 func CreateSubResourceTag(args ...string) (template.HTML, error) {
 	var nonce string
 	if len(args) > 1 {
