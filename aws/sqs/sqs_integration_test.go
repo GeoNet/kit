@@ -18,28 +18,28 @@ import (
 )
 
 const (
-	CustomAWSEndpointURL = "http://localhost:4566"
-	AWSRegion            = "ap-southeast-2"
-	TestQueue            = "test-queue"
-	TestMessage          = "test message"
+	cutomAWSEndpointURL = "http://localhost:4566"
+	awsRegion           = "ap-southeast-2"
+	testQueue           = "test-queue"
+	testMessage         = "test message"
 )
 
 // helper functions
 
 func setup() {
 	// setup environment variables to access LocalStack
-	os.Setenv("AWS_REGION", AWSRegion)
+	os.Setenv("AWS_REGION", awsRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", CustomAWSEndpointURL)
+	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", cutomAWSEndpointURL)
 
 	// create queue
 	if err := exec.Command(
 		"aws", "sqs",
 		"create-queue",
-		"--queue-name", TestQueue,
-		"--endpoint-url", CustomAWSEndpointURL,
-		"--region", AWSRegion).Run(); err != nil {
+		"--queue-name", testQueue,
+		"--endpoint-url", cutomAWSEndpointURL,
+		"--region", awsRegion).Run(); err != nil {
 
 		panic(err)
 	}
@@ -50,8 +50,8 @@ func teardown() {
 		"aws", "sqs",
 		"delete-queue",
 		"--queue-url", awsCmdQueueURL(),
-		"--region", AWSRegion,
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).Run(); err != nil {
 
 		panic(err)
 	}
@@ -61,9 +61,9 @@ func awsCmdQueueURL() string {
 	if out, err := exec.Command(
 		"aws", "sqs",
 		"get-queue-url",
-		"--queue-name", TestQueue,
-		"--region", AWSRegion,
-		"--endpoint-url", CustomAWSEndpointURL).CombinedOutput(); err != nil {
+		"--queue-name", testQueue,
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -78,9 +78,9 @@ func awsCmdSendMessage() {
 		"aws", "sqs",
 		"send-message",
 		"--queue-url", awsCmdQueueURL(),
-		"--message-body", TestMessage,
-		"--region", AWSRegion,
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--message-body", testMessage,
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).Run(); err != nil {
 
 		panic(err)
 	}
@@ -92,8 +92,8 @@ func awsCmdReceiveMessage() string {
 		"receive-message",
 		"--queue-url", awsCmdQueueURL(),
 		"--attribute-names", "body",
-		"--region", AWSRegion,
-		"--endpoint-url", CustomAWSEndpointURL).CombinedOutput(); err != nil {
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -109,8 +109,8 @@ func awsCmdQueueCount() int {
 		"get-queue-attributes",
 		"--queue-url", awsCmdQueueURL(),
 		"--attribute-name", "ApproximateNumberOfMessages",
-		"--region", AWSRegion,
-		"--endpoint-url", CustomAWSEndpointURL).CombinedOutput(); err != nil {
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -187,7 +187,7 @@ func TestSQSReceive(t *testing.T) {
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestMessage, receivedMessage.Body)
+	assert.Equal(t, testMessage, receivedMessage.Body)
 }
 
 func TestSQSReceiveWithAttributes(t *testing.T) {
@@ -240,11 +240,11 @@ func TestSQSSend(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
 	// ACTION
-	err = client.Send(awsCmdQueueURL(), TestMessage)
+	err = client.Send(awsCmdQueueURL(), testMessage)
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestMessage, awsCmdReceiveMessage())
+	assert.Equal(t, testMessage, awsCmdReceiveMessage())
 }
 
 func TestSQSSendWithDelay(t *testing.T) {
@@ -256,7 +256,7 @@ func TestSQSSendWithDelay(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
 	// ACTION
-	err = client.SendWithDelay(awsCmdQueueURL(), TestMessage, 4) // delay seconds
+	err = client.SendWithDelay(awsCmdQueueURL(), testMessage, 4) // delay seconds
 	time.Sleep(2 * time.Second)
 	messageCountBeforeDelay := awsCmdQueueCount()
 	time.Sleep(3 * time.Second)
@@ -277,7 +277,7 @@ func TestGetQueueUrl(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
 	// ACTION
-	queueURL, err := client.GetQueueUrl(TestQueue)
+	queueURL, err := client.GetQueueUrl(testQueue)
 
 	// ASSERT
 	assert.Nil(t, err)

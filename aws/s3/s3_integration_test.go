@@ -19,39 +19,39 @@ import (
 )
 
 const (
-	CustomAWSEndpointURL = "http://localhost:4566"
-	AWSRegion            = "ap-southeast-2"
-	TestBucket           = "test-bucket"
+	customAWSEndpoint = "http://localhost:4566"
+	awsRegion         = "ap-southeast-2"
+	testBucket        = "test-bucket"
 
-	TestObjectKey  = "test-key"
-	TestObjectData = "some data"
+	testObjectKey  = "test-key"
+	testObjectData = "some data"
 
-	TestMetaKey   = "test-meta-key"
-	TestMetaValue = "test-meta-value"
+	testMetaKey   = "test-meta-key"
+	testMetaValue = "test-meta-value"
 
-	TestPrefix          = "test-prefix"
-	TestPrefixDelimiter = "_"
+	testPrefix          = "test-prefix"
+	testPrefixDelimiter = "_"
 
-	TestNewKey = "test-new-key"
+	testNewKey = "test-new-key"
 )
 
 // helper functions
 
 func setup() {
 	// setup environment variables to access LocalStack
-	os.Setenv("AWS_REGION", AWSRegion)
+	os.Setenv("AWS_REGION", awsRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", CustomAWSEndpointURL)
+	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpoint)
 
 	// create bucket
 	if err := exec.Command(
 		"aws", "s3api",
 		"create-bucket",
-		"--bucket", TestBucket,
+		"--bucket", testBucket,
 		"--create-bucket-configuration", fmt.Sprintf(
-			"{\"LocationConstraint\": \"%v\"}", AWSRegion),
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+			"{\"LocationConstraint\": \"%v\"}", awsRegion),
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
 	}
@@ -60,9 +60,9 @@ func setup() {
 func teardown() {
 	if err := exec.Command(
 		"aws", "s3",
-		"rb", fmt.Sprintf("s3://%v", TestBucket),
+		"rb", fmt.Sprintf("s3://%v", testBucket),
 		"--force",
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
 	}
@@ -75,18 +75,18 @@ func awsCmdPopulateBucket() {
 
 	testDataFilepath := filepath.Join(tmpDir, "data.txt")
 	testFile, _ := os.Create(testDataFilepath)
-	testFile.WriteString(TestObjectData)
+	testFile.WriteString(testObjectData)
 	testFile.Close()
 
 	// populate bucket
 	if err := exec.Command(
 		"aws", "s3api",
 		"put-object",
-		"--bucket", TestBucket,
-		"--key", TestObjectKey,
+		"--bucket", testBucket,
+		"--key", testObjectKey,
 		"--body", testDataFilepath,
-		"--metadata", fmt.Sprintf("%v=%v", TestMetaKey, TestMetaValue),
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--metadata", fmt.Sprintf("%v=%v", testMetaKey, testMetaValue),
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
 	}
@@ -96,9 +96,9 @@ func awsCmdExists(key string) bool {
 	if err := exec.Command(
 		"aws", "s3api",
 		"head-object",
-		"--bucket", TestBucket,
+		"--bucket", testBucket,
 		"--key", key,
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		return false
 	}
@@ -109,9 +109,9 @@ func awsCmdPutKey(key string) {
 	if err := exec.Command(
 		"aws", "s3api",
 		"put-object",
-		"--bucket", TestBucket,
+		"--bucket", testBucket,
 		"--key", key,
-		"--endpoint-url", CustomAWSEndpointURL).Run(); err != nil {
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
 	}
@@ -131,9 +131,9 @@ func awsCmdMeta() awsMeta {
 	cmd := exec.Command(
 		"aws", "s3api",
 		"head-object",
-		"--bucket", TestBucket,
-		"--key", TestObjectKey,
-		"--endpoint-url", CustomAWSEndpointURL)
+		"--bucket", testBucket,
+		"--key", testObjectKey,
+		"--endpoint-url", customAWSEndpoint)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -167,9 +167,9 @@ func awsCmdGetTestObject() string {
 	if err := exec.Command(
 		"aws", "s3api",
 		"get-object",
-		"--bucket", TestBucket,
-		"--key", TestObjectKey,
-		"--endpoint-url", CustomAWSEndpointURL,
+		"--bucket", testBucket,
+		"--key", testObjectKey,
+		"--endpoint-url", customAWSEndpoint,
 		testDataFilepath).Run(); err != nil {
 		panic(err)
 	}
@@ -241,11 +241,11 @@ func TestS3Get(t *testing.T) {
 
 	// ACTION
 	dataObject := bytes.Buffer{}
-	err = client.Get(TestBucket, TestObjectKey, "", &dataObject)
+	err = client.Get(testBucket, testObjectKey, "", &dataObject)
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestObjectData, dataObject.String())
+	assert.Equal(t, testObjectData, dataObject.String())
 }
 
 func TestS3GetWithLastModified(t *testing.T) {
@@ -263,19 +263,19 @@ func TestS3GetWithLastModified(t *testing.T) {
 	// ACTION
 	dataObject := bytes.Buffer{}
 	lastModified, err := client.GetWithLastModified(
-		TestBucket, TestObjectKey, "", &dataObject)
+		testBucket, testObjectKey, "", &dataObject)
 
 	// ASSERT
 	assert.Nil(t, err)
 
 	// object is what we expect
-	assert.Equal(t, TestObjectData, dataObject.String())
+	assert.Equal(t, testObjectData, dataObject.String())
 
 	// modified time is what we expect
 	assert.Equal(t, meta.lastModified, lastModified)
 
 	// bonus test, LastModified function
-	lastModified, err = client.LastModified(TestBucket, TestObjectKey, "")
+	lastModified, err = client.LastModified(testBucket, testObjectKey, "")
 	assert.Nil(t, err)
 	assert.Equal(t, meta.lastModified, lastModified)
 }
@@ -291,11 +291,11 @@ func TestS3GetMeta(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	meta, err := client.GetMeta(TestBucket, TestObjectKey, "")
+	meta, err := client.GetMeta(testBucket, testObjectKey, "")
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestMetaValue, meta[TestMetaKey])
+	assert.Equal(t, testMetaValue, meta[testMetaKey])
 }
 
 func TestS3GetContentSizeTime(t *testing.T) {
@@ -311,7 +311,7 @@ func TestS3GetContentSizeTime(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	contentLength, lastModified, err := client.GetContentSizeTime(TestBucket, TestObjectKey)
+	contentLength, lastModified, err := client.GetContentSizeTime(testBucket, testObjectKey)
 
 	// ASSERT
 	assert.Equal(t, meta.contentLength, contentLength)
@@ -327,11 +327,11 @@ func TestS3Put(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	err = client.Put(TestBucket, TestObjectKey, []byte(TestObjectData))
+	err = client.Put(testBucket, testObjectKey, []byte(testObjectData))
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestObjectData, awsCmdGetTestObject())
+	assert.Equal(t, testObjectData, awsCmdGetTestObject())
 }
 
 func TestS3PutWithMetadata(t *testing.T) {
@@ -344,18 +344,18 @@ func TestS3PutWithMetadata(t *testing.T) {
 
 	// ACTION
 	err = client.PutWithMetadata(
-		TestBucket,
-		TestObjectKey,
-		[]byte(TestObjectData),
-		map[string]string{TestMetaKey: TestMetaValue})
+		testBucket,
+		testObjectKey,
+		[]byte(testObjectData),
+		map[string]string{testMetaKey: testMetaValue})
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, TestObjectData, awsCmdGetTestObject())
+	assert.Equal(t, testObjectData, awsCmdGetTestObject())
 
 	// test meta data
 	metaData := awsCmdMeta()
-	assert.Equal(t, TestMetaValue, metaData.meta[TestMetaKey])
+	assert.Equal(t, testMetaValue, metaData.meta[testMetaKey])
 }
 
 func TestS3Exists(t *testing.T) {
@@ -369,14 +369,14 @@ func TestS3Exists(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	exists, err := client.Exists(TestBucket, TestObjectKey)
+	exists, err := client.Exists(testBucket, testObjectKey)
 
 	// ASSERT
 	assert.Nil(t, err)
 	assert.True(t, exists)
 
 	// ACTION
-	exists, err = client.Exists(TestBucket, "thisdoesntexists")
+	exists, err = client.Exists(testBucket, "thisdoesntexists")
 
 	// ASSERT
 	assert.Nil(t, err)
@@ -409,7 +409,7 @@ func TestS3List(t *testing.T) {
 
 	for _, tt := range tests {
 		// ACTION
-		listing, err := client.List(TestBucket, tt.prefix, 1000)
+		listing, err := client.List(testBucket, tt.prefix, 1000)
 
 		// ASSERT
 
@@ -425,7 +425,7 @@ func TestS3List(t *testing.T) {
 		}
 
 		// sneak in a ListAll test as well
-		listAll, err := client.ListAll(TestBucket, tt.prefix)
+		listAll, err := client.ListAll(testBucket, tt.prefix)
 		assert.Nil(t, err)
 		assert.Equal(t, listing, listAll)
 	}
@@ -436,20 +436,20 @@ func TestS3PrefixExists(t *testing.T) {
 	setup()
 	defer teardown()
 
-	awsCmdPutKey(TestPrefix + "/" + TestObjectKey)
+	awsCmdPutKey(testPrefix + "/" + testObjectKey)
 
 	client, err := New()
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	exists, err := client.PrefixExists(TestBucket, TestPrefix)
+	exists, err := client.PrefixExists(testBucket, testPrefix)
 
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, true, exists)
 
 	// ACTION
-	exists, err = client.PrefixExists(TestBucket, "thisdoesnotexists")
+	exists, err = client.PrefixExists(testBucket, "thisdoesnotexists")
 
 	// ASSERT
 	assert.Nil(t, err)
@@ -464,10 +464,10 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	// create several test inputs
 	var testKeys = []string{
 		// prefix_1 etc.
-		TestPrefix + TestPrefixDelimiter + "file1",
-		TestPrefix + TestPrefixDelimiter + "file2",
-		TestPrefix + TestPrefixDelimiter + "file3",
-		TestPrefix + TestPrefixDelimiter + "file4",
+		testPrefix + testPrefixDelimiter + "file1",
+		testPrefix + testPrefixDelimiter + "file2",
+		testPrefix + testPrefixDelimiter + "file3",
+		testPrefix + testPrefixDelimiter + "file4",
 	}
 
 	//populate bucket with several objects, some with common prefix
@@ -479,16 +479,16 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	listing, err := client.ListCommonPrefixes(TestBucket, TestPrefix, "_")
+	listing, err := client.ListCommonPrefixes(testBucket, testPrefix, "_")
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, []string{TestPrefix + TestPrefixDelimiter}, listing)
+	assert.Equal(t, []string{testPrefix + testPrefixDelimiter}, listing)
 
 	// test ListObjects
 
 	// ACTION
-	objects, err := client.ListObjects(TestBucket, TestPrefix)
+	objects, err := client.ListObjects(testBucket, testPrefix)
 	var keys []string
 	for _, object := range objects {
 		keys = append(keys, *object.Key)
@@ -505,19 +505,19 @@ func TestS3Delete(t *testing.T) {
 	defer teardown()
 
 	awsCmdPopulateBucket()
-	require.True(t, awsCmdExists(TestObjectKey))
+	require.True(t, awsCmdExists(testObjectKey))
 
 	client, err := New()
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	err = client.Delete(TestBucket, TestObjectKey)
+	err = client.Delete(testBucket, testObjectKey)
 
 	// ASSERT
 	assert.Nil(t, err)
 
 	// should no longer exists
-	assert.False(t, awsCmdExists(TestObjectKey))
+	assert.False(t, awsCmdExists(testObjectKey))
 }
 
 func TestS3Copy(t *testing.T) {
@@ -531,11 +531,11 @@ func TestS3Copy(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
 
 	// ACTION
-	err = client.Copy(TestBucket, TestNewKey, TestBucket+"/"+TestObjectKey)
+	err = client.Copy(testBucket, testNewKey, testBucket+"/"+testObjectKey)
 
 	// ASSERT
 	assert.Nil(t, err)
 
 	// new object exists
-	assert.True(t, awsCmdExists(TestNewKey))
+	assert.True(t, awsCmdExists(testNewKey))
 }
