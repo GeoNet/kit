@@ -96,20 +96,24 @@ func TestCreateSubResourceTag(t *testing.T) {
 
 	work := []struct {
 		nonce    string
+		attr     string
 		path     string
 		expected string
 	}{
 		{"",
+			"",
 			"testdata/leaflet.css",
-			`<link rel="stylesheet" href="/07800b98-leaflet.css" integrity="sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4">`,
+			`<link rel="stylesheet" href="/07800b98-leaflet.css" integrity="sha384-9oKBsxAYdVVBJcv3hwG8RjuoJhw9GwYLqXdQRDxi2q0t1AImNHOap8y6Qt7REVd4" >`,
 		},
 		{"abcdefgh",
+			"async",
 			"testdata/gnss-map-plot.js",
-			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1" nonce="abcdefgh"></script>`,
+			`<script src="/e83a0b0f-gnss-map-plot.js" type="text/javascript" integrity="sha384-haxRijtRHhpn6nbt+JNpioqOj0AwB+THIaVdUZ34R9sQrQL2vmf/pn6GPnQq+AI1" nonce="abcdefgh" async></script>`,
 		},
 		{"ijklmnop",
+			"defer",
 			"testdata/test.mjs",
-			`<script src="/3616e4a4-test.mjs" type="module" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="ijklmnop"></script>`,
+			`<script src="/3616e4a4-test.mjs" type="module" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="ijklmnop" defer></script>`,
 		},
 	}
 
@@ -121,13 +125,106 @@ func TestCreateSubResourceTag(t *testing.T) {
 				t.Error(err)
 			}
 
-			tag, err := createSubResourceTag(a, w.nonce)
+			tag, err := createSubResourceTag(a, w.nonce, w.attr)
 			if err != nil {
 				t.Fatalf("Couldn't create embedded resource tag: %v", err)
 			}
 
 			if tag != w.expected {
 				t.Fatalf("output tag '%v' did not equal epected '%v'", tag, w.expected)
+			}
+		})
+	}
+}
+
+func TestCreateSubResourcePreloadTag(t *testing.T) {
+	err := initAssets("testdata", "testdata")
+	if err != nil {
+		t.Error(err)
+	}
+
+	work := []struct {
+		nonce    string
+		path     string
+		expected string
+	}{
+		{"",
+			"testdata/test.mjs",
+			`<link rel="modulepreload" href="/3616e4a4-test.mjs" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r"/>`,
+		},
+		{"abcdefg",
+			"testdata/test.mjs",
+			`<link rel="modulepreload" href="/3616e4a4-test.mjs" integrity="sha384-yL9nK0JVp9FW9oAfkQ2kQC/9CcuAMK4vmyb8q+TY2SokmBFflIxJpZJ6Nk8Xqw5r" nonce="abcdefg"/>`,
+		},
+	}
+
+	for _, w := range work {
+		t.Run(w.path, func(t *testing.T) {
+
+			a, err := loadAsset(w.path, "testdata")
+			if err != nil {
+				t.Fatal(err)
+			}
+			tag, err := createSubResourcePreloadTag(a, w.nonce)
+			if err != nil {
+				t.Errorf("Couldn't create embedded resource preload tag: %v", err)
+			}
+			if tag != w.expected {
+				t.Errorf("output tag '%v' did not equal epected '%v'", tag, w.expected)
+			}
+		})
+	}
+}
+
+func TestCreateImportTag(t *testing.T) {
+	err := initAssets("testdata", "testdata")
+	if err != nil {
+		t.Error(err)
+	}
+
+	work := []struct {
+		testName      string
+		nonce         string
+		importMapping map[string]string
+		expected      string
+	}{
+		{
+			"No nonce, one module file",
+			"",
+			map[string]string{
+				"test.mjs": "/assets/js/hashprefix-test.mjs",
+			},
+			`<script type="importmap">
+{
+	"imports":{
+		"test.mjs":"/assets/js/hashprefix-test.mjs"
+	}
+}
+</script>`,
+		},
+		{
+			"Nonce present, two module files",
+			"abcdefg",
+			map[string]string{
+				"test1.mjs": "/assets/js/hashprefix-test1.mjs",
+				"test2.mjs": "/assets/js/hashprefix-test2.mjs",
+			},
+			`<script type="importmap" nonce="abcdefg">
+{
+	"imports":{
+		"test1.mjs":"/assets/js/hashprefix-test1.mjs",
+		"test2.mjs":"/assets/js/hashprefix-test2.mjs"
+	}
+}
+</script>`,
+		},
+	}
+
+	for _, w := range work {
+		t.Run(w.testName, func(t *testing.T) {
+			tag := createImportMapTag(w.importMapping, w.nonce)
+			if tag != w.expected {
+				t.Errorf("import map tag\n '%v' did not equal expected\n '%v'", tag, w.expected)
 			}
 		})
 	}
