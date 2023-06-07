@@ -170,7 +170,7 @@ func CreateSubResourcePreload(args ...string) (template.HTML, error) {
 //		}
 //	}
 //	</script>
-func CreateImportMap(nonce string) (template.HTML, error) {
+func CreateImportMap(nonce string) template.HTML {
 
 	importMapping := make(map[string]string, 0)
 	for k, v := range assetHashes {
@@ -181,11 +181,11 @@ func CreateImportMap(nonce string) (template.HTML, error) {
 		importMapping[filename] = v
 	}
 	if len(importMapping) == 0 {
-		return template.HTML(""), errors.New("no module files found, import map not required.")
+		return template.HTML("")
 	}
 	importMap := createImportMapTag(importMapping, nonce)
 
-	return template.HTML(importMap), nil //nolint:gosec
+	return template.HTML(importMap) //nolint:gosec
 }
 
 // createImportMapTag returns the <script> tag of type "importmap" to faciliate browser with
