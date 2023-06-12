@@ -337,14 +337,8 @@ func initAssets(dir, prefix string) error {
 			if err != nil {
 				return err
 			}
-
-			switch a.fileType {
-			case "js", "mjs", "css":
-				assets[a.hashedPath] = a
-			default:
-				assets[a.hashedPath] = a
-				assets[a.path] = a
-			}
+			assets[a.hashedPath] = a
+			assets[a.path] = a
 			assetHashes[a.path] = a.hashedPath
 		}
 	}
