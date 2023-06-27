@@ -1,24 +1,21 @@
 language: go
 go:
-- 1.16.13
+  - "1.20"
 
 services:
   - docker
 
 install:
   # dependencies for kit are not vendored and should always build with the latest version.
-  - go get github.com/golang/protobuf/proto
-  - go get google.golang.org/protobuf/proto
-  - go get github.com/golang/groupcache
   - docker pull localstack/localstack
   - export PATH=$PATH:$HOME/.local/bin
 
 before_script:
- - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin
- - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
- - sudo unzip -o awscliv2.zip
- - sudo ./aws/install
- - docker run -d --rm -it -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack
+  - curl -sfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh| sh -s -- -b $(go env GOPATH)/bin
+  - curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  - sudo unzip -o awscliv2.zip
+  - sudo ./aws/install
+  - docker run -d --rm -it -p 4566:4566 -p 4510-4559:4510-4559 localstack/localstack
 
 script:
   - test -z "$(gofmt -s -l `find . -name "*.go" | egrep -v vendor` | tee /dev/stderr)"
