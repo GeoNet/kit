@@ -10,10 +10,11 @@
 package sit_pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -146,7 +147,7 @@ func (x *AllSites) GetSites() []*SitSite {
 	return nil
 }
 
-//A site record (represents a seismic site OR gps mark)
+// A site record (represents a seismic site OR gps mark)
 type SitSite struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -411,7 +412,7 @@ func (x *Span) GetEnd() int64 {
 	return 0
 }
 
-//An access record - access.csv
+// An access record - access.csv
 type Access struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -476,7 +477,7 @@ func (x *Access) GetAddress() *Address {
 	return nil
 }
 
-//An address record - address.csv
+// An address record - address.csv
 type Address struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -596,7 +597,7 @@ func (x *Address) GetType() string {
 	return ""
 }
 
-//An equipment record - equipment.csv
+// An equipment record - equipment.csv
 type Equipment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -684,7 +685,7 @@ func (x *Equipment) GetOwner() string {
 	return ""
 }
 
-//An equipment install record - equipment_installs.csv
+// An equipment install record - equipment_installs.csv
 type Equipment_Install struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -740,7 +741,7 @@ func (x *Equipment_Install) GetInstalled() *Span {
 	return nil
 }
 
-//A record for a piece of power equipment - power.csv
+// A record for a piece of power equipment - power.csv
 type PowerEquipment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -836,7 +837,7 @@ func (x *PowerEquipment) GetInstallationDate() int64 {
 	return 0
 }
 
-//A record for a cable/conduit
+// A record for a cable/conduit
 type CableConduit struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -932,7 +933,7 @@ func (x *CableConduit) GetInstallationDate() int64 {
 	return 0
 }
 
-//A record for an enclosure
+// A record for an enclosure
 type Enclosure struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1036,7 +1037,7 @@ func (x *Enclosure) GetFenceY() float64 {
 	return 0
 }
 
-//A place record - place.csv
+// A place record - place.csv
 type Place struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -1116,7 +1117,7 @@ func (x *Place) GetAddress() *Address {
 	return nil
 }
 
-//A person record - place_person.csv
+// A person record - place_person.csv
 type Person struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

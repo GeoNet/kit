@@ -9,10 +9,11 @@
 package sit_delta_pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -156,7 +157,7 @@ func (x *Span) GetEnd() int64 {
 	return 0
 }
 
-//A site record (represents a seismic site OR gps mark (OR tsunami station?))
+// A site record (represents a seismic site OR gps mark (OR tsunami station?))
 type Site struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -267,7 +268,7 @@ func (x *Site) GetEquipmentInstalls() []*Equipment_Install {
 	return nil
 }
 
-//A location record (seismic site, tsunami guage, etc.)
+// A location record (seismic site, tsunami guage, etc.)
 type Location struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -358,7 +359,7 @@ func (x *Location) GetSpan() *Span {
 	return nil
 }
 
-//An equipment record
+// An equipment record
 type Equipment struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -470,7 +471,7 @@ func (x *Equipment) GetOrientation() float64 {
 	return 0
 }
 
-//An equipment install record
+// An equipment install record
 type Equipment_Install struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -637,7 +638,7 @@ func (x *InstalledMonument) GetMonument() *Monument {
 	return nil
 }
 
-//A monument for a Mark
+// A monument for a Mark
 type Monument struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

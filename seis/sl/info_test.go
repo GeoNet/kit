@@ -1,7 +1,7 @@
 package sl
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 )
 
@@ -16,7 +16,7 @@ func TestStationInfo(t *testing.T) {
 
 	for k, v := range checks {
 		t.Run(k, func(t *testing.T) {
-			raw, err := ioutil.ReadFile("testdata/" + v)
+			raw, err := os.ReadFile("testdata/" + v)
 			if err != nil {
 				t.Fatal(err)
 			}

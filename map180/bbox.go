@@ -16,9 +16,9 @@ type bbox struct {
 
 /*
 ValidBbox returns a nil error for a valid boundingBox.  Valid options are one of:
-  * an empty string: ""
-  * a string definition of a bounding box using ',' separated
-     longitude latitude (float) on EPSG4327.  This should be lower
+  - an empty string: ""
+  - a string definition of a bounding box using ',' separated
+    longitude latitude (float) on EPSG4327.  This should be lower
     left and upper right corners.  It may cross 180.  Longitude can be -180 to 180
     or 0 to 360.  Latitude must be <= 85.0 && >= -85.0  Examples:
     "165,-48,179,-34"  // New Zealand

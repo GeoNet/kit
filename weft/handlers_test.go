@@ -3,10 +3,11 @@ package weft_test
 import (
 	"bytes"
 	"errors"
-	"github.com/GeoNet/kit/weft"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+
+	"github.com/GeoNet/kit/weft"
 )
 
 func TestMakeHandler(t *testing.T) {

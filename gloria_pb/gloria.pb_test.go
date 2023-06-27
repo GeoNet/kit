@@ -1,11 +1,12 @@
 package gloria_pb
 
 import (
-	"google.golang.org/protobuf/proto"
-	"io/ioutil"
+	"os"
 	"sort"
 	"testing"
 	"time"
+
+	"google.golang.org/protobuf/proto"
 )
 
 // TestProto creates an example Gloria proto file for TAUP.
@@ -66,7 +67,7 @@ Contact: www.geonet.org.nz  email: info@geonet.org.nz`,
 		t.Error(err)
 	}
 
-	err = ioutil.WriteFile("testdata/taup.pb", b, 0600)
+	err = os.WriteFile("testdata/taup.pb", b, 0600)
 	if err != nil {
 		t.Error(err)
 	}

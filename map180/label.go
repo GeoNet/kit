@@ -4,6 +4,9 @@ import (
 	"bytes"
 	"fmt"
 	"strings"
+
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 type label struct {
@@ -42,7 +45,8 @@ func labelsToSVG(labels []label) string {
 
 	for _, l := range labels {
 		l.label = strings.Replace(l.label, `Mount`, `Mt`, -1)
-		l.label = strings.Title(strings.ToLower(l.label))
+		l.label = cases.Lower(language.English).String(l.label)
+		l.label = cases.Title(language.English).String(l.label)
 		switch l.featureType {
 		case 0:
 			b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"1\" stroke=\"grey\" stroke-width=\"1\" fill=\"lightgrey\" />", l.x, l.y))

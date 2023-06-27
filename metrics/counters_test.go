@@ -1,10 +1,11 @@
 package metrics_test
 
 import (
-	"github.com/GeoNet/kit/metrics"
 	"runtime"
 	"strconv"
 	"testing"
+
+	"github.com/GeoNet/kit/metrics"
 )
 
 func TestMsgCounters(t *testing.T) {

@@ -2,12 +2,13 @@ package weft_test
 
 import (
 	"errors"
-	"github.com/GeoNet/kit/weft"
 	"net/http"
 	"runtime"
 	"strconv"
 	"strings"
 	"testing"
+
+	"github.com/GeoNet/kit/weft"
 )
 
 func TestStatus(t *testing.T) {

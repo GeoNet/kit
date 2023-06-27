@@ -3,10 +3,11 @@ package weft
 
 import (
 	"errors"
-	"github.com/GeoNet/kit/metrics"
 	"net/http"
 	"net/url"
 	"strings"
+
+	"github.com/GeoNet/kit/metrics"
 )
 
 // QueryValidator returns an error for any invalid query parameter values.
@@ -72,9 +73,9 @@ func (s StatusError) Status() int {
 
 // Status returns the HTTP status code appropriate for err.
 // It returns:
-//   * http.StatusOk if err is nil
-//   * err.Code if err is a StatusErr and Code is set
-//   * otherwise http.StatusServiceUnavailable
+//   - http.StatusOk if err is nil
+//   - err.Code if err is a StatusErr and Code is set
+//   - otherwise http.StatusServiceUnavailable
 func Status(err error) int {
 	if err == nil {
 		return http.StatusOK
