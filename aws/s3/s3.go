@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -403,6 +404,77 @@ func (s *S3) ListAllObjects(bucket, prefix string) ([]types.Object, error) {
 		}
 		continuationToken = out.NextContinuationToken
 	}
+}
+
+// ListAllObjectsConcurrently returns a list of ALL objects that match the provided prefixes.
+// Keys are NOT in alphabetical order.
+func (s *S3) ListAllObjectsConcurrently(bucket string, prefixes []string) ([]types.Object, error) {
+
+	type work struct {
+		index  int // Used to retain order.
+		bucket string
+		prefix string
+		result []types.Object
+		err    error
+	}
+
+	input := make(chan work, len(prefixes))
+	output := make(chan work)
+
+	workerCount := 20
+	var wg sync.WaitGroup
+	wg.Add(workerCount)
+
+	// Workers take work from the input channel. work contains a prefix to List from S3.
+	// The result of the list is set, then sent to the output channel.
+	worker := func(s *S3, input <-chan work, output chan<- work, wg *sync.WaitGroup) {
+		defer wg.Done()
+
+		for w := range input {
+			w.result, w.err = s.ListAllObjects(w.bucket, w.prefix)
+			output <- w
+		}
+	}
+	// Create workers
+	for i := 0; i < workerCount; i++ {
+		go worker(s, input, output, &wg)
+	}
+	// Send prefixes to list to the workers.
+	for i, prefix := range prefixes {
+		input <- work{index: i, bucket: bucket, prefix: prefix}
+	}
+	close(input)
+
+	go func() {
+		wg.Wait()
+		close(output)
+	}()
+
+	// Read results and errors from output channel.
+	results := make([][]types.Object, len(prefixes))
+	errorList := make([]error, 0)
+	for w := range output {
+		if w.err != nil {
+			errorList = append(errorList, w.err)
+		}
+		results[w.index] = w.result
+	}
+
+	// If errors found, concatenate and return as error.
+	if len(errorList) > 0 {
+		var errorMessage string
+		for _, e := range errorList {
+			errorMessage += e.Error() + "\n"
+		}
+		return nil, errors.New(errorMessage)
+	}
+
+	// Append results into single slice before returning.
+	finalResult := make([]types.Object, 0)
+	for _, r := range results {
+		finalResult = append(finalResult, r...)
+	}
+	return finalResult, nil
 }
 
 // PutStream puts the data stream to key in bucket.

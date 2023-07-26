@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -489,8 +490,10 @@ func TestS3ListAll(t *testing.T) {
 	// which ListAll's continuation token functionality is required).
 	numObjects := 1005
 	keys := make([]string, 0)
+	keyGroups := [11]string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
 	for i := 0; i < numObjects; i++ {
-		keys = append(keys, fmt.Sprintf("%s%s%06d", testPrefix, testPrefixDelimiter, i))
+		keyGroup := keyGroups[i/100]
+		keys = append(keys, fmt.Sprintf("%s%s%s%06d", testPrefix, keyGroup, testPrefixDelimiter, i))
 	}
 	awsCmdPutKeys(keys)
 
@@ -507,6 +510,25 @@ func TestS3ListAll(t *testing.T) {
 
 	// expected objects in list in the correct order.
 	assert.Equal(t, listing, keys)
+
+	// ACTION
+	testPrefixes := make([]string, 0)
+	for _, keyGroup := range keyGroups {
+		testPrefixes = append(testPrefixes, testPrefix+keyGroup)
+	}
+	listingConcurrent, err := client.ListAllObjectsConcurrently(testBucket, testPrefixes)
+	var keysConcurrent []string
+	for _, object := range listingConcurrent {
+		keysConcurrent = append(keysConcurrent, aws.ToString(object.Key))
+	}
+
+	// ASSERT
+
+	// got listing ok
+	assert.Nil(t, err)
+
+	// expected objects in list in the correct order.
+	assert.Equal(t, keysConcurrent, keys)
 }
 
 func TestS3PrefixExists(t *testing.T) {
