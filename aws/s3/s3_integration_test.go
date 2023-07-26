@@ -125,6 +125,27 @@ func awsCmdPutKey(key string) {
 	}
 }
 
+func awsCmdPutKeys(keys []string) {
+	// create test data
+	tmpDir, _ := os.MkdirTemp("", "")
+	defer os.RemoveAll(tmpDir)
+
+	for _, k := range keys {
+		testDataFilepath := filepath.Join(tmpDir, k)
+		testFile, _ := os.Create(testDataFilepath)
+		testFile.WriteString(testObjectData)
+		testFile.Close()
+	}
+	// sync to bucket
+	if err := exec.Command(
+		"aws", "s3",
+		"sync", tmpDir, fmt.Sprintf("s3://%v", testBucket),
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+
+		panic(err)
+	}
+}
+
 type awsMeta struct {
 	lastModified  time.Time
 	contentLength int64
@@ -254,6 +275,26 @@ func TestS3Get(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testObjectData, dataObject.String())
+}
+
+func TestS3GetByteRange(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	// ACTION
+	testByteRange := "bytes=0-2"
+	dataObject := bytes.Buffer{}
+	err = client.GetByteRange(testBucket, testObjectKey, "", testByteRange, &dataObject)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, testObjectData[:3], dataObject.String())
 }
 
 func TestS3GetWithLastModified(t *testing.T) {
@@ -439,6 +480,35 @@ func TestS3List(t *testing.T) {
 	}
 }
 
+func TestS3ListAll(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	// populate bucket with over 1000 objects (the limit at
+	// which ListAll's continuation token functionality is required).
+	numObjects := 1005
+	keys := make([]string, 0)
+	for i := 0; i < numObjects; i++ {
+		keys = append(keys, fmt.Sprintf("%s%s%06d", testPrefix, testPrefixDelimiter, i))
+	}
+	awsCmdPutKeys(keys)
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	// ACTION
+	listing, err := client.ListAll(testBucket, testPrefix)
+
+	// ASSERT
+
+	// got listing ok
+	assert.Nil(t, err)
+
+	// expected objects in list in the correct order.
+	assert.Equal(t, listing, keys)
+}
+
 func TestS3PrefixExists(t *testing.T) {
 	// ARRANGE
 	setup()
@@ -496,7 +566,7 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	// test ListObjects
 
 	// ACTION
-	objects, err := client.ListObjects(testBucket, testPrefix)
+	objects, err := client.ListObjects(testBucket, testPrefix, 1000)
 	var keys []string
 	for _, object := range objects {
 		keys = append(keys, *object.Key)
@@ -505,6 +575,19 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testKeys, keys)
+
+	// test ListObjects with limit
+
+	// ACTION
+	objectsLimited, err := client.ListObjects(testBucket, testPrefix, 2)
+	var keysLimited []string
+	for _, object := range objectsLimited {
+		keysLimited = append(keysLimited, *object.Key)
+	}
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, testKeys[:2], keysLimited)
 }
 
 func TestS3Delete(t *testing.T) {
