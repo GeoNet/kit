@@ -37,11 +37,17 @@ const (
 
 // helper functions
 
-func setup() {
-	// setup environment variables to access LocalStack
+func setAwsEnv() {
 	os.Setenv("AWS_REGION", awsRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
+}
+
+func setup() {
+	// setup environment variable to run AWS CLI/SDK
+	setAwsEnv()
+
+	// setup environment variable to access LocalStack
 	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpoint)
 
 	// create bucket
@@ -58,6 +64,8 @@ func setup() {
 }
 
 func teardown() {
+	setAwsEnv()
+
 	if err := exec.Command(
 		"aws", "s3",
 		"rb", fmt.Sprintf("s3://%v", testBucket),
