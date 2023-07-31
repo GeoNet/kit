@@ -111,7 +111,7 @@ func (s *S3) Ready() bool {
 }
 
 // Get gets the object referred to by key and version from bucket and writes it into b.
-// Version can be zero.
+// Version can be empty.
 func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
 	input := s3.GetObjectInput{
 		Key:    aws.String(key),
@@ -132,7 +132,7 @@ func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
 }
 
 // GetByteRange gets the specified byte range of an object referred to by key and version
-// from bucket and writes it into b. Version can be zero.
+// from bucket and writes it into b. Version can be empty.
 // See https://www.rfc-editor.org/rfc/rfc9110.html#name-byte-ranges for examples
 func (s *S3) GetByteRange(bucket, key, version, byteRange string, b *bytes.Buffer) error {
 	input := s3.GetObjectInput{
@@ -193,7 +193,7 @@ func (s *S3) LastModified(bucket, key, version string) (time.Time, error) {
 	return aws.ToTime(result.LastModified), nil
 }
 
-// GetMeta returns the metadata for an object. Version can be zero.
+// GetMeta returns the metadata for an object. Version can be empty.
 func (s *S3) GetMeta(bucket, key, version string) (Meta, error) {
 	input := s3.HeadObjectInput{
 		Bucket: aws.String(bucket),
