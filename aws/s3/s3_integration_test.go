@@ -14,6 +14,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -119,6 +120,27 @@ func awsCmdPutKey(key string) {
 		"put-object",
 		"--bucket", testBucket,
 		"--key", key,
+		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+
+		panic(err)
+	}
+}
+
+func awsCmdPutKeys(keys []string) {
+	// create test data
+	tmpDir, _ := os.MkdirTemp("", "")
+	defer os.RemoveAll(tmpDir)
+
+	for _, k := range keys {
+		testDataFilepath := filepath.Join(tmpDir, k)
+		testFile, _ := os.Create(testDataFilepath)
+		testFile.WriteString(testObjectData)
+		testFile.Close()
+	}
+	// sync to bucket
+	if err := exec.Command(
+		"aws", "s3",
+		"sync", tmpDir, fmt.Sprintf("s3://%v", testBucket),
 		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
@@ -254,6 +276,26 @@ func TestS3Get(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testObjectData, dataObject.String())
+}
+
+func TestS3GetByteRange(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	// ACTION
+	testByteRange := "bytes=0-2"
+	dataObject := bytes.Buffer{}
+	err = client.GetByteRange(testBucket, testObjectKey, "", testByteRange, &dataObject)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, testObjectData[:3], dataObject.String())
 }
 
 func TestS3GetWithLastModified(t *testing.T) {
@@ -439,6 +481,56 @@ func TestS3List(t *testing.T) {
 	}
 }
 
+func TestS3ListAll(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	// populate bucket with over 1000 objects (the limit at
+	// which ListAll's continuation token functionality is required).
+	numObjects := 1005
+	keys := make([]string, 0)
+	keyGroups := [11]string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
+	for i := 0; i < numObjects; i++ {
+		keyGroup := keyGroups[i/100]
+		keys = append(keys, fmt.Sprintf("%s%s%s%06d", testPrefix, keyGroup, testPrefixDelimiter, i))
+	}
+	awsCmdPutKeys(keys)
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	// ACTION
+	listing, err := client.ListAll(testBucket, testPrefix)
+
+	// ASSERT
+
+	// got listing ok
+	assert.Nil(t, err)
+
+	// expected objects in list in the correct order.
+	assert.Equal(t, listing, keys)
+
+	// ACTION
+	testPrefixes := make([]string, 0)
+	for _, keyGroup := range keyGroups {
+		testPrefixes = append(testPrefixes, testPrefix+keyGroup)
+	}
+	listingConcurrent, err := client.ListAllObjectsConcurrently(testBucket, testPrefixes)
+	var keysConcurrent []string
+	for _, object := range listingConcurrent {
+		keysConcurrent = append(keysConcurrent, aws.ToString(object.Key))
+	}
+
+	// ASSERT
+
+	// got listing ok
+	assert.Nil(t, err)
+
+	// expected objects in list in the correct order.
+	assert.Equal(t, keysConcurrent, keys)
+}
+
 func TestS3PrefixExists(t *testing.T) {
 	// ARRANGE
 	setup()
@@ -496,7 +588,7 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	// test ListObjects
 
 	// ACTION
-	objects, err := client.ListObjects(testBucket, testPrefix)
+	objects, err := client.ListObjects(testBucket, testPrefix, 1000)
 	var keys []string
 	for _, object := range objects {
 		keys = append(keys, *object.Key)
@@ -505,6 +597,19 @@ func TestS3ListCommonPrefixes(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testKeys, keys)
+
+	// test ListObjects with limit
+
+	// ACTION
+	objectsLimited, err := client.ListObjects(testBucket, testPrefix, 2)
+	var keysLimited []string
+	for _, object := range objectsLimited {
+		keysLimited = append(keysLimited, *object.Key)
+	}
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, testKeys[:2], keysLimited)
 }
 
 func TestS3Delete(t *testing.T) {
