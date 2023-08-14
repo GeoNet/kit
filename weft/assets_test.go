@@ -186,7 +186,7 @@ func TestCreateImportTag(t *testing.T) {
 		testName      string
 		nonce         string
 		importMapping map[string]string
-		expected      string
+		expectedOr    []string
 	}{
 		{
 			"No nonce, one module file",
@@ -194,13 +194,13 @@ func TestCreateImportTag(t *testing.T) {
 			map[string]string{
 				"test.mjs": "/assets/js/hashprefix-test.mjs",
 			},
-			`<script type="importmap">
+			[]string{`<script type="importmap">
 {
 	"imports":{
 		"test.mjs":"/assets/js/hashprefix-test.mjs"
 	}
 }
-</script>`,
+</script>`},
 		},
 		{
 			"Nonce present, two module files",
@@ -209,22 +209,38 @@ func TestCreateImportTag(t *testing.T) {
 				"test1.mjs": "/assets/js/hashprefix-test1.mjs",
 				"test2.mjs": "/assets/js/hashprefix-test2.mjs",
 			},
-			`<script type="importmap" nonce="abcdefg">
+			[]string{`<script type="importmap" nonce="abcdefg">
 {
 	"imports":{
 		"test1.mjs":"/assets/js/hashprefix-test1.mjs",
 		"test2.mjs":"/assets/js/hashprefix-test2.mjs"
 	}
 }
-</script>`,
+</script>`, `<script type="importmap" nonce="abcdefg">
+{
+	"imports":{
+		"test2.mjs":"/assets/js/hashprefix-test2.mjs",
+		"test1.mjs":"/assets/js/hashprefix-test1.mjs"
+	}
+}
+</script>`},
 		},
 	}
 
 	for _, w := range work {
 		t.Run(w.testName, func(t *testing.T) {
 			tag := createImportMapTag(w.importMapping, w.nonce)
-			if tag != w.expected {
-				t.Errorf("import map tag\n '%v' did not equal expected\n '%v'", tag, w.expected)
+
+			foundExpected := false
+			for _, expected := range w.expectedOr {
+				if tag == expected {
+					foundExpected = true
+					break
+				}
+			}
+
+			if !foundExpected {
+				t.Errorf("import map tag\n '%v' did not equal one of the expected values\n '%v'", tag, w.expectedOr)
 			}
 		})
 	}
