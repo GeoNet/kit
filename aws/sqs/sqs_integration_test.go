@@ -46,6 +46,11 @@ func setup() {
 }
 
 func teardown() {
+	os.Setenv("AWS_REGION", awsRegion)
+	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
+	os.Setenv("AWS_ACCESS_KEY_ID", "test")
+	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", cutomAWSEndpointURL)
+
 	if err := exec.Command(
 		"aws", "sqs",
 		"delete-queue",
