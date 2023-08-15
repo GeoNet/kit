@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 )
 
@@ -198,8 +199,15 @@ func createImportMapTag(importMapping map[string]string, nonce string) string {
 	}
 	importMap += ">\n{\n\t\"imports\":{"
 
-	for k, v := range importMapping {
-		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", k, v)
+	// sort keys to produce consistent tag
+	keys := make([]string, 0, len(importMapping))
+	for k := range importMapping {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	for _, k := range keys {
+		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", k, importMapping[k])
 	}
 	importMap = strings.TrimSuffix(importMap, ",")
 	importMap += "\n\t}\n}\n</script>"
