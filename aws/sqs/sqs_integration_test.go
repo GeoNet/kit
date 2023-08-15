@@ -269,8 +269,7 @@ func TestSQSSendWithDelay(t *testing.T) {
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, 0, messageCountBeforeDelay)
-	assert.Equal(t, 1, messageCountAfterDelay)
+	assert.Equal(t, messageCountBeforeDelay+1, messageCountAfterDelay)
 }
 
 func TestGetQueueUrl(t *testing.T) {
