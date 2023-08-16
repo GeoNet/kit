@@ -256,16 +256,17 @@ func TestSQSSendWithDelay(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
 	// ACTION
-	err = client.SendWithDelay(awsCmdQueueURL(), testMessage, 4) // delay seconds
-	time.Sleep(2 * time.Second)
-	messageCountBeforeDelay := awsCmdQueueCount()
-	time.Sleep(3 * time.Second)
-	messageCountAfterDelay := awsCmdQueueCount()
+	err = client.SendWithDelay(awsCmdQueueURL(), testMessage, 5) // delay seconds
+
+	start := time.Now()
+	for awsCmdQueueCount() < 1 {
+		time.Sleep(500 * time.Millisecond)
+	}
+	timeElapsed := time.Since(start)
 
 	// ASSERT
 	assert.Nil(t, err)
-	assert.Equal(t, 0, messageCountBeforeDelay)
-	assert.Equal(t, 1, messageCountAfterDelay)
+	assert.True(t, timeElapsed > 5*time.Second)
 }
 
 func TestGetQueueUrl(t *testing.T) {
