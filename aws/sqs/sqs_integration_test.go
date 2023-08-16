@@ -256,8 +256,8 @@ func TestSQSSendWithDelay(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
 	// ACTION
-	err = client.SendWithDelay(awsCmdQueueURL(), testMessage, 4) // delay seconds
-	time.Sleep(2 * time.Second)
+	err = client.SendWithDelay(awsCmdQueueURL(), testMessage, 5) // delay seconds
+	time.Sleep(3 * time.Second)
 	messageCountBeforeDelay := awsCmdQueueCount()
 	time.Sleep(3 * time.Second)
 	messageCountAfterDelay := awsCmdQueueCount()
