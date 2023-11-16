@@ -2,10 +2,14 @@
 package keyspaces
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sigv4-auth-cassandra-gocql-driver-plugin/sigv4"
 	"github.com/gocql/gocql"
 )
 
@@ -21,25 +25,28 @@ func New(certPath string) (Keyspaces, error) {
 
 	ksClient := Keyspaces{}
 
-	var region, service_username, service_password string
-	if region = os.Getenv("AWS_REGION"); region == "" {
-		return ksClient, errors.New("AWS_REGION is not set")
+	cfg, err := getConfig()
+	if err != nil {
+		return ksClient, err
 	}
-	if service_username = os.Getenv("KEYSPACE_USER"); service_username == "" {
-		return ksClient, errors.New("KEYSPACE_USER is not set")
-	}
-	if service_password = os.Getenv("KEYSPACE_PW"); service_password == "" {
-		return ksClient, errors.New("KEYSPACE_PW is not set")
-	}
+
+	region := cfg.Region
 
 	// Add the Amazon Keyspaces service endpoint
 	cluster := gocql.NewCluster(fmt.Sprintf("cassandra.%s.amazonaws.com:9142", region))
 
-	// Add your service specific credentials
-	cluster.Authenticator = gocql.PasswordAuthenticator{
-		Username: service_username,
-		Password: service_password,
+	// Get credentials from config (required for authentication to Keyspaces)
+	creds, err := cfg.Credentials.Retrieve(context.TODO())
+	if err != nil {
+		return ksClient, err
 	}
+	var auth sigv4.AwsAuthenticator = sigv4.NewAwsAuthenticator()
+	auth.Region = region
+	auth.AccessKeyId = creds.AccessKeyID
+	auth.SecretAccessKey = creds.SecretAccessKey
+	auth.SessionToken = creds.SessionToken
+	cluster.Authenticator = auth
+
 	// Provide the path to the certificate
 	cluster.SslOpts = &gocql.SslOptions{
 		CaPath: certPath,
@@ -62,4 +69,36 @@ func New(certPath string) (Keyspaces, error) {
 // QueryDatabase queries the database with provided query, and returns a Scanner to iterate through the results.
 func (k *Keyspaces) QueryDatabase(query string, values []interface{}) gocql.Scanner {
 	return k.Session.Query(query, values...).Iter().Scanner()
+}
+
+// getConfig returns the default AWS Config struct.
+func getConfig() (aws.Config, error) {
+	if os.Getenv("AWS_REGION") == "" {
+		return aws.Config{}, errors.New("AWS_REGION is not set")
+	}
+
+	var cfg aws.Config
+	var err error
+
+	if awsEndpoint := os.Getenv("CUSTOM_AWS_ENDPOINT_URL"); awsEndpoint != "" {
+		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
+			return aws.Endpoint{
+				PartitionID:       "aws",
+				URL:               awsEndpoint,
+				HostnameImmutable: true,
+			}, nil
+		})
+
+		cfg, err = config.LoadDefaultConfig(
+			context.TODO(),
+			config.WithEndpointResolverWithOptions(customResolver),
+		)
+	} else {
+		cfg, err = config.LoadDefaultConfig(context.TODO())
+	}
+
+	if err != nil {
+		return aws.Config{}, err
+	}
+	return cfg, nil
 }
