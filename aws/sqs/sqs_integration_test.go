@@ -22,6 +22,9 @@ const (
 	awsRegion           = "ap-southeast-2"
 	testQueue           = "test-queue"
 	testMessage         = "test message"
+
+	testMessageAttributeKey   = "test-key"
+	testMessageAttributeValue = "test-value"
 )
 
 // helper functions
@@ -79,6 +82,9 @@ func awsCmdSendMessage() {
 		"send-message",
 		"--queue-url", awsCmdQueueURL(),
 		"--message-body", testMessage,
+		"--message-attributes", fmt.Sprintf(
+			"%s={DataType=String, StringValue=\"%s\"}",
+			testMessageAttributeKey, testMessageAttributeValue),
 		"--region", awsRegion,
 		"--endpoint-url", cutomAWSEndpointURL).Run(); err != nil {
 
@@ -100,6 +106,29 @@ func awsCmdReceiveMessage() string {
 		var payload map[string][]map[string]string
 		json.Unmarshal(out, &payload)
 		return payload["Messages"][0]["Body"]
+	}
+}
+
+func awsCmdReceiveMessageWithAttributes() (string, map[string]string) {
+	if out, err := exec.Command(
+		"aws", "sqs",
+		"receive-message",
+		"--queue-url", awsCmdQueueURL(),
+		"--message-attribute-names", "All",
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL).CombinedOutput(); err != nil {
+
+		panic(err)
+	} else {
+		var payload map[string][]map[string]interface{}
+		json.Unmarshal(out, &payload)
+
+		msgAttributes := map[string]string{}
+		for k, v := range payload["Messages"][0]["MessageAttributes"].(map[string]interface{}) {
+			msgAttributes[k] = v.(map[string]interface{})["StringValue"].(string)
+		}
+
+		return payload["Messages"][0]["Body"].(string), msgAttributes
 	}
 }
 
@@ -188,6 +217,7 @@ func TestSQSReceive(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testMessage, receivedMessage.Body)
+	assert.Equal(t, testMessageAttributeValue, receivedMessage.MessageAttributes[testMessageAttributeKey])
 }
 
 func TestSQSReceiveWithAttributes(t *testing.T) {
@@ -245,6 +275,28 @@ func TestSQSSend(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testMessage, awsCmdReceiveMessage())
+}
+
+func TestSQSSendMessageWithAttributes(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
+
+	// ACTION
+	err = client.SendWithAttributes(
+		awsCmdQueueURL(),
+		testMessage,
+		map[string]string{testMessageAttributeKey: testMessageAttributeValue})
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	msg, attributes := awsCmdReceiveMessageWithAttributes()
+	assert.Equal(t, testMessage, msg)
+	assert.Equal(t, testMessageAttributeValue, attributes[testMessageAttributeKey])
 }
 
 func TestSQSSendWithDelay(t *testing.T) {

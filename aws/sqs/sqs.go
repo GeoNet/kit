@@ -18,9 +18,10 @@ import (
 )
 
 type Raw struct {
-	Body          string
-	ReceiptHandle string
-	Attributes    map[string]string
+	Body              string
+	ReceiptHandle     string
+	Attributes        map[string]string
+	MessageAttributes map[string]string
 }
 
 type SQS struct {
@@ -113,11 +114,12 @@ func (s *SQS) ReceiveWithAttributes(queueURL string, visibilityTimeout int32, at
 // which can be used to safely stop the system
 func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string, visibilityTimeout int32, attrs []types.QueueAttributeName) (Raw, error) {
 	input := sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 1,
-		VisibilityTimeout:   visibilityTimeout,
-		WaitTimeSeconds:     20,
-		AttributeNames:      attrs,
+		QueueUrl:              aws.String(queueURL),
+		MaxNumberOfMessages:   1,
+		VisibilityTimeout:     visibilityTimeout,
+		WaitTimeSeconds:       20,
+		AttributeNames:        attrs,
+		MessageAttributeNames: []string{"All"},
 	}
 	return s.receiveMessage(ctx, &input)
 }
@@ -139,10 +141,20 @@ func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput
 		case len(r.Messages) == 1:
 			raw := r.Messages[0]
 
+			msgAttributes := map[string]string{}
+			for k, v := range raw.MessageAttributes {
+				if aws.ToString(v.DataType) == "Binary" {
+					continue
+				}
+
+				msgAttributes[k] = aws.ToString(v.StringValue)
+			}
+
 			m := Raw{
-				Body:          aws.ToString(raw.Body),
-				ReceiptHandle: aws.ToString(raw.ReceiptHandle),
-				Attributes:    raw.Attributes,
+				Body:              aws.ToString(raw.Body),
+				ReceiptHandle:     aws.ToString(raw.ReceiptHandle),
+				Attributes:        raw.Attributes,
+				MessageAttributes: msgAttributes,
 			}
 			return m, nil
 		case len(r.Messages) > 1:
@@ -157,10 +169,11 @@ func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput
 // which can be used to safely stop the system
 func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilityTimeout int32) (Raw, error) {
 	input := sqs.ReceiveMessageInput{
-		QueueUrl:            aws.String(queueURL),
-		MaxNumberOfMessages: 1,
-		VisibilityTimeout:   visibilityTimeout,
-		WaitTimeSeconds:     20,
+		QueueUrl:              aws.String(queueURL),
+		MaxNumberOfMessages:   1,
+		VisibilityTimeout:     visibilityTimeout,
+		WaitTimeSeconds:       20,
+		MessageAttributeNames: []string{"All"},
 	}
 	return s.receiveMessage(ctx, &input)
 }
@@ -179,9 +192,25 @@ func (s *SQS) Delete(queueURL, receiptHandle string) error {
 
 // Send sends the message body to the SQS queue referred to by queueURL.
 func (s *SQS) Send(queueURL string, body string) error {
+	return s.SendWithAttributes(queueURL, body, nil)
+}
+
+// Send sends the message body with message attributes to the SQS queue referred to by queueURL.
+func (s *SQS) SendWithAttributes(queueURL string, body string, attributes map[string]string) error {
 	params := sqs.SendMessageInput{
 		QueueUrl:    aws.String(queueURL),
 		MessageBody: aws.String(body),
+	}
+
+	// add message attributes
+	if len(attributes) > 0 {
+		params.MessageAttributes = map[string]types.MessageAttributeValue{}
+		for k, v := range attributes {
+			params.MessageAttributes[k] = types.MessageAttributeValue{
+				DataType:    aws.String("String"),
+				StringValue: aws.String(v),
+			}
+		}
 	}
 
 	_, err := s.client.SendMessage(context.TODO(), &params)
