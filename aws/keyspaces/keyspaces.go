@@ -103,6 +103,9 @@ func (k *Keyspaces) RefreshSessionEvery(d time.Duration) {
 	go func(client *Keyspaces, interval time.Duration) {
 		ticker := time.NewTicker(interval)
 		for range ticker.C {
+			if client == nil {
+				return
+			}
 			err := client.refreshSession()
 			if err != nil {
 				ksLogger.Printf("error refreshing session: %v", err)
