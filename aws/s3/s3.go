@@ -21,9 +21,10 @@ import (
 )
 
 type S3 struct {
-	client     *s3.Client
-	uploader   *manager.Uploader
-	downloader *manager.Downloader
+	client       *s3.Client
+	uploader     *manager.Uploader
+	downloader   *manager.Downloader
+	concurrenter *ConcurrencyManager
 }
 
 type Meta map[string]string
@@ -85,6 +86,29 @@ func (s3 *S3) AddDownloader() error {
 	return nil
 }
 
+// AddConcurrencyManager creates a ConcurrencyManager and sets it to
+// the S3 struct's concurrenter field. This enables the use of the GetAll function,
+// which downloads multiple files at once while retaining order.
+// Ensure that the HTTP client option used to create the S3 client is configured to
+// make use of the specified maxConnections. Also, ensure that the S3 Client
+// has access to maxBytes in memory to avoid out of memory errors.
+func (s3 *S3) AddConcurrencyManager(maxConnections, maxConnectionsPerRequest, maxBytes int) error {
+	if !s3.Ready() {
+		return errors.New("S3 client needs to be initialised to add concurrency limits")
+	}
+	if maxConnections <= 0 || maxConnectionsPerRequest <= 0 || maxBytes <= 0 {
+		return errors.New("all parameters must be greater than 0")
+	}
+	if maxConnections > maxBytes {
+		return errors.New("max bytes must be greater than or equal to max connections")
+	}
+	if maxConnectionsPerRequest > maxConnections {
+		return errors.New("max connections must be greater than or equal to max connections per request")
+	}
+	s3.concurrenter = NewConcurrencyManager(maxConnections, maxConnectionsPerRequest, maxBytes)
+	return nil
+}
+
 // getConfig returns the default AWS Config struct.
 func getConfig() (aws.Config, error) {
 	if os.Getenv("AWS_REGION") == "" {
@@ -140,6 +164,34 @@ func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
 	_, err = b.ReadFrom(result.Body)
 
 	return err
+}
+
+// GetAll gets the objects specified from bucket and writes the resulting HydratedFiles
+// to the returned output channel. The closure of this channel is handled, however it's the caller's
+// responsibility to purge the channel, and handle any errors present in the HydratedFiles.
+// If the S3 client's ConcurrencyManager is not initialised before calling GetAll, an output channel
+// containing a single HydratedFile with an error is returned.
+// Version can be empty, but must be the same for all objects.
+func (s *S3) GetAll(bucket, version string, objects []types.Object) chan HydratedFile {
+
+	if s.concurrenter == nil {
+		output := make(chan HydratedFile, 1)
+		output <- HydratedFile{Error: errors.New("error getting files from S3, concurrenter not initialised")}
+		close(output)
+		return output
+	}
+	processFunc := func(input types.Object) HydratedFile {
+		buf := bytes.NewBuffer(make([]byte, 0, input.Size))
+		key := aws.ToString(input.Key)
+		err := s.Get(bucket, key, version, buf)
+
+		return HydratedFile{
+			Key:   key,
+			Data:  buf.Bytes(),
+			Error: err,
+		}
+	}
+	return s.concurrenter.Process(processFunc, objects)
 }
 
 // GetByteRange gets the specified byte range of an object referred to by key and version

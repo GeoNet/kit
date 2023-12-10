@@ -1,0 +1,250 @@
+package s3
+
+import (
+	"context"
+	"sync"
+	"time"
+
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
+)
+
+// This file contains code to allow S3 objects to be downloaded from S3 concurrently,
+// while still retaining the order that the objects were given in.
+// The pattern has been adapted from https://www.wwt.com/article/fan-out-fan-in-while-maintaining-order
+
+// General flow:
+
+// 1. When the Process function is called, it creates a worker group and takes the specified max number of
+//    workers per request from the worker pool.
+// 2. The Process function returns the output channel which will have the desired HydratedFiles in order.
+//    This needs to be read from to ensure this whole process is not blocked.
+// 3. Each worker adds themselves to the the WorkerGroup's roster, indicating they are ready to receive work.
+// 4. When a job comes in, the WorkerGroup's AddWork function gets the first available worker from
+//    the roster channel and adds that worker's output channel to its reception channel in the order that workers
+//    are added to the roster. Since work is given to workers in the order that they are in the roster, this
+//    means it doesn't matter how long each piece of work takes, because all the workers' output is read from
+//    reception in order, which will block if needed to ensure the WorkerGroup's final output is in the same order
+//    as it came in.
+// 5. The Process function receives work from the jobs channel. Each job is an S3 Object to download.
+// 6. FileProcessor defines a function that turns a job into a HydratedFile. This is supplied to the Process function.
+//    To ensure memory usage at any one time doesn't get too big, enough memory to contain the size of the
+//    S3 Object being downloaded is secured from the memory pool before starting the work.
+// 7. After a worker finishes a piece of work, it adds itself back to the roster, and releases the memory back to the pool.
+// 8. The WorkerGroup's startOuput function acts a bridge, where it ranges over the reception channel, gets each
+//    worker output channel, takes the HydratedFile from it, and sends it to its output channel.
+// 9. When the jobs channel is closed, and the last piece of work has been added to the WorkerGroup,
+//    the WorkerGroup calls its stopWork function. This utilises Go's context package to cancel the process. This will
+//    unblock the WorkerGroup's cleanup function which waits for the cancel to happen before waiting for all workers
+//    to be finished via the WorkerGroup's sync.WaitGroup, after which it closes up the remaining channels.
+// 10. Each worker is returned to the worker pool.
+
+type ConcurrencyManager struct {
+	memoryPool           chan int64
+	workerPool           chan *worker
+	memoryChunkSize      int64
+	maxWorkersPerRequest int
+}
+
+type FileProcessor func(types.Object) HydratedFile
+
+type HydratedFile struct {
+	Key   string
+	Data  []byte
+	Error error
+}
+
+type worker struct {
+	manager *ConcurrencyManager
+	input   chan types.Object
+	output  chan HydratedFile
+}
+
+// NewConcurrencyManager returns a new ConcurrencyManager set with the given specifications.
+// This enables the use of the S3Client's GetAll function.
+func NewConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *ConcurrencyManager {
+	cm := ConcurrencyManager{}
+
+	// Create worker pool
+	wp := make(chan *worker, maxWorkers)
+	for i := 0; i < maxWorkers; i++ {
+		wp <- &worker{
+			manager: &cm,
+			input:   make(chan types.Object, 1),
+			output:  make(chan HydratedFile, 1),
+		}
+	}
+	cm.workerPool = wp
+
+	// Create memory pool. This consists of a channel of "memory chunks",
+	// each of which is represented as an int64. The number of chunks and
+	// each chunk's size is calculated so that if all workers are downloading a file,
+	// the total size of all those files would be less than or equal to
+	// the specified max number of bytes.
+	mp := make(chan int64, maxWorkers)
+	memoryChunkSize := int64(maxBytes / maxWorkers)
+	for i := 0; i < maxWorkers; i++ {
+		mp <- memoryChunkSize
+	}
+	cm.memoryPool = mp
+	cm.memoryChunkSize = memoryChunkSize
+	cm.maxWorkersPerRequest = maxWorkersPerRequest
+
+	return &cm
+}
+
+// getWorker retrieves a worker from the manager's worker pool.
+func (cm *ConcurrencyManager) getWorker() *worker {
+	return <-cm.workerPool
+}
+
+// returnWorker returns a worker to the manager's worker pool.
+func (cm *ConcurrencyManager) returnWorker(w *worker) {
+	cm.workerPool <- w
+}
+
+// secureMemory secures enough memory from the manager's memory pool
+// to fit the specified size.
+func (cm *ConcurrencyManager) secureMemory(size int64) {
+
+	var securedMemory int64 = 0
+	for securedMemory < size {
+		securedMemory += <-cm.memoryPool
+	}
+}
+
+// releaseMemory returns the specified amount of memory back to
+// the manager's memory pool.
+func (cm *ConcurrencyManager) releaseMemory(size int64) {
+
+	memoryToRelease := size
+	for memoryToRelease > 0 {
+		cm.memoryPool <- cm.memoryChunkSize
+		memoryToRelease -= cm.memoryChunkSize
+	}
+}
+
+// Functions for providing a fan-out/fan-in operation. Workers are taken from the
+// worker pool and added to a WorkerGroup. All workers are returned to the pool once
+// the jobs have finished.
+func (cm *ConcurrencyManager) Process(asyncProcessor FileProcessor, objects []types.Object) chan HydratedFile {
+	workerGroup := cm.newWorkerGroup(context.Background(), asyncProcessor, cm.maxWorkersPerRequest) // 1.
+
+	go func() {
+		for _, obj := range objects {
+			workerGroup.addWork(obj)
+		}
+		workerGroup.stopWork() // 9.
+	}()
+	return workerGroup.returnOutput() // 2.
+}
+
+// start begins a worker's process of making itself available for work, doing the work,
+// and repeat, until all work is done.
+func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan *worker, wg *sync.WaitGroup) {
+	go func() {
+		defer func() {
+			wg.Done()
+
+			// Make sure workers contents have been consumed
+			// before returning to pool.
+			if len(w.input) > 0 {
+				input := <-w.input
+				w.manager.secureMemory(input.Size)
+				w.output <- processor(input)
+				w.manager.releaseMemory(input.Size)
+			}
+			for len(w.output) > 0 {
+				time.Sleep(1 * time.Millisecond)
+			}
+
+			w.manager.returnWorker(w) // 10.
+		}()
+		for {
+			roster <- w // 3., 7.
+
+			select {
+			case input := <-w.input: // 5.
+				w.manager.secureMemory(input.Size)
+				w.output <- processor(input) // 6.
+				w.manager.releaseMemory(input.Size)
+			case <-ctx.Done(): // 9.
+				return
+			}
+		}
+	}()
+}
+
+type workerGroup struct {
+	roster    chan *worker
+	reception chan chan HydratedFile
+	output    chan HydratedFile
+	group     *sync.WaitGroup
+	stop      func()
+}
+
+// newWorkerGroup creates and returns a new workerGroup, which is a group of workers assembled
+// to service a request.
+func (cm *ConcurrencyManager) newWorkerGroup(ctx context.Context, processor FileProcessor, size int) workerGroup {
+	ctx, cancel := context.WithCancel(ctx)
+	workerGroup := workerGroup{
+		roster:    make(chan *worker, size),
+		reception: make(chan chan HydratedFile, size),
+		output:    make(chan HydratedFile),
+		stop:      cancel,
+		group:     &sync.WaitGroup{},
+	}
+	workerGroup.group.Add(size)
+
+	go func() {
+		for i := 0; i < size; i++ {
+			w := cm.getWorker()
+			w.start(ctx, processor, workerGroup.roster, workerGroup.group)
+		}
+	}()
+	go workerGroup.startOutput()
+	go workerGroup.cleanUp(ctx)
+
+	return workerGroup
+}
+
+// startOutput begins the process of directing each worker's output
+// to the output channel.
+func (wg *workerGroup) startOutput() {
+	defer close(wg.output)
+	for woc := range wg.reception {
+		wg.output <- <-woc // 8.
+	}
+}
+
+// cleanUp blocks on the workerGroup's cancel Context. Once Done(),
+// it then waits for the workerGroup's WaitGroup to finish. After that,
+// the workerGroup's channels are closed.
+func (wg *workerGroup) cleanUp(ctx context.Context) {
+	<-ctx.Done()
+	wg.group.Wait() // 9.
+	close(wg.reception)
+	close(wg.roster)
+}
+
+// addWork gets the first available worker from the workerGroup's
+// roster, and gives it an S3 Object to download. The worker's output
+// channel is registered to the workerGroup's reception so that
+// order is retained.
+func (wg *workerGroup) addWork(newWork types.Object) { // 4.
+	for w := range wg.roster {
+		w.input <- newWork
+		wg.reception <- w.output
+		break
+	}
+}
+
+// returnOutput returns the workerGroup's output channel.
+func (wg *workerGroup) returnOutput() chan HydratedFile {
+	return wg.output
+}
+
+// stopWork calls the workerGroup's stop function, which initiates
+// the cleanup process.
+func (wg *workerGroup) stopWork() {
+	wg.stop()
+}
