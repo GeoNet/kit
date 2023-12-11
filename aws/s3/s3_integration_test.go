@@ -1,6 +1,3 @@
-//go:build localstack
-// +build localstack
-
 package s3
 
 import (
@@ -15,6 +12,7 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -259,6 +257,43 @@ func TestCreateS3ClientWithMaxRetries(t *testing.T) {
 	// ASSERT
 	assert.NotNil(t, err)
 }
+
+func TestCreateS3ClientWithOptions(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	// ACTION
+	s3Client, err := NewWithOptions(func(options *s3.Options) {
+		options.EndpointResolver = nil
+	})
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// ACTION
+	_, err = s3Client.ListAll(testBucket, "")
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	// ACTION
+	s3Client, err = NewWithOptions(func(options *s3.Options) {
+		options.Region = testRegion
+	})
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// ACTION
+	_, err = s3Client.ListAll(testBucket, "")
+
+	// ASSERT
+	assert.Nil(t, err)
+}
+
 func TestS3Get(t *testing.T) {
 	// ARRANGE
 	setup()
