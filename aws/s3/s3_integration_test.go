@@ -21,7 +21,7 @@ import (
 
 const (
 	customAWSEndpoint = "http://localhost:4566"
-	awsRegion         = "ap-southeast-2"
+	testRegion        = "ap-southeast-2"
 	testBucket        = "test-bucket"
 
 	testObjectKey  = "test-key"
@@ -39,7 +39,7 @@ const (
 // helper functions
 
 func setAwsEnv() {
-	os.Setenv("AWS_REGION", awsRegion)
+	os.Setenv("AWS_REGION", testRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
 }
@@ -57,7 +57,7 @@ func setup() {
 		"create-bucket",
 		"--bucket", testBucket,
 		"--create-bucket-configuration", fmt.Sprintf(
-			"{\"LocationConstraint\": \"%v\"}", awsRegion),
+			"{\"LocationConstraint\": \"%v\"}", testRegion),
 		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
