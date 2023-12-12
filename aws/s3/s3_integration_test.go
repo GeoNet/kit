@@ -50,7 +50,7 @@ func setup() {
 	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpoint)
 
 	// create bucket
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"create-bucket",
 		"--bucket", testBucket,
@@ -65,7 +65,7 @@ func setup() {
 func teardown() {
 	setAwsEnv()
 
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3",
 		"rb", fmt.Sprintf("s3://%v", testBucket),
 		"--force",
@@ -82,7 +82,7 @@ func awsCmdPopulateBucket() {
 
 	testDataFilepath := filepath.Join(tmpDir, "data.txt")
 	testFile, _ := os.Create(testDataFilepath)
-	testFile.WriteString(testObjectData)
+	_, _ = testFile.WriteString(testObjectData)
 	testFile.Close()
 
 	// populate bucket
@@ -132,7 +132,7 @@ func awsCmdPutKeys(keys []string) {
 	for _, k := range keys {
 		testDataFilepath := filepath.Join(tmpDir, k)
 		testFile, _ := os.Create(testDataFilepath)
-		testFile.WriteString(testObjectData)
+		_, _ = testFile.WriteString(testObjectData)
 		testFile.Close()
 	}
 	// sync to bucket
@@ -169,7 +169,7 @@ func awsCmdMeta() awsMeta {
 	}
 
 	var metaData map[string]interface{}
-	json.Unmarshal(out, &metaData)
+	_ = json.Unmarshal(out, &metaData)
 	testLastModified, err := time.Parse(
 		"2006-01-02T15:04:05", metaData["LastModified"].(string)[0:19])
 	if err != nil {
@@ -488,6 +488,7 @@ func TestS3GetContentSizeTime(t *testing.T) {
 	contentLength, lastModified, err := client.GetContentSizeTime(testBucket, testObjectKey)
 
 	// ASSERT
+	assert.Nil(t, err)
 	assert.Equal(t, meta.contentLength, contentLength)
 	assert.Equal(t, meta.lastModified, lastModified)
 }
