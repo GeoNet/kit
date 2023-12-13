@@ -1,10 +1,14 @@
 package s3
 
 import (
+	"bytes"
 	"context"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
@@ -38,6 +42,11 @@ import (
 //    to be finished via the WorkerGroup's sync.WaitGroup, after which it closes up the remaining channels.
 // 10. Each worker is returned to the worker pool.
 
+type S3Concurrent struct {
+	S3
+	manager *ConcurrencyManager
+}
+
 type ConcurrencyManager struct {
 	memoryPool           chan int64
 	workerPool           chan *worker
@@ -59,9 +68,34 @@ type worker struct {
 	output  chan HydratedFile
 }
 
-// NewConcurrencyManager returns a new ConcurrencyManager set with the given specifications.
-// This enables the use of the S3Client's GetAll function.
-func NewConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *ConcurrencyManager {
+// NewConcurrent returns an S3Concurrent client, which embeds an S3 client, and has a ConcurrencyManager
+// to allow the use of the GetAllConcurrently function. The GetAllConcurrently function can download multiple files
+// at once while retaining order. Ensure that the HTTP client option used to create the S3 client is configured to
+// make use of the specified maxConnections. Also, ensure that the S3 Client has access to maxBytes in memory
+// to avoid out of memory errors.
+func NewConcurrent(maxConnections, maxConnectionsPerRequest, maxBytes int) (S3Concurrent, error) {
+
+	s3Client, err := New()
+	if err != nil {
+		return S3Concurrent{}, fmt.Errorf("error creating base S3 Client for S3Concurrent: %w", err)
+	}
+	if maxConnections <= 0 || maxConnectionsPerRequest <= 0 || maxBytes <= 0 {
+		return S3Concurrent{}, errors.New("all parameters must be greater than 0")
+	}
+	if maxConnections > maxBytes {
+		return S3Concurrent{}, errors.New("max bytes must be greater than or equal to max connections")
+	}
+	if maxConnectionsPerRequest > maxConnections {
+		return S3Concurrent{}, errors.New("max connections must be greater than or equal to max connections per request")
+	}
+	return S3Concurrent{
+		S3:      s3Client,
+		manager: newConcurrencyManager(maxConnections, maxConnectionsPerRequest, maxBytes),
+	}, nil
+}
+
+// newConcurrencyManager returns a new ConcurrencyManager set with the given specifications.
+func newConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *ConcurrencyManager {
 	cm := ConcurrencyManager{}
 
 	// Create worker pool
@@ -90,6 +124,34 @@ func NewConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *Conc
 	cm.maxWorkersPerRequest = maxWorkersPerRequest
 
 	return &cm
+}
+
+// GetAllConcurrently gets the objects specified from bucket and writes the resulting HydratedFiles
+// to the returned output channel. The closure of this channel is handled, however it's the caller's
+// responsibility to purge the channel, and handle any errors present in the HydratedFiles.
+// If the ConcurrencyManager is not initialised before calling GetAllConcurrently, an output channel
+// containing a single HydratedFile with an error is returned.
+// Version can be empty, but must be the same for all objects.
+func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []types.Object) chan HydratedFile {
+
+	if s.manager == nil {
+		output := make(chan HydratedFile, 1)
+		output <- HydratedFile{Error: errors.New("error getting files from S3, Concurrency Manager not initialised")}
+		close(output)
+		return output
+	}
+	processFunc := func(input types.Object) HydratedFile {
+		buf := bytes.NewBuffer(make([]byte, 0, input.Size))
+		key := aws.ToString(input.Key)
+		err := s.Get(bucket, key, version, buf)
+
+		return HydratedFile{
+			Key:   key,
+			Data:  buf.Bytes(),
+			Error: err,
+		}
+	}
+	return s.manager.Process(processFunc, objects)
 }
 
 // getWorker retrieves a worker from the manager's worker pool.
