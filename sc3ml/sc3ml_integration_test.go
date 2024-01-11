@@ -1,13 +1,15 @@
+//go:build integration
 // +build integration
 
 package sc3ml_test
 
 import (
-	"github.com/GeoNet/kit/sc3ml"
-	"io/ioutil"
+	"io"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/GeoNet/kit/sc3ml"
 )
 
 // TestUnmarshalIntegration will list and unmarshal all .xml files
@@ -22,7 +24,7 @@ func TestUnmarshalIntegration(t *testing.T) {
 	var b []byte
 	var files []os.FileInfo
 
-	if files, err = ioutil.ReadDir("/work/seismcompml07-test"); err != nil {
+	if files, err = os.ReadDir("/work/seismcompml07-test"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -34,7 +36,7 @@ func TestUnmarshalIntegration(t *testing.T) {
 			}
 			defer f.Close()
 
-			if b, err = ioutil.ReadAll(f); err != nil {
+			if b, err = io.ReadAll(f); err != nil {
 				t.Fatal(err)
 			}
 			f.Close()

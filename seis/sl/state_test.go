@@ -1,7 +1,6 @@
 package sl
 
 import (
-	"io/ioutil"
 	"os"
 	"strings"
 	"testing"
@@ -20,7 +19,7 @@ func TestState(t *testing.T) {
 	})
 
 	t.Run("check read then write", func(t *testing.T) {
-		raw, err := ioutil.ReadFile("testdata/state.json")
+		raw, err := os.ReadFile("testdata/state.json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -40,13 +39,13 @@ func TestState(t *testing.T) {
 	})
 
 	t.Run("check read then write file", func(t *testing.T) {
-		tmpfile, err := ioutil.TempFile("", "test")
+		tmpfile, err := os.CreateTemp("", "test")
 		if err != nil {
 			t.Fatal(err)
 		}
 		defer os.Remove(tmpfile.Name())
 
-		raw, err := ioutil.ReadFile("testdata/state.json")
+		raw, err := os.ReadFile("testdata/state.json")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -59,7 +58,7 @@ func TestState(t *testing.T) {
 			t.Errorf("an empty write path should not return an error")
 		}
 
-		data, err := ioutil.ReadFile(tmpfile.Name())
+		data, err := os.ReadFile(tmpfile.Name())
 		if err != nil {
 			t.Fatal(err)
 		}

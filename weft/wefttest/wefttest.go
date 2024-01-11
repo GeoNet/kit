@@ -3,7 +3,7 @@ package wefttest
 import (
 	"bytes"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"regexp"
 	"runtime"
@@ -129,7 +129,7 @@ func (r Request) Do(server string) ([]byte, error) {
 		}
 	}
 
-	return ioutil.ReadAll(res.Body)
+	return io.ReadAll(res.Body)
 }
 
 /**
