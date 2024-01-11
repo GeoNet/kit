@@ -15,6 +15,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da
 	github.com/lib/pq v1.3.0
 	github.com/stretchr/testify v1.6.1
+	golang.org/x/text v0.14.0
 	google.golang.org/protobuf v1.27.1
 )
 
