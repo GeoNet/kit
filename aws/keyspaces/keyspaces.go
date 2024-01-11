@@ -4,7 +4,6 @@ package keyspaces
 import (
 	"context"
 	"errors"
-	"fmt"
 	"os"
 	"sync"
 	"time"
@@ -42,39 +41,36 @@ func SetLogger(l Logger) {
 	ksLogger = l
 }
 
-// New returns a Keyspaces struct which wraps a Keyspaces session. certPath
-// is the path of the required Starfield digital certificate to connect
+// New returns a Keyspaces struct which wraps a Keyspaces session.
+// host to connect to eg: cassandra.ap-southeast-2.amazonaws.com:9142
+// certPath is the path of the required Starfield digital certificate to connect
 // to Keyspaces using SSL/TLS
 // (found here: https://certs.secureserver.net/repository/sf-class2-root.crt)
-func New(certPath string) (Keyspaces, error) {
+func New(host, certPath string) (Keyspaces, error) {
 
 	ksClient := Keyspaces{}
 
-	cfg, err := getConfig()
-	if err != nil {
-		return ksClient, err
-	}
-
-	region := cfg.Region
-
 	// Add the Amazon Keyspaces service endpoint
-	cluster := gocql.NewCluster(fmt.Sprintf("cassandra.%s.amazonaws.com:9142", region))
+	cluster := gocql.NewCluster(host)
 	ksClient.cluster = cluster
 
-	authenticator, err := generateAuthenticator()
-	if err != nil {
-		return ksClient, err
-	}
-	cluster.Authenticator = authenticator
+	// When host is localhost, for example in a test environment, we don't need these settings.
+	if host != "localhost" {
+		authenticator, err := generateAuthenticator()
+		if err != nil {
+			return ksClient, err
+		}
+		cluster.Authenticator = authenticator
 
-	// Provide the path to the certificate
-	cluster.SslOpts = &gocql.SslOptions{
-		CaPath: certPath,
+		// Provide the path to the certificate
+		cluster.SslOpts = &gocql.SslOptions{
+			CaPath: certPath,
+		}
+		// Override default Consistency to LocalQuorum
+		cluster.Consistency = gocql.LocalQuorum
+		// Disable initial host lookup
+		cluster.DisableInitialHostLookup = true
 	}
-	// Override default Consistency to LocalQuorum
-	cluster.Consistency = gocql.LocalQuorum
-	// Disable initial host lookup
-	cluster.DisableInitialHostLookup = true
 
 	// Create session.
 	session, err := cluster.CreateSession()
