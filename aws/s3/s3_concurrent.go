@@ -5,10 +5,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	awshttp "github.com/aws/aws-sdk-go-v2/aws/transport/http"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
 
@@ -70,12 +73,20 @@ type worker struct {
 
 // NewConcurrent returns an S3Concurrent client, which embeds an S3 client, and has a ConcurrencyManager
 // to allow the use of the GetAllConcurrently function. The GetAllConcurrently function can download multiple files
-// at once while retaining order. Ensure that the HTTP client option used to create the S3 client is configured to
-// make use of the specified maxConnections. Also, ensure that the S3 Client has access to maxBytes in memory
-// to avoid out of memory errors.
+// at once while retaining order. The S3 client is configured to make use of the specified maxConnections.
+// Also, ensure that the S3 Client has access to maxBytes in memory to avoid out of memory errors.
 func NewConcurrent(maxConnections, maxConnectionsPerRequest, maxBytes int) (S3Concurrent, error) {
 
-	s3Client, err := New()
+	// Create S3 client with custom HTTP client to facilitate higher concurrency.
+	var err error
+	htmlClientOption := func(options *s3.Options) {
+		httpClient := awshttp.NewBuildableClient().WithTransportOptions(func(t *http.Transport) {
+			t.MaxIdleConns = maxConnections
+			t.MaxIdleConnsPerHost = maxConnections
+		})
+		options.HTTPClient = httpClient
+	}
+	s3Client, err := NewWithOptions(htmlClientOption)
 	if err != nil {
 		return S3Concurrent{}, fmt.Errorf("error creating base S3 Client for S3Concurrent: %w", err)
 	}
