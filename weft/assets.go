@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"html/template"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -308,7 +307,7 @@ func loadAsset(file, prefix string) (*asset, error) {
 		return nil, err
 	}
 
-	a.b, err = ioutil.ReadAll(f)
+	a.b, err = io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}

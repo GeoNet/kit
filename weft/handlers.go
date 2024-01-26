@@ -5,7 +5,7 @@ import (
 	"compress/gzip"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"reflect"
 	"runtime"
@@ -345,13 +345,13 @@ func logRequest(r *http.Request) {
 	if logPostBody {
 		switch r.Method {
 		case http.MethodPost, http.MethodPut:
-			body, err := ioutil.ReadAll(r.Body)
+			body, err := io.ReadAll(r.Body)
 			if err != nil {
 				logger.Printf("Error reading request body") // This error doesn't affect we processing requests
 			} else {
 				logger.Printf("Body:%s", string(body))
 				// put read bytes back so the real handler can use it
-				r.Body = ioutil.NopCloser(bytes.NewBuffer(body))
+				r.Body = io.NopCloser(bytes.NewBuffer(body))
 			}
 		}
 	}

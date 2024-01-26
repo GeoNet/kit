@@ -1,3 +1,4 @@
+//go:build generate
 // +build generate
 
 package map180
@@ -6,11 +7,12 @@ import (
 	"bytes"
 	"database/sql"
 	"fmt"
+	"log"
+	"os"
+	"testing"
+
 	"github.com/GeoNet/kit/cfg"
 	_ "github.com/lib/pq"
-	"io/ioutil"
-	"log"
-	"testing"
 )
 
 /*
@@ -166,7 +168,7 @@ func TestIconNewZealand(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzicon.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzicon.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +227,7 @@ func TestIconNewZealandRaoulChathams(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzrcicon.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzrcicon.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -277,7 +279,7 @@ func TestIconNewZealandSouth(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzsicon.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzsicon.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -329,7 +331,7 @@ func TestNewZealand(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzmedium.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzmedium.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -389,7 +391,7 @@ func TestNewZealandRaoulChathams(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzrcmedium.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzrcmedium.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -441,7 +443,7 @@ func TestNewZealandSouth(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzsmedium.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzsmedium.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -499,7 +501,7 @@ func TestNewZealandRaoul(t *testing.T) {
 	}
 	out.WriteString("}\n")
 
-	err = ioutil.WriteFile("nzmap/nzrmedium.go", out.Bytes(), 0644)
+	err = os.WriteFile("nzmap/nzrmedium.go", out.Bytes(), 0644)
 	if err != nil {
 		t.Fatal(err)
 	}
