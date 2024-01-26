@@ -53,6 +53,17 @@ func NewWithMaxRetries(maxRetries int) (S3, error) {
 	return S3{client: client}, nil
 }
 
+// NewWithOptions returns the same as New(), but with the additional option functions
+// applied.
+func NewWithOptions(optFns ...func(*s3.Options)) (S3, error) {
+	cfg, err := getConfig()
+	if err != nil {
+		return S3{}, err
+	}
+	client := s3.NewFromConfig(cfg, optFns...)
+	return S3{client: client}, nil
+}
+
 // AddUploader creates an s3manager uploader and sets it to the S3 struct's
 // uploader field. This can be used for streaming uploading.
 func (s3 *S3) AddUploader() error {

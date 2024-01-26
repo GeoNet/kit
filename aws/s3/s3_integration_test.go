@@ -1,6 +1,3 @@
-//go:build localstack
-// +build localstack
-
 package s3
 
 import (
@@ -15,13 +12,14 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 const (
 	customAWSEndpoint = "http://localhost:4566"
-	awsRegion         = "ap-southeast-2"
+	testRegion        = "ap-southeast-2"
 	testBucket        = "test-bucket"
 
 	testObjectKey  = "test-key"
@@ -39,7 +37,7 @@ const (
 // helper functions
 
 func setAwsEnv() {
-	os.Setenv("AWS_REGION", awsRegion)
+	os.Setenv("AWS_REGION", testRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
 }
@@ -52,12 +50,12 @@ func setup() {
 	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpoint)
 
 	// create bucket
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"create-bucket",
 		"--bucket", testBucket,
 		"--create-bucket-configuration", fmt.Sprintf(
-			"{\"LocationConstraint\": \"%v\"}", awsRegion),
+			"{\"LocationConstraint\": \"%v\"}", testRegion),
 		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
 
 		panic(err)
@@ -67,7 +65,7 @@ func setup() {
 func teardown() {
 	setAwsEnv()
 
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3",
 		"rb", fmt.Sprintf("s3://%v", testBucket),
 		"--force",
@@ -84,7 +82,7 @@ func awsCmdPopulateBucket() {
 
 	testDataFilepath := filepath.Join(tmpDir, "data.txt")
 	testFile, _ := os.Create(testDataFilepath)
-	testFile.WriteString(testObjectData)
+	_, _ = testFile.WriteString(testObjectData)
 	testFile.Close()
 
 	// populate bucket
@@ -134,7 +132,7 @@ func awsCmdPutKeys(keys []string) {
 	for _, k := range keys {
 		testDataFilepath := filepath.Join(tmpDir, k)
 		testFile, _ := os.Create(testDataFilepath)
-		testFile.WriteString(testObjectData)
+		_, _ = testFile.WriteString(testObjectData)
 		testFile.Close()
 	}
 	// sync to bucket
@@ -171,7 +169,7 @@ func awsCmdMeta() awsMeta {
 	}
 
 	var metaData map[string]interface{}
-	json.Unmarshal(out, &metaData)
+	_ = json.Unmarshal(out, &metaData)
 	testLastModified, err := time.Parse(
 		"2006-01-02T15:04:05", metaData["LastModified"].(string)[0:19])
 	if err != nil {
@@ -259,6 +257,43 @@ func TestCreateS3ClientWithMaxRetries(t *testing.T) {
 	// ASSERT
 	assert.NotNil(t, err)
 }
+
+func TestCreateS3ClientWithOptions(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	// ACTION
+	s3Client, err := NewWithOptions(func(options *s3.Options) {
+		options.EndpointResolver = nil
+	})
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// ACTION
+	_, err = s3Client.ListAll(testBucket, "")
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	// ACTION
+	s3Client, err = NewWithOptions(func(options *s3.Options) {
+		options.Region = testRegion
+	})
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// ACTION
+	_, err = s3Client.ListAll(testBucket, "")
+
+	// ASSERT
+	assert.Nil(t, err)
+}
+
 func TestS3Get(t *testing.T) {
 	// ARRANGE
 	setup()
@@ -364,6 +399,7 @@ func TestS3GetContentSizeTime(t *testing.T) {
 	contentLength, lastModified, err := client.GetContentSizeTime(testBucket, testObjectKey)
 
 	// ASSERT
+	assert.Nil(t, err)
 	assert.Equal(t, meta.contentLength, contentLength)
 	assert.Equal(t, meta.lastModified, lastModified)
 }
