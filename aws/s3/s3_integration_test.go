@@ -381,6 +381,13 @@ func TestS3GetMeta(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, testMetaValue, meta[testMetaKey])
+
+	// for non existing object, we want an empty result instead of not found error
+	meta, err = client.GetMeta(testBucket, fmt.Sprintf("%s.%d", testObjectKey, time.Now().Unix()), "")
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Empty(t, meta)
 }
 
 func TestS3GetContentSizeTime(t *testing.T) {

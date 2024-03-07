@@ -216,11 +216,15 @@ func (s *S3) GetMeta(bucket, key, version string) (Meta, error) {
 
 	res, err := s.client.HeadObject(context.TODO(), &input)
 	if err != nil {
-		var nf *types.NotFound
-		if errors.As(err, &nf) {
-			return Meta{}, nil
+		if err != nil {
+			var ae smithy.APIError
+			if errors.As(err, &ae) {
+				if ae.ErrorCode() == "NotFound" {
+					return Meta{}, nil
+				}
+			}
+			return Meta{}, err
 		}
-		return Meta{}, err
 	}
 
 	return res.Metadata, nil
