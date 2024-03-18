@@ -243,7 +243,7 @@ func (s *S3) GetContentSizeTime(bucket, key string) (int64, time.Time, error) {
 	if err != nil {
 		return size, mt, err
 	}
-	return *o.ContentLength, *o.LastModified, nil
+	return aws.ToInt64(o.ContentLength), aws.ToTime(o.LastModified), nil
 }
 
 // Put puts the object in bucket using specified key.
