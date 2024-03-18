@@ -152,7 +152,7 @@ func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []type
 		return output
 	}
 	processFunc := func(input types.Object) HydratedFile {
-		buf := bytes.NewBuffer(make([]byte, 0, input.Size))
+		buf := bytes.NewBuffer(make([]byte, 0, int(*input.Size)))
 		key := aws.ToString(input.Key)
 		err := s.Get(bucket, key, version, buf)
 
@@ -222,9 +222,9 @@ func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan
 			// before returning to pool.
 			if len(w.input) > 0 {
 				input := <-w.input
-				w.manager.secureMemory(input.Size)
+				w.manager.secureMemory(int64(*input.Size))
 				w.output <- processor(input)
-				w.manager.releaseMemory(input.Size)
+				w.manager.releaseMemory(int64(*input.Size))
 			}
 			for len(w.output) > 0 {
 				time.Sleep(1 * time.Millisecond)
@@ -237,9 +237,9 @@ func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan
 
 			select {
 			case input := <-w.input: // 5.
-				w.manager.secureMemory(input.Size)
+				w.manager.secureMemory(int64(*input.Size))
 				w.output <- processor(input) // 6.
-				w.manager.releaseMemory(input.Size)
+				w.manager.releaseMemory(int64(*input.Size))
 			case <-ctx.Done(): // 9.
 				return
 			}

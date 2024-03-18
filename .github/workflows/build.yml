@@ -10,7 +10,7 @@ permissions:
   pull-requests: write
   id-token: write
 env:
-  IMAGE_LOCALSTACK: docker.io/localstack/localstack:2.2.0@sha256:5468c261527460a907417887f2e3e5dc23c901f84c045919ff390bd755cf6f3e
+  IMAGE_LOCALSTACK: docker.io/localstack/localstack:3.2.0
 jobs:
   go-build:
     if: ${{ contains(fromJSON('["workflow_call", "push", "pull_request"]'), github.event_name) && startsWith(github.repository, 'GeoNet/') != false }}
