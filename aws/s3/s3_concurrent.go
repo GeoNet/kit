@@ -139,13 +139,11 @@ func newConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *Conc
 	// the specified max number of bytes.
 	mp := make(chan int64, maxWorkers)
 	memoryChunkSize := int64(maxBytes / maxWorkers)
-	var memoryTotalSize int64 = 0
 	for i := 0; i < maxWorkers; i++ {
 		mp <- memoryChunkSize
-		memoryTotalSize += memoryChunkSize
 	}
 	cm.memoryPool = memoryPool{channel: mp}
-	cm.memoryTotalSize = memoryTotalSize
+	cm.memoryTotalSize = memoryChunkSize * int64(maxWorkers)
 	cm.memoryChunkSize = memoryChunkSize
 	cm.maxWorkersPerRequest = maxWorkersPerRequest
 
@@ -227,11 +225,11 @@ func (cm *ConcurrencyManager) secureMemory(objects []types.Object) {
 func (cm *ConcurrencyManager) calculateRequiredMemoryFor(objects []types.Object) int64 {
 	var totalMemory int64 = 0
 	for _, o := range objects {
-		var memoryForObject int64 = 0
-		for memoryForObject < aws.ToInt64(o.Size) {
-			memoryForObject += cm.memoryChunkSize
+		numberOfChunks := aws.ToInt64(o.Size) / cm.memoryChunkSize
+		if aws.ToInt64(o.Size)%cm.memoryChunkSize != 0 {
+			numberOfChunks++
 		}
-		totalMemory += memoryForObject
+		totalMemory += numberOfChunks * cm.memoryChunkSize
 	}
 	return totalMemory
 }
