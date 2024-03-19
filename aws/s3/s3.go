@@ -243,7 +243,7 @@ func (s *S3) GetContentSizeTime(bucket, key string) (int64, time.Time, error) {
 	if err != nil {
 		return size, mt, err
 	}
-	return o.ContentLength, *o.LastModified, nil
+	return aws.ToInt64(o.ContentLength), aws.ToTime(o.LastModified), nil
 }
 
 // Put puts the object in bucket using specified key.
@@ -330,10 +330,11 @@ func (s *S3) ListAll(bucket, prefix string) ([]string, error) {
 
 // Returns whether there is an object in bucket with specified prefix.
 func (s *S3) PrefixExists(bucket, prefix string) (bool, error) {
+	maxKeys := int32(1)
 	input := s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucket),
 		Prefix:  aws.String(prefix),
-		MaxKeys: 1,
+		MaxKeys: &maxKeys,
 	}
 	out, err := s.client.ListObjectsV2(context.TODO(), &input)
 	if err != nil {
@@ -368,7 +369,7 @@ func (s *S3) ListCommonPrefixes(bucket, prefix, delimiter string) ([]string, err
 			result = append(result, aws.ToString(o.Prefix))
 		}
 		// When result is not truncated, it means all common prefixes have been found.
-		if !out.IsTruncated {
+		if !(*out.IsTruncated) {
 			return result, nil
 		}
 		continuationToken = out.NextContinuationToken
@@ -381,7 +382,7 @@ func (s *S3) ListObjects(bucket, prefix string, max int32) ([]types.Object, erro
 	input := s3.ListObjectsV2Input{
 		Bucket:  aws.String(bucket),
 		Prefix:  aws.String(prefix),
-		MaxKeys: max,
+		MaxKeys: &max,
 	}
 
 	out, err := s.client.ListObjectsV2(context.TODO(), &input)
@@ -414,7 +415,7 @@ func (s *S3) ListAllObjects(bucket, prefix string) ([]types.Object, error) {
 		result = append(result, out.Contents...)
 
 		// When result is not truncated, it means all matching keys have been found.
-		if !out.IsTruncated {
+		if !(*out.IsTruncated) {
 			return result, nil
 		}
 		continuationToken = out.NextContinuationToken
