@@ -21,6 +21,8 @@ import (
 
 // General flow:
 
+// 0. To ensure memory usage at any one time doesn't get too big, enough memory to contain the size of all
+//    the S3 Objects requested is secured from the memory pool before starting the work.
 // 1. When the Process function is called, it creates a worker group and takes the specified max number of
 //    workers per request from the worker pool.
 // 2. The Process function returns the output channel which will have the desired HydratedFiles in order.
@@ -34,9 +36,8 @@ import (
 //    as it came in.
 // 5. The Process function receives work from the jobs channel. Each job is an S3 Object to download.
 // 6. FileProcessor defines a function that turns a job into a HydratedFile. This is supplied to the Process function.
-//    To ensure memory usage at any one time doesn't get too big, enough memory to contain the size of the
-//    S3 Object being downloaded is secured from the memory pool before starting the work.
-// 7. After a worker finishes a piece of work, it adds itself back to the roster, and releases the memory back to the pool.
+// 7. After a worker finishes a piece of work, it adds itself back to the roster, and releases the memory for that
+//    object back to the pool.
 // 8. The WorkerGroup's startOuput function acts a bridge, where it ranges over the reception channel, gets each
 //    worker output channel, takes the HydratedFile from it, and sends it to its output channel.
 // 9. When the jobs channel is closed, and the last piece of work has been added to the WorkerGroup,
@@ -51,10 +52,21 @@ type S3Concurrent struct {
 }
 
 type ConcurrencyManager struct {
-	memoryPool           chan int64
-	workerPool           chan *worker
+	memoryPool           memoryPool
+	workerPool           workerPool
+	memoryTotalSize      int64
 	memoryChunkSize      int64
 	maxWorkersPerRequest int
+}
+
+type memoryPool struct {
+	channel chan int64
+	mutex   sync.Mutex
+}
+
+type workerPool struct {
+	channel chan *worker
+	mutex   sync.Mutex
 }
 
 type FileProcessor func(types.Object) HydratedFile
@@ -118,7 +130,7 @@ func newConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *Conc
 			output:  make(chan HydratedFile, 1),
 		}
 	}
-	cm.workerPool = wp
+	cm.workerPool = workerPool{channel: wp}
 
 	// Create memory pool. This consists of a channel of "memory chunks",
 	// each of which is represented as an int64. The number of chunks and
@@ -130,7 +142,8 @@ func newConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *Conc
 	for i := 0; i < maxWorkers; i++ {
 		mp <- memoryChunkSize
 	}
-	cm.memoryPool = mp
+	cm.memoryPool = memoryPool{channel: mp}
+	cm.memoryTotalSize = memoryChunkSize * int64(maxWorkers)
 	cm.memoryChunkSize = memoryChunkSize
 	cm.maxWorkersPerRequest = maxWorkersPerRequest
 
@@ -151,6 +164,16 @@ func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []type
 		close(output)
 		return output
 	}
+
+	if s.manager.memoryTotalSize < s.manager.calculateRequiredMemoryFor(objects) {
+		output := make(chan HydratedFile, 1)
+		output <- HydratedFile{Error: fmt.Errorf("error: bytes requested greater than max allowed by server (%v)", s.manager.memoryTotalSize)}
+		close(output)
+		return output
+	}
+	// Secure memory for all objects upfront.
+	s.manager.secureMemory(objects) // 0.
+
 	processFunc := func(input types.Object) HydratedFile {
 		buf := bytes.NewBuffer(make([]byte, 0, int(*input.Size)))
 		key := aws.ToString(input.Key)
@@ -165,33 +188,58 @@ func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []type
 	return s.manager.Process(processFunc, objects)
 }
 
-// getWorker retrieves a worker from the manager's worker pool.
-func (cm *ConcurrencyManager) getWorker() *worker {
-	return <-cm.workerPool
+// getWorker retrieves a number of workers from the manager's worker pool.
+func (cm *ConcurrencyManager) getWorkers(number int) []*worker {
+	cm.workerPool.mutex.Lock()
+	defer cm.workerPool.mutex.Unlock()
+
+	workers := make([]*worker, number)
+	for i := 0; i < number; i++ {
+		workers[i] = <-cm.workerPool.channel
+	}
+	return workers
 }
 
 // returnWorker returns a worker to the manager's worker pool.
 func (cm *ConcurrencyManager) returnWorker(w *worker) {
-	cm.workerPool <- w
+	cm.workerPool.channel <- w
 }
 
-// secureMemory secures enough memory from the manager's memory pool
-// to fit the specified size.
-func (cm *ConcurrencyManager) secureMemory(size int64) {
+// secureMemory secures the memory needed for the given objects
+// from the manager's memory pool.
+func (cm *ConcurrencyManager) secureMemory(objects []types.Object) {
+	cm.memoryPool.mutex.Lock()
+	defer cm.memoryPool.mutex.Unlock()
 
-	var securedMemory int64 = 0
-	for securedMemory < size {
-		securedMemory += <-cm.memoryPool
+	for _, o := range objects {
+		var securedMemory int64 = 0
+		for securedMemory < aws.ToInt64(o.Size) {
+			securedMemory += <-cm.memoryPool.channel
+		}
 	}
+}
+
+// calculateRequiredMemoryFor calculates the amount of memory required to contain
+// the given objects based on size. Useful as a precheck before securing to
+// ensure there's enough in the pool to fulfill the request.
+func (cm *ConcurrencyManager) calculateRequiredMemoryFor(objects []types.Object) int64 {
+	var totalMemory int64 = 0
+	for _, o := range objects {
+		numberOfChunks := aws.ToInt64(o.Size) / cm.memoryChunkSize
+		if aws.ToInt64(o.Size)%cm.memoryChunkSize != 0 {
+			numberOfChunks++
+		}
+		totalMemory += numberOfChunks * cm.memoryChunkSize
+	}
+	return totalMemory
 }
 
 // releaseMemory returns the specified amount of memory back to
 // the manager's memory pool.
 func (cm *ConcurrencyManager) releaseMemory(size int64) {
-
 	memoryToRelease := size
 	for memoryToRelease > 0 {
-		cm.memoryPool <- cm.memoryChunkSize
+		cm.memoryPool.channel <- cm.memoryChunkSize
 		memoryToRelease -= cm.memoryChunkSize
 	}
 }
@@ -222,7 +270,6 @@ func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan
 			// before returning to pool.
 			if len(w.input) > 0 {
 				input := <-w.input
-				w.manager.secureMemory(int64(*input.Size))
 				w.output <- processor(input)
 				w.manager.releaseMemory(int64(*input.Size))
 			}
@@ -237,7 +284,6 @@ func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan
 
 			select {
 			case input := <-w.input: // 5.
-				w.manager.secureMemory(int64(*input.Size))
 				w.output <- processor(input) // 6.
 				w.manager.releaseMemory(int64(*input.Size))
 			case <-ctx.Done(): // 9.
@@ -269,8 +315,8 @@ func (cm *ConcurrencyManager) newWorkerGroup(ctx context.Context, processor File
 	workerGroup.group.Add(size)
 
 	go func() {
-		for i := 0; i < size; i++ {
-			w := cm.getWorker()
+		workers := cm.getWorkers(size)
+		for _, w := range workers {
 			w.start(ctx, processor, workerGroup.roster, workerGroup.group)
 		}
 	}()
