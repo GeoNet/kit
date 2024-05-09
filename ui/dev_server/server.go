@@ -87,18 +87,33 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 			log.Println(err)
 		}
 	case "/geonetheaderbasic":
-		links := []header_basic.HeaderBasicLink{
-			{
+		items := []header_basic.HeaderBasicItem{
+			header_basic.HeaderBasicLink{
 				Title:      "Test Home",
 				URL:        "https://www.geonet.org.nz",
 				IsExternal: false,
 			},
-			{
+			header_basic.HeaderBasicDropdown{
+				Title: "Test Dropdown",
+				Links: []header_basic.HeaderBasicLink{
+					{
+						Title:      "Test Dropdown External",
+						URL:        "https://www.geonet.org.nz",
+						IsExternal: true,
+					},
+					{
+						Title:      "Test Dropdown Not External",
+						URL:        "https://www.geonet.org.nz",
+						IsExternal: false,
+					},
+				},
+			},
+			header_basic.HeaderBasicLink{
 				Title:      "Test External",
 				URL:        "https://www.geonet.org.nz",
 				IsExternal: true,
 			},
-			{
+			header_basic.HeaderBasicLink{
 				Title:      "Test Not External",
 				URL:        "https://www.geonet.org.nz",
 				IsExternal: false,
@@ -106,7 +121,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		}
 		config := header_basic.HeaderBasicConfig{
 			Logo:  logo,
-			Links: links,
+			Items: items,
 		}
 		leadingHTML += `<link rel="stylesheet" href="/local/header_basic.css">`
 

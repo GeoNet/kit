@@ -12,21 +12,40 @@
         </button>
         <div class="navbar-collapse collapse" id="navbarSupportedContent">
             <ul class="navbar-nav ms-auto">
-
-                {{range $index,$link := .Links }}
+                {{range $index,$item := .Items }}
+                {{ if eq (len $item.GetLinks) 1 }}
+                {{ $link := index $item.GetLinks 0 }}
                 <li class="nav-item">
                     <a
-                        class="nav-link{{if $link.IsExternal}} external-link{{end}}"
-                        href="{{$link.URL}}"
-                        rel="{{if $link.IsExternal}}external noopener noreferrer{{end}}"
-                        title="{{$link.Title}}"
-                        target="{{if $link.IsExternal}}_blank{{else}}_self{{end}}"
+                        class="nav-link{{if $link.External}} external-link{{end}}"
+                        href="{{$link.GetURL}}"
+                        rel="{{if $link.External}}external noopener noreferrer{{end}}"
+                        title="{{$link.GetTitle}}"
+                        target="{{if $link.External}}_blank{{else}}_self{{end}}"
                     >
                         {{if eq $index 0}}
                         <span class="d-inline-flex align-items-center">{{$.HomeIcon}}</span>{{end}}
-                        {{$link.Title}}
+                        {{$link.GetTitle}}
                     </a>
                 </li>
+                {{ else }}
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown" data-target="#" role="button" aria-haspopup="true" aria-expanded="false" title={{$item.Title}}> {{$item.Title}} </a>
+                    <div class="dropdown-menu">
+                        {{range $_,$link := $item.GetLinks}}
+                        <a 
+                            class="dropdown-item{{if $link.External}} external-link{{end}}" 
+                            href={{$link.URL}}
+                            rel="{{if $link.External}}external noopener noreferrer{{end}}"
+                            title="{{$link.GetTitle}}"
+                            target="{{if $link.External}}_blank{{else}}_self{{end}}"
+                        > 
+                            {{$link.Title}} 
+                        </a>
+                        {{end}}
+                    </div>
+                </li>
+                {{ end }}
                 {{end}}
             </ul>
         </div>
