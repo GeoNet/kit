@@ -12,11 +12,12 @@ import (
 Versions of the input files are created by editing the source file and changing
 the version.  The validating them using the XSDs:
 
-    xmllint --noout --schema sc3ml_0.7.xsd 2015p768477_0.7.xml
-    xmllint --noout --schema sc3ml_0.8.xsd 2015p768477_0.8.xml
-    xmllint --noout --schema sc3ml_0.9.xsd 2015p768477_0.9.xml
-    xmllint --noout --schema sc3ml_0.10.xsd 2015p768477_0.10.xml
-	xmllint --noout --schema sc3ml_0.11.xsd 2015p768477_0.11.xml
+	    xmllint --noout --schema sc3ml_0.7.xsd 2015p768477_0.7.xml
+	    xmllint --noout --schema sc3ml_0.8.xsd 2015p768477_0.8.xml
+	    xmllint --noout --schema sc3ml_0.9.xsd 2015p768477_0.9.xml
+	    xmllint --noout --schema sc3ml_0.10.xsd 2015p768477_0.10.xml
+		xmllint --noout --schema sc3ml_0.11.xsd 2015p768477_0.11.xml
+		xmllint --noout --schema sc3ml_0.13.xsd 2024p344188_0.13.xml
 */
 func TestUnmarshal(t *testing.T) {
 	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml", "2015p768477_0.11.xml"} {
@@ -383,6 +384,87 @@ func TestDecodeSC3ML07CMT(t *testing.T) {
 
 		if e.PreferredMagnitude.StationCount != 19 {
 			t.Errorf("%s: Expected StationCount 19 gor %d", input, e.PreferredMagnitude.StationCount)
+		}
+	}
+}
+
+func TestUnmarshall13(t *testing.T) {
+	for _, input := range []string{"2024p344188_0.13.xml"} {
+		b, err := os.ReadFile("testdata/" + input)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var s sc3ml.Seiscomp
+
+		if err = sc3ml.Unmarshal(b, &s); err != nil {
+			t.Errorf("%s: %s", input, err.Error())
+		}
+
+		if len(s.EventParameters.Events) != 1 {
+			t.Errorf("should have found 1 event for %s.", input)
+		}
+
+		e := s.EventParameters.Events[0]
+
+		if e.PublicID != "2024p344188" {
+			t.Errorf("%s: expected publicID 2024p344188 got %s", input, e.PublicID)
+		}
+
+		if e.Type != "other" {
+			t.Errorf("%s: expected type other got %s", input, e.Type)
+		}
+
+		if e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano) != "2024-05-07T08:24:09.853066Z" {
+			t.Errorf("%s: expected 2024-05-07T08:24:09.853066Z, got %s", input, e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano))
+		}
+
+		if e.PreferredOrigin.Latitude.Value != -38.62063477317881 {
+			t.Errorf("%s: Latitude expected -38.62063477317881 got %f", input, e.PreferredOrigin.Latitude.Value)
+		}
+
+		if e.PreferredOrigin.Longitude.Value != 176.2128674424493 {
+			t.Errorf("%s: Longitude expected 176.2128674424493 got %f", input, e.PreferredOrigin.Longitude.Value)
+		}
+
+		if e.PreferredOrigin.Depth.Value != 5.1162109375 {
+			t.Errorf("%s: Depth expected 5.1162109375 got %f", input, e.PreferredOrigin.Depth.Value)
+		}
+
+		if e.PreferredOrigin.MethodID != "NonLinLoc" {
+			t.Errorf("%s: MethodID expected NonLinLoc got %s", input, e.PreferredOrigin.MethodID)
+		}
+
+		if e.PreferredOrigin.EarthModelID != "nz3drx" {
+			t.Errorf("%s: EarthModelID expected nz3drx got %s", input, e.PreferredOrigin.EarthModelID)
+		}
+
+		if e.PreferredOrigin.Quality.AzimuthalGap != 76.05025526639076 {
+			t.Errorf("%s: AzimuthalGap expected 76.05025526639076 got %f", input, e.PreferredOrigin.Quality.AzimuthalGap)
+		}
+
+		if e.PreferredOrigin.Quality.MinimumDistance != 0.0752301603770797 {
+			t.Errorf("%s: MinimumDistance expected 0.0752301603770797 got %f", input, e.PreferredOrigin.Quality.MinimumDistance)
+		}
+
+		if e.PreferredOrigin.Quality.UsedPhaseCount != 10 {
+			t.Errorf("%s: UsedPhaseCount expected 10 got %d", input, e.PreferredOrigin.Quality.UsedPhaseCount)
+		}
+
+		if e.PreferredOrigin.Quality.UsedStationCount != 10 {
+			t.Errorf("%s: UsedStationCount expected 10 got %d", input, e.PreferredOrigin.Quality.UsedStationCount)
+		}
+
+		if e.PreferredMagnitude.Magnitude.Value != 1.4089917745797527 {
+			t.Errorf("%s: Magnitude expected 1.4089917745797527 got %f", input, e.PreferredMagnitude.Magnitude.Value)
+		}
+
+		if e.PreferredMagnitude.Type != "M" {
+			t.Errorf("%s: Magnitude type expected M got %s", input, e.PreferredMagnitude.Type)
+		}
+
+		if e.PreferredMagnitude.StationCount != 5 {
+			t.Errorf("%s: Expected StationCount 5 gor %d", input, e.PreferredMagnitude.StationCount)
 		}
 	}
 }
