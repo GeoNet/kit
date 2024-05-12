@@ -12,11 +12,13 @@ import (
 Versions of the input files are created by editing the source file and changing
 the version.  The validating them using the XSDs:
 
-	    xmllint --noout --schema sc3ml_0.7.xsd 2015p768477_0.7.xml
+	    xmllint --noout --schema sc3ml_0.6.xsd 2801727_0.6.xml
+		xmllint --noout --schema sc3ml_0.7.xsd 2015p768477_0.7.xml
 	    xmllint --noout --schema sc3ml_0.8.xsd 2015p768477_0.8.xml
 	    xmllint --noout --schema sc3ml_0.9.xsd 2015p768477_0.9.xml
 	    xmllint --noout --schema sc3ml_0.10.xsd 2015p768477_0.10.xml
 		xmllint --noout --schema sc3ml_0.11.xsd 2015p768477_0.11.xml
+		xmllint --noout --schema sc3ml_0.12.xsd 2024p344188_0.12.xml
 		xmllint --noout --schema sc3ml_0.13.xsd 2024p344188_0.13.xml
 */
 func TestUnmarshal(t *testing.T) {
@@ -388,8 +390,89 @@ func TestDecodeSC3ML07CMT(t *testing.T) {
 	}
 }
 
-func TestUnmarshall13(t *testing.T) {
-	for _, input := range []string{"2024p344188_0.13.xml"} {
+func TestUnmarshall06(t *testing.T) {
+	for _, input := range []string{"2801727_0.6.xml"} {
+		b, err := os.ReadFile("testdata/" + input)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var s sc3ml.Seiscomp
+
+		if err = sc3ml.Unmarshal(b, &s); err != nil {
+			t.Errorf("%s: %s", input, err.Error())
+		}
+
+		if len(s.EventParameters.Events) != 1 {
+			t.Errorf("should have found 1 event for %s.", input)
+		}
+
+		e := s.EventParameters.Events[0]
+
+		if e.PublicID != "2801727" {
+			t.Errorf("%s: expected publicID 2801727 got %s", input, e.PublicID)
+		}
+
+		if e.Type != "outside of network interest" {
+			t.Errorf("%s: expected type other got %s", input, e.Type)
+		}
+
+		if e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano) != "2007-10-01T13:35:26.69Z" {
+			t.Errorf("%s: expected 2007-10-01T13:35:26.69Z, got %s", input, e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano))
+		}
+
+		if e.PreferredOrigin.Latitude.Value != -49.10301 {
+			t.Errorf("%s: Latitude expected -49.10301 got %f", input, e.PreferredOrigin.Latitude.Value)
+		}
+
+		if e.PreferredOrigin.Longitude.Value != 164.175 {
+			t.Errorf("%s: Longitude expected 164.175 got %f", input, e.PreferredOrigin.Longitude.Value)
+		}
+
+		if e.PreferredOrigin.Depth.Value != 10 {
+			t.Errorf("%s: Depth expected 10 got %f", input, e.PreferredOrigin.Depth.Value)
+		}
+
+		if e.PreferredOrigin.MethodID != "GROPE" {
+			t.Errorf("%s: MethodID expected GROPE got %s", input, e.PreferredOrigin.MethodID)
+		}
+
+		if e.PreferredOrigin.EarthModelID != "nz1dr" {
+			t.Errorf("%s: EarthModelID expected nz1dr got %s", input, e.PreferredOrigin.EarthModelID)
+		}
+
+		if e.PreferredOrigin.Quality.AzimuthalGap != 334 {
+			t.Errorf("%s: AzimuthalGap expected 334 got %f", input, e.PreferredOrigin.Quality.AzimuthalGap)
+		}
+
+		if e.PreferredOrigin.Quality.MinimumDistance != 3.39 {
+			t.Errorf("%s: MinimumDistance expected 3.39 got %f", input, e.PreferredOrigin.Quality.MinimumDistance)
+		}
+
+		if e.PreferredOrigin.Quality.UsedPhaseCount != 14 {
+			t.Errorf("%s: UsedPhaseCount expected 14 got %d", input, e.PreferredOrigin.Quality.UsedPhaseCount)
+		}
+
+		if e.PreferredOrigin.Quality.UsedStationCount != 10 {
+			t.Errorf("%s: UsedStationCount expected 10 got %d", input, e.PreferredOrigin.Quality.UsedStationCount)
+		}
+
+		if e.PreferredMagnitude.Magnitude.Value != 4.9 {
+			t.Errorf("%s: Magnitude expected 4.9 got %f", input, e.PreferredMagnitude.Magnitude.Value)
+		}
+
+		if e.PreferredMagnitude.Type != "Mw" {
+			t.Errorf("%s: Magnitude type expected Mw got %s", input, e.PreferredMagnitude.Type)
+		}
+
+		if e.PreferredMagnitude.StationCount != 0 {
+			t.Errorf("%s: Expected StationCount 0 gor %d", input, e.PreferredMagnitude.StationCount)
+		}
+	}
+}
+
+func TestUnmarshall12_13(t *testing.T) {
+	for _, input := range []string{"2024p344188_0.12.xml", "2024p344188_0.13.xml"} {
 		b, err := os.ReadFile("testdata/" + input)
 		if err != nil {
 			t.Fatal(err)
