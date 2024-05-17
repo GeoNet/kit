@@ -9,41 +9,19 @@ permissions:
   contents: write
   pull-requests: write
   id-token: write
-env:
-  IMAGE_LOCALSTACK: docker.io/localstack/localstack:3.2.0
 jobs:
-  go-build:
-    if: ${{ contains(fromJSON('["workflow_call", "push", "pull_request"]'), github.event_name) && startsWith(github.repository, 'GeoNet/') != false }}
-    uses: GeoNet/Actions/.github/workflows/reusable-go-build-smoke-test.yml@main
-  gofmt:
-    if: ${{ contains(fromJSON('["workflow_call", "push", "pull_request"]'), github.event_name) && startsWith(github.repository, 'GeoNet/') != false }}
-    uses: GeoNet/Actions/.github/workflows/reusable-gofmt.yml@main
-  golangci-lint:
-    if: ${{ contains(fromJSON('["workflow_call", "push", "pull_request"]'), github.event_name) && startsWith(github.repository, 'GeoNet/') != false }}
-    uses: GeoNet/Actions/.github/workflows/reusable-golangci-lint.yml@main
-  go-vet:
-    if: ${{ contains(fromJSON('["workflow_call", "push", "pull_request"]'), github.event_name) && startsWith(github.repository, 'GeoNet/') != false }}
-    uses: GeoNet/Actions/.github/workflows/reusable-go-vet.yml@main
-  go-test:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@c85c95e3d7251135ab7dc9ce3241c5835cc595a9 # v3.5.3
-      - uses: actions/setup-go@fac708d6674e30b6ba41289acaab6d4b75aa0753 # v4.0.1
-        with:
-          go-version-file: go.mod
-          cache-dependency-path: go.sum
-          check-latest: true
-      - name: setup
-        run: |
-          docker run --name localstack -d --rm -p 4566:4566 -p 4510-4559:4510-4559 "$IMAGE_LOCALSTACK"
-          echo "waiting for localstack to be ready"
-          until curl -v localhost:4566; do
-            sleep 1s
-          done
-          echo "waiting for localstack service status to be ready"
-          until docker exec localstack /opt/code/localstack/bin/localstack status services; do
-            sleep 1s
-          done
-      - name: test
-        run: |
-          go test -v ./... --tags localstack
+  build-app:
+    uses: GeoNet/Actions/.github/workflows/reusable-go-apps.yml@main
+    with:
+      testSetup: |
+        docker run --name localstack -d --rm -p 4566:4566 -p 4510-4559:4510-4559 docker.io/localstack/localstack:3.2.0
+        echo "waiting for localstack to be ready"
+        until curl -v localhost:4566; do
+          sleep 1s
+        done
+        echo "waiting for localstack service status to be ready"
+        until docker exec localstack /opt/code/localstack/bin/localstack status services; do
+          sleep 1s
+        done
+      goTestExtraArgs: --tags localstack
+
