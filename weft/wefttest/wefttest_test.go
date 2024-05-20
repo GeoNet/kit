@@ -17,7 +17,7 @@ const (
 	maxAge86400 = "max-age=86400"
 )
 
-//expected csp header for normal responses
+// expected csp header for normal responses
 var normalCspHeader = weft.ReturnDefaultCSP()
 
 // test server and handlers for running the tests
@@ -138,7 +138,8 @@ func TestExtraParameter(t *testing.T) {
 
 // TestFuzzRoutes tests routes with fuzzed query parameters.
 // Fuzzing takes a while to run.  Fuzz tests can be excluded during other testing with:
-//    go test -v -run 'Test[^Fuzz]'
+//
+//	go test -v -run 'Test[^Fuzz]'
 func TestFuzzQuery(t *testing.T) {
 	setup()
 	defer teardown()

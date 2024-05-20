@@ -1,3 +1,4 @@
+//go:build link
 // +build link
 
 package sl

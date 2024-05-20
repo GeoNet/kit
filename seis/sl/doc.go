@@ -10,15 +10,14 @@
 //
 // An example Seedlink application can be as simple as:
 //
-//  if err := sl.NewSLink().Collect(func(seq string, data []byte) (bool, error) {
-//	   //... process miniseed data
+//	 if err := sl.NewSLink().Collect(func(seq string, data []byte) (bool, error) {
+//		   //... process miniseed data
 //
-//         return false, nil
-//  }); err != nil {
-//          log.Fatal(err)
-//  }
+//	        return false, nil
+//	 }); err != nil {
+//	         log.Fatal(err)
+//	 }
 //
 // A state mechanism is available for the initial connection, although it is the clients responsibility to
 // periodically maintain its content.
-//
 package sl

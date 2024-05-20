@@ -9,11 +9,12 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"github.com/golang/groupcache"
 	"log"
 	"regexp"
 	"strconv"
 	"strings"
+
+	"github.com/golang/groupcache"
 )
 
 const (
@@ -76,7 +77,7 @@ for land and lake layers.  region must be a valid Region.
 
 Example:
 
-   wm, err = map180.Init(db, map180.Region(`newzealand`), 256000000)
+	wm, err = map180.Init(db, map180.Region(`newzealand`), 256000000)
 */
 func Init(d *sql.DB, region Region, cacheBytes int64) (*Map180, error) {
 	w := &Map180{}
@@ -331,38 +332,36 @@ func (w *Map180) Map(boundingBox string, width int, pts Points, insetBbox string
 /*
 MapRaw returns a Raw struct which can be used for drawing SVG maps e.g.,
 
-    raw, err := wm.MapRaw(bbox, width)
-    b := bytes.Buffer
-    b.WriteString(`<?xml version="1.0"?>`)
-    b.WriteString(fmt.Sprintf("<svg  viewBox=\"0 0 %d %d\"  xmlns=\"http://www.w3.org/2000/svg\">",
-    raw.Width, raw.Height))
-    b.WriteString(fmt.Sprintf("<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" style=\"fill: azure\"/>", raw.Width, raw.Height))
-    b.WriteString(fmt.Sprintf("<path style=\"fill: wheat; stroke-width: 1; stroke-linejoin: round; stroke: lightslategrey\" d=\"%s\"/>", raw.Land))
-    b.WriteString(fmt.Sprintf("<path style=\"fill: azure; stroke-width: 1; stroke-linejoin: round; stroke: lightslategrey\" d=\"%s\"/>", raw.Lakes))
-    b.WriteString("</svg>")
+	raw, err := wm.MapRaw(bbox, width)
+	b := bytes.Buffer
+	b.WriteString(`<?xml version="1.0"?>`)
+	b.WriteString(fmt.Sprintf("<svg  viewBox=\"0 0 %d %d\"  xmlns=\"http://www.w3.org/2000/svg\">",
+	raw.Width, raw.Height))
+	b.WriteString(fmt.Sprintf("<rect x=\"0\" y=\"0\" width=\"%d\" height=\"%d\" style=\"fill: azure\"/>", raw.Width, raw.Height))
+	b.WriteString(fmt.Sprintf("<path style=\"fill: wheat; stroke-width: 1; stroke-linejoin: round; stroke: lightslategrey\" d=\"%s\"/>", raw.Land))
+	b.WriteString(fmt.Sprintf("<path style=\"fill: azure; stroke-width: 1; stroke-linejoin: round; stroke: lightslategrey\" d=\"%s\"/>", raw.Lakes))
+	b.WriteString("</svg>")
 
 The other properties can be used to scale and translate for drawing on the map e.g.,
 
-    type point struct {
-	latitude, longitude float64
-	x, y                float64
-    }
+	    type point struct {
+		latitude, longitude float64
+		x, y                float64
+	    }
 
-    // create pts []point with x,y, set to EPSG3857 and latitude longitude EPSG4326
-    // range of pts ...
+	    // create pts []point with x,y, set to EPSG3857 and latitude longitude EPSG4326
+	    // range of pts ...
 
-    switch raw.CrossesCentral && p.longitude > -180.0 && p.longitude < 0.0 {
-	case true:
-		p.x = (p.x + map180.Width3857 - raw.LLX) * raw.DX
-		p.y = (p.y - math.Abs(raw.YShift)) * raw.DX
-	case false:
-		p.x = (p.x - math.Abs(raw.XShift)) * raw.DX
-		p.y = (p.y - math.Abs(raw.YShift)) * raw.DX
-    }
+	    switch raw.CrossesCentral && p.longitude > -180.0 && p.longitude < 0.0 {
+		case true:
+			p.x = (p.x + map180.Width3857 - raw.LLX) * raw.DX
+			p.y = (p.y - math.Abs(raw.YShift)) * raw.DX
+		case false:
+			p.x = (p.x - math.Abs(raw.XShift)) * raw.DX
+			p.y = (p.y - math.Abs(raw.YShift)) * raw.DX
+	    }
 
-    // draw p on SVG.
-
-
+	    // draw p on SVG.
 */
 func (w *Map180) MapRaw(boundingBox string, width int) (mr Raw, err error) {
 	var b bbox

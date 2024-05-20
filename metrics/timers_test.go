@@ -1,9 +1,10 @@
 package metrics_test
 
 import (
-	"github.com/GeoNet/kit/metrics"
 	"testing"
 	"time"
+
+	"github.com/GeoNet/kit/metrics"
 )
 
 func TestTimers(t *testing.T) {
