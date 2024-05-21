@@ -4,20 +4,19 @@ There are no external dependencies.
 
 Calling code can draw markers on the maps as required.  The closing </svg> tag must also be added.
 
-  var b bytes.Buffer
-  var pts nzmap.Points
+	  var b bytes.Buffer
+	  var pts nzmap.Points
 
-  pts.Medium(b)
+	  pts.Medium(b)
 
-	for _, p := range pts {
-		if p.Visible() {
-			b.WriteString(fmt.Sprintf("<path d=\"M%d %d l5 0 l-5 -8 l-5 8 Z\" stroke-width=\"0\" fill=\"blue\" opacity=\"0.7\"></path>",
-			p.X(), p.Y()))
+		for _, p := range pts {
+			if p.Visible() {
+				b.WriteString(fmt.Sprintf("<path d=\"M%d %d l5 0 l-5 -8 l-5 8 Z\" stroke-width=\"0\" fill=\"blue\" opacity=\"0.7\"></path>",
+				p.X(), p.Y()))
+			}
 		}
-	}
 
- b.WriteString("</svg>")
-
+	 b.WriteString("</svg>")
 */
 package nzmap
 

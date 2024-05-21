@@ -1,10 +1,11 @@
 package cfg_test
 
 import (
-	"github.com/GeoNet/kit/cfg"
 	"os"
 	"strings"
 	"testing"
+
+	"github.com/GeoNet/kit/cfg"
 )
 
 func TestPostgresEnv(t *testing.T) {

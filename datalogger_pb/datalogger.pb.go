@@ -9,10 +9,11 @@
 package datalogger_pb
 
 import (
-	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
-	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	reflect "reflect"
 	sync "sync"
+
+	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
+	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 )
 
 const (
@@ -22,7 +23,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-//A structure containing all the devices listed in the network repo.
+// A structure containing all the devices listed in the network repo.
 type Devices struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -16,7 +16,7 @@ import (
 // under /work/seismcompml07-test and make sure basic quake facts
 // are not zero values.  Run using:
 //
-//     go test -tags=integration
+//	go test -tags=integration
 func TestUnmarshalIntegration(t *testing.T) {
 	var s sc3ml.Seiscomp
 	var err error
