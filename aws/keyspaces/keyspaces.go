@@ -54,6 +54,9 @@ func New(host, certPath string) (Keyspaces, error) {
 	cluster := gocql.NewCluster(host)
 	ksClient.cluster = cluster
 
+	// Set port.
+	cluster.Port = 9142
+
 	// When host is localhost, for example in a test environment, we don't need these settings.
 	if host != "localhost" {
 		authenticator, err := generateAuthenticator()
@@ -68,8 +71,11 @@ func New(host, certPath string) (Keyspaces, error) {
 		}
 		// Override default Consistency to LocalQuorum
 		cluster.Consistency = gocql.LocalQuorum
-		// Disable initial host lookup
-		cluster.DisableInitialHostLookup = true
+
+		// Enable initial host lookup.
+		// see https://github.com/gocql/gocql/issues/915
+		// When set to true, we were seeing this error intermittently.
+		cluster.DisableInitialHostLookup = false
 	}
 
 	// Create session.
