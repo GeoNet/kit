@@ -54,11 +54,12 @@ func New(host, certPath string) (Keyspaces, error) {
 	cluster := gocql.NewCluster(host)
 	ksClient.cluster = cluster
 
-	// Set port.
-	cluster.Port = 9142
-
 	// When host is localhost, for example in a test environment, we don't need these settings.
 	if host != "localhost" {
+
+		// Set port.
+		cluster.Port = 9142
+
 		authenticator, err := generateAuthenticator()
 		if err != nil {
 			return ksClient, err
