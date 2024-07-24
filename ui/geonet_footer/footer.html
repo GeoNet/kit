@@ -2,17 +2,17 @@
 <div class="container">
     <div class="footer">
         <div class="row d-flex">
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/about">About&nbsp;GeoNet</a></div>
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/contact">Contact{{if .Basic}}&nbsp;GeoNet{{end}}</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/about">About&nbsp;GeoNet</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/contact">Contact{{if .Basic}}&nbsp;GeoNet{{end}}</a></div>
             {{if not .Basic}}
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/ngmc">NGMC</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/ngmc">NGMC</a></div>
             {{end}}
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/policy">{{if .Basic}}GeoNet&nbsp;{{end}}Data&nbsp;Policy</a></div>
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/disclaimer">{{if .Basic}}GeoNet&nbsp;{{end}}Disclaimer</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/policy">{{if .Basic}}GeoNet&nbsp;{{end}}Data&nbsp;Policy</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/disclaimer">{{if .Basic}}GeoNet&nbsp;{{end}}Disclaimer</a></div>
             <div class="col-xs-12 col-md"><a href="https://gns.cri.nz/Home/Contact-Us/Privacy-Policy" target="_blank" rel="external noopener noreferrer">{{if .Basic}}GeoNet&nbsp;{{end}}Privacy</a></div>
             {{if not .Basic}}
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/sponsors">Sponsors</a></div>
-            <div class="col-xs-12 col-md"><a href="https://www.geonet.org.nz/reviews">Reviews&nbsp;Plans&nbsp;&amp;&nbsp;Reports</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/sponsors">Sponsors</a></div>
+            <div class="col-xs-12 col-md"><a href="{{.Origin}}/reviews">Reviews&nbsp;Plans&nbsp;&amp;&nbsp;Reports</a></div>
             {{end}}
             <div id="appLinkContainer" class="col-12 d-md-none"><a id="appLink" href="" rel="external noopener noreferrer">Get&nbsp;our&nbsp;GeoNet&nbsp;App
                 <i id="osIcon" aria-hidden="true"></i></a>
@@ -22,7 +22,7 @@
     <div id="footer" class="footer">
         <div class="row">
             <div class="col-12 d-md-none pt-1 pb-4">
-                <a href="https://www.geonet.org.nz">
+                <a href="{{.Origin}}/">
                     {{.GeoNetLogo}}
                 </a>
             </div>
@@ -52,7 +52,7 @@
         {{end}}
         <div class="row">
             <div class="col-md-3 d-none d-md-flex justify-content-center">
-                    <a href="https://www.geonet.org.nz">
+                    <a href="{{.Origin}}/">
                         {{.GeoNetLogo}}
                     </a>
             </div>

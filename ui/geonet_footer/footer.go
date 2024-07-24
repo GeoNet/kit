@@ -23,6 +23,11 @@ var nhcLogo template.HTML
 var nhcLogoStacked template.HTML
 
 type FooterConfig struct {
+	// Whether to use relative links in footer. If false, uses www.geonet.org.nz.
+	UseRelativeLinks bool
+	// The origin to be used at the beginning of GeoNet links in the footer.
+	// Cannot be changed.
+	Origin string
 	// The GeoNet, GNS, and NHC logos are fixed and cannot be changed.
 	GeoNetLogo     template.HTML
 	GnsLogo        template.HTML
@@ -52,6 +57,11 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 	config.GnsLogo = gnsLogo
 	config.NhcLogo = nhcLogo
 	config.NhcLogoStacked = nhcLogoStacked
+
+	config.Origin = "https://www.geonet.org.nz"
+	if config.UseRelativeLinks {
+		config.Origin = ""
+	}
 
 	if err := footerTmpl.ExecuteTemplate(&b, "footer", config); err != nil {
 		return contents, err
