@@ -12,3 +12,6 @@ Run `./copy.sh && go build && ./dev_server`
 
 The `copy` script copies assets from the UI packages into the Dev Server's `assets/local` folder. Add any new files
 that are needed for the UI fragments to this script, as well as the wrapper HTML in `server.go`
+
+Then in the browser navigate to, for example:
+`localhost:8080/geonetfooter`

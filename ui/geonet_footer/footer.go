@@ -16,18 +16,23 @@ var geonetLogo template.HTML
 //go:embed images/gns_logo.svg
 var gnsLogo template.HTML
 
-//go:embed images/toka_tu_ake_eqc_logo.svg
-var eqcLogo template.HTML
+//go:embed images/toka_tu_ake_nhc_logo.svg
+var nhcLogo template.HTML
 
-//go:embed images/toka_tu_ake_eqc_logo_stacked.svg
-var eqcLogoStacked template.HTML
+//go:embed images/toka_tu_ake_nhc_logo_stacked.svg
+var nhcLogoStacked template.HTML
 
 type FooterConfig struct {
-	// The GeoNet, GNS, and EQC logos are fixed and cannot be changed.
+	// Whether to use relative links in footer. If false, uses www.geonet.org.nz.
+	UseRelativeLinks bool
+	// The origin to be used at the beginning of GeoNet links in the footer.
+	// Cannot be changed.
+	Origin string
+	// The GeoNet, GNS, and NHC logos are fixed and cannot be changed.
 	GeoNetLogo     template.HTML
 	GnsLogo        template.HTML
-	EqcLogo        template.HTML
-	EqcLogoStacked template.HTML
+	NhcLogo        template.HTML
+	NhcLogoStacked template.HTML
 	// URLs for extra logos to be added to the footer can be passed in.
 	ExtraLogos []FooterLogo
 	// Set whether footer is a stripped down, basic version.
@@ -50,8 +55,13 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 
 	config.GeoNetLogo = geonetLogo
 	config.GnsLogo = gnsLogo
-	config.EqcLogo = eqcLogo
-	config.EqcLogoStacked = eqcLogoStacked
+	config.NhcLogo = nhcLogo
+	config.NhcLogoStacked = nhcLogoStacked
+
+	config.Origin = "https://www.geonet.org.nz"
+	if config.UseRelativeLinks {
+		config.Origin = ""
+	}
 
 	if err := footerTmpl.ExecuteTemplate(&b, "footer", config); err != nil {
 		return contents, err
