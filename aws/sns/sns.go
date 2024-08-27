@@ -53,8 +53,9 @@ func getConfig() (aws.Config, error) {
 	if awsEndpoint := os.Getenv("CUSTOM_AWS_ENDPOINT_URL"); awsEndpoint != "" {
 		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
-				PartitionID: "aws",
-				URL:         awsEndpoint,
+				PartitionID:   "aws",
+				SigningRegion: region,
+				URL:           awsEndpoint,
 			}, nil
 		})
 
