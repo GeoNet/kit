@@ -279,6 +279,53 @@ func (s *SQS) GetQueueUrl(name string) (string, error) {
 	return "", nil
 }
 
+func (s *SQS) GetQueueARN(url string) (string, error) {
+
+	params := sqs.GetQueueAttributesInput{
+		QueueUrl: aws.String(url),
+		AttributeNames: []types.QueueAttributeName{
+			types.QueueAttributeNameQueueArn,
+		},
+	}
+
+	output, err := s.client.GetQueueAttributes(context.TODO(), &params)
+	if err != nil {
+		return "", err
+	}
+	arn := output.Attributes[string(types.QueueAttributeNameQueueArn)]
+	if arn == "" {
+		return "", errors.New("ARN attribute not found")
+	}
+	return arn, nil
+}
+
+// CreateQueue creates an Amazon SQS queue with the specified name. You can specify
+// whether the queue is created as a FIFO queue. Returns the queue URL.
+func (s *SQS) CreateQueue(queueName string, isFifoQueue bool) (string, error) {
+
+	queueAttributes := map[string]string{}
+	if isFifoQueue {
+		queueAttributes["FifoQueue"] = "true"
+	}
+	queue, err := s.client.CreateQueue(context.TODO(), &sqs.CreateQueueInput{
+		QueueName:  aws.String(queueName),
+		Attributes: queueAttributes,
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return aws.ToString(queue.QueueUrl), err
+}
+
+// DeleteQueue deletes an Amazon SQS queue.
+func (s *SQS) DeleteQueue(queueUrl string) error {
+	_, err := s.client.DeleteQueue(context.TODO(), &sqs.DeleteQueueInput{
+		QueueUrl: aws.String(queueUrl)})
+
+	return err
+}
+
 func Cancelled(err error) bool {
 	var opErr *smithy.OperationError
 	if errors.As(err, &opErr) {

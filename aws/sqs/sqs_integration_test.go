@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -34,15 +35,7 @@ func setup() {
 	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", cutomAWSEndpointURL)
 
 	// create queue
-	if err := exec.Command(
-		"aws", "sqs",
-		"create-queue",
-		"--queue-name", testQueue,
-		"--endpoint-url", cutomAWSEndpointURL,
-		"--region", awsRegion).Run(); err != nil {
-
-		panic(err)
-	}
+	awsCmdCreateQueue(testQueue)
 }
 
 func teardown() {
@@ -55,6 +48,22 @@ func teardown() {
 
 		panic(err)
 	}
+}
+
+func awsCmdCreateQueue(name string) string {
+	url, err := exec.Command(
+		"aws", "sqs",
+		"create-queue",
+		"--queue-name", name,
+		"--endpoint-url", cutomAWSEndpointURL,
+		"--region", awsRegion,
+		"--query", "QueueUrl",
+		"--output", "text").CombinedOutput()
+
+	if err != nil {
+		panic(err)
+	}
+	return strings.TrimSpace(string(url))
 }
 
 func awsCmdQueueURL() string {
@@ -119,6 +128,63 @@ func awsCmdQueueCount() int {
 		rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessages"])
 		return rvalue
 	}
+}
+
+func awsCmdGetQueueArn(url string) string {
+	arn, err := exec.Command(
+		"aws", "sqs",
+		"get-queue-attributes",
+		"--queue-url", url,
+		"--attribute-names", "QueueArn",
+		"--endpoint-url", cutomAWSEndpointURL,
+		"--region", awsRegion,
+		"--query", "Attributes.QueueArn",
+		"--output", "text").CombinedOutput()
+
+	if err != nil {
+		panic(err)
+	}
+	return strings.TrimSpace(string(arn))
+}
+
+func awsCmdDeleteQueue(url string) {
+	if err := exec.Command(
+		"aws", "sqs",
+		"delete-queue",
+		"--queue-url", url,
+		"--endpoint-url", cutomAWSEndpointURL,
+		"--region", awsRegion).Run(); err != nil {
+
+		panic(err)
+	}
+}
+
+func awsCmdCheckSQSAttribute(url, attribute, expectedValue string) bool {
+
+	if out, err := exec.Command(
+		"aws", "sqs",
+		"get-queue-attributes",
+		"--queue-url", url,
+		"--region", awsRegion,
+		"--endpoint-url", cutomAWSEndpointURL,
+		"--attribute-names", attribute,
+		"--output", "json").CombinedOutput(); err != nil {
+		panic(err)
+	} else {
+		var payload map[string]map[string]string
+		err = json.Unmarshal(out, &payload)
+		if err != nil {
+			panic(err)
+		}
+		attributes, ok := payload["Attributes"]
+		if !ok {
+			panic("attributes not found in payload")
+		}
+		if value, exists := attributes[attribute]; exists && value == expectedValue {
+			return true
+		}
+	}
+	return false
 }
 
 func TestSQSNewAndReady(t *testing.T) {
@@ -288,4 +354,75 @@ func TestGetQueueUrl(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, awsCmdQueueURL(), queueURL)
+}
+
+func TestGetQueueARN(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
+
+	// ACTION
+	queueARN, err := client.GetQueueARN(awsCmdQueueURL())
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, awsCmdGetQueueArn(awsCmdQueueURL()), queueARN)
+}
+
+func TestCreateQueue(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
+
+	// ACTION
+	newQueue := "test-queue-2"
+	url, err := client.CreateQueue(newQueue, false)
+	defer awsCmdDeleteQueue(url)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.NotPanics(t, func() { awsCmdGetQueueArn(url) })
+}
+
+func TestCreateFifoQueue(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
+
+	// ACTION
+	newQueue := "test-queue-2.fifo"
+	url, err := client.CreateQueue(newQueue, true)
+	defer awsCmdDeleteQueue(url)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.NotPanics(t, func() { awsCmdGetQueueArn(url) })
+	assert.True(t, awsCmdCheckSQSAttribute(url, "FifoQueue", "true"))
+}
+
+func TestDeleteQueue(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
+	newQueue := "test-queue-2"
+	newQueueUrl := awsCmdCreateQueue(newQueue)
+
+	// ACTION
+	err = client.DeleteQueue(newQueueUrl)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Panics(t, func() { awsCmdDeleteQueue(newQueueUrl) })
 }
