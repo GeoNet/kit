@@ -23,5 +23,4 @@ jobs:
         until docker exec localstack /opt/code/localstack/bin/localstack status services; do
           sleep 1s
         done
-      goTestExtraArgs: --tags localstack
-
+      goTestExtraArgs: -p 1 --tags localstack
