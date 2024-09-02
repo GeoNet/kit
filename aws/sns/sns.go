@@ -53,8 +53,9 @@ func getConfig() (aws.Config, error) {
 	if awsEndpoint := os.Getenv("CUSTOM_AWS_ENDPOINT_URL"); awsEndpoint != "" {
 		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
 			return aws.Endpoint{
-				PartitionID: "aws",
-				URL:         awsEndpoint,
+				PartitionID:   "aws",
+				SigningRegion: region,
+				URL:           awsEndpoint,
 			}, nil
 		})
 
@@ -93,4 +94,38 @@ func (s *SNS) Publish(topicArn string, message []byte) error {
 	}
 
 	return nil
+}
+
+// CreateTopic creates an SNS topic with the specified name. You can provide a
+// map of topic attributes if needed (can be set to nil if not).
+// Returns the ARN of the created topic.
+func (s *SNS) CreateTopic(topicName string, topicAttributes map[string]string) (string, error) {
+	topic, err := s.client.CreateTopic(context.TODO(), &sns.CreateTopicInput{
+		Name:       aws.String(topicName),
+		Attributes: topicAttributes,
+	})
+	if err != nil {
+		return "", err
+	}
+	return aws.ToString(topic.TopicArn), nil
+}
+
+// DeleteTopic delete an SNS topic.
+func (s *SNS) DeleteTopic(topicArn string) error {
+	_, err := s.client.DeleteTopic(context.TODO(), &sns.DeleteTopicInput{TopicArn: aws.String(topicArn)})
+	return err
+}
+
+// SubscribeQueue subscribes an SQS queue to an SNS topic.
+func (s *SNS) SubscribeQueue(topicArn string, queueArn string) (string, error) {
+	output, err := s.client.Subscribe(context.TODO(), &sns.SubscribeInput{
+		Protocol:              aws.String("sqs"),
+		TopicArn:              aws.String(topicArn),
+		Endpoint:              aws.String(queueArn),
+		ReturnSubscriptionArn: true,
+	})
+	if err != nil {
+		return "", err
+	}
+	return aws.ToString(output.SubscriptionArn), err
 }
