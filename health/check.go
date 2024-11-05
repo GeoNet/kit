@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 )
 
@@ -13,7 +14,11 @@ import (
 // An error will be returned if the connection fails, or the response status
 // is not 200 (i.e. StatusOK). A successful check will return only the check message reply.
 func Check(ctx context.Context, servicePath string, timeout time.Duration) ([]byte, error) {
-	req, err := url.Parse("http://" + servicePath)
+	checkUrl := servicePath
+	if !strings.HasPrefix(checkUrl, "http") {
+		checkUrl = "http://" + servicePath
+	}
+	req, err := url.Parse(checkUrl)
 	if err != nil {
 		return nil, err
 	}
