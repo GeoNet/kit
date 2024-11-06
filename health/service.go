@@ -2,7 +2,7 @@ package health
 
 import (
 	"context"
-	"fmt"
+	"log"
 	"net/http"
 	"sync"
 	"time"
@@ -23,7 +23,7 @@ type Service struct {
 	// start stores when the service was started.
 	start time.Time
 	// aged is the time if no updates have happened indicates the service is no longer running.
-	// set to 0 if no age check needed
+	// Default zero value means no age check required.
 	aged time.Duration
 	// startup is the time after the start which the check is assumed to be successful.
 	startup time.Duration
@@ -48,7 +48,9 @@ func New(endpoint string, aged, startup time.Duration) *Service {
 	}
 
 	go func() {
-		_ = srv.ListenAndServe()
+		if err := srv.ListenAndServe(); err != nil {
+			log.Println("error starting health check service", err)
+		}
 	}()
 
 	return service
@@ -64,20 +66,26 @@ func (s *Service) state() bool {
 }
 
 func (s *Service) handler(w http.ResponseWriter, r *http.Request) {
-	switch ok := s.state(); {
+	ok := s.state()
+	switch {
 	case time.Since(s.start) < s.startup:
-		// the check has been made too soon, this is to avoid
-		// a service being terminated before the initial check
+		// Avoid terminating before initial check period
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "warn")
+		if _, err := w.Write([]byte("warn")); err != nil {
+			log.Println("error writing response", err)
+		}
 	case ok && (s.aged == 0 || time.Since(s.last) < s.aged):
-		// the service has been okay and is still being updated
+		// Service is OK and actively updating
 		w.WriteHeader(http.StatusOK)
-		fmt.Fprintf(w, "ok")
+		if _, err := w.Write([]byte("ok")); err != nil {
+			log.Println("error writing response", err)
+		}
 	default:
-		// the service is not okay or the check has stopped being updating
+		// Service is not OK or has stopped updating
 		w.WriteHeader(http.StatusInternalServerError)
-		fmt.Fprintf(w, "fail")
+		if _, err := w.Write([]byte("fail")); err != nil {
+			log.Println("error writing response", err)
+		}
 	}
 }
 
