@@ -40,14 +40,12 @@ func setAwsEnv() {
 	os.Setenv("AWS_REGION", testRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
+	os.Setenv("AWS_ENDPOINT_URL", customAWSEndpoint)
 }
 
 func setup() {
 	// setup environment variable to run AWS CLI/SDK
 	setAwsEnv()
-
-	// setup environment variable to access LocalStack
-	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpoint)
 
 	// create bucket
 	if err := exec.Command( //nolint:gosec
@@ -56,7 +54,7 @@ func setup() {
 		"--bucket", testBucket,
 		"--create-bucket-configuration", fmt.Sprintf(
 			"{\"LocationConstraint\": \"%v\"}", testRegion),
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -69,7 +67,7 @@ func teardown() {
 		"aws", "s3",
 		"rb", fmt.Sprintf("s3://%v", testBucket),
 		"--force",
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -93,7 +91,7 @@ func awsCmdPopulateBucket() {
 		"--key", testObjectKey,
 		"--body", testDataFilepath,
 		"--metadata", fmt.Sprintf("%v=%v", testMetaKey, testMetaValue),
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -105,7 +103,7 @@ func awsCmdExists(key string) bool {
 		"head-object",
 		"--bucket", testBucket,
 		"--key", key,
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		return false
 	}
@@ -118,7 +116,7 @@ func awsCmdPutKey(key string) {
 		"put-object",
 		"--bucket", testBucket,
 		"--key", key,
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -139,7 +137,7 @@ func awsCmdPutKeys(keys []string) {
 	if err := exec.Command(
 		"aws", "s3",
 		"sync", tmpDir, fmt.Sprintf("s3://%v", testBucket),
-		"--endpoint-url", customAWSEndpoint).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -160,8 +158,7 @@ func awsCmdMeta() awsMeta {
 		"aws", "s3api",
 		"head-object",
 		"--bucket", testBucket,
-		"--key", testObjectKey,
-		"--endpoint-url", customAWSEndpoint)
+		"--key", testObjectKey)
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
@@ -197,7 +194,6 @@ func awsCmdGetTestObject() string {
 		"get-object",
 		"--bucket", testBucket,
 		"--key", testObjectKey,
-		"--endpoint-url", customAWSEndpoint,
 		testDataFilepath).Run(); err != nil {
 		panic(err)
 	}
