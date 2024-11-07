@@ -32,7 +32,7 @@ func setup(createQueue, createTopic bool) (string, string) {
 	os.Setenv("AWS_REGION", awsRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpointURL)
+	os.Setenv("AWS_ENDPOINT_URL", customAWSEndpointURL)
 
 	var queueArn, topicArn string
 	if createQueue {
@@ -54,7 +54,7 @@ func teardown(queueArn, topicArn string) {
 	os.Unsetenv("AWS_REGION")
 	os.Unsetenv("AWS_SECRET_ACCESS_KEY")
 	os.Unsetenv("AWS_ACCESS_KEY_ID")
-	os.Unsetenv("CUSTOM_AWS_ENDPOINT_URL")
+	os.Unsetenv("AWS_ENDPOINT_URL")
 }
 
 func TestSNSNewAndReady(t *testing.T) {
@@ -206,7 +206,6 @@ func awsCmdCheckQueueSubscribedToTopic(topicArn, queueArn, subscriptionArn strin
 		"list-subscriptions-by-topic",
 		"--topic-arn", topicArn,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL,
 		"--output", "json").CombinedOutput(); err != nil {
 
 		panic(err)
@@ -231,7 +230,7 @@ func awsCmdQueueURL(name string) string {
 		"get-queue-url",
 		"--queue-name", name,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).CombinedOutput(); err != nil {
+	).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -248,7 +247,7 @@ func awsCmdReceiveMessage(name string) string {
 		"--queue-url", awsCmdQueueURL(name),
 		"--attribute-names", "body",
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).CombinedOutput(); err != nil {
+	).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -267,7 +266,6 @@ func awsCmdGetQueueArn(url string) string {
 		"get-queue-attributes",
 		"--queue-url", url,
 		"--attribute-names", "QueueArn",
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion,
 		"--query", "Attributes.QueueArn",
 		"--output", "text").CombinedOutput()
@@ -283,7 +281,6 @@ func awsCmdCreateQueue(name string) string {
 		"aws", "sqs",
 		"create-queue",
 		"--queue-name", name,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion,
 		"--query", "QueueUrl",
 		"--output", "text").CombinedOutput()
@@ -299,7 +296,6 @@ func awsCmdCreateTopic(name string) string {
 		"aws", "sns",
 		"create-topic",
 		"--name", name,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion,
 		"--query", "TopicArn",
 		"--output", "text").CombinedOutput()
@@ -315,7 +311,6 @@ func awsCmdDeleteQueue(name string) {
 		"aws", "sqs",
 		"delete-queue",
 		"--queue-url", awsCmdQueueURL(name),
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion).Run(); err != nil {
 
 		panic(err)
@@ -327,7 +322,6 @@ func awsCmdDeleteTopic(arn string) {
 		"aws", "sns",
 		"delete-topic",
 		"--topic-arn", arn,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion).Run(); err != nil {
 
 		panic(err)
@@ -341,7 +335,6 @@ func awsCmdSubscribeQueueToTopic(topicArn, queueArn string) {
 		"--topic-arn", topicArn,
 		"--protocol", "sqs",
 		"--notification-endpoint", queueArn,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion).Run(); err != nil {
 
 		panic(err)
@@ -355,7 +348,6 @@ func awsCmdCheckTopicAttribute(arn, attribute, expectedValue string) bool {
 		"get-topic-attributes",
 		"--topic-arn", arn,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL,
 		"--output", "json").CombinedOutput(); err != nil {
 		panic(err)
 	} else {
@@ -380,7 +372,6 @@ func awsCmdCheckTopicExists(arn string) bool {
 		"aws", "sns",
 		"list-topics",
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL,
 		"--output", "json").CombinedOutput(); err != nil {
 
 		panic(err)

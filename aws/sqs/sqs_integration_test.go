@@ -32,7 +32,7 @@ func setup() {
 	os.Setenv("AWS_REGION", awsRegion)
 	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
 	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("CUSTOM_AWS_ENDPOINT_URL", customAWSEndpointURL)
+	os.Setenv("AWS_ENDPOINT_URL", customAWSEndpointURL)
 
 	// create queue
 	awsCmdCreateQueue(testQueue)
@@ -44,7 +44,7 @@ func teardown() {
 		"delete-queue",
 		"--queue-url", awsCmdQueueURL(),
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -55,7 +55,6 @@ func awsCmdCreateQueue(name string) string {
 		"aws", "sqs",
 		"create-queue",
 		"--queue-name", name,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion,
 		"--query", "QueueUrl",
 		"--output", "text").CombinedOutput()
@@ -72,7 +71,7 @@ func awsCmdQueueURL() string {
 		"get-queue-url",
 		"--queue-name", testQueue,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).CombinedOutput(); err != nil {
+	).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -89,7 +88,7 @@ func awsCmdSendMessage() {
 		"--queue-url", awsCmdQueueURL(),
 		"--message-body", testMessage,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).Run(); err != nil {
+	).Run(); err != nil {
 
 		panic(err)
 	}
@@ -102,7 +101,7 @@ func awsCmdReceiveMessage() string {
 		"--queue-url", awsCmdQueueURL(),
 		"--attribute-names", "body",
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).CombinedOutput(); err != nil {
+	).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -118,8 +117,7 @@ func awsCmdQueueCount() int {
 		"get-queue-attributes",
 		"--queue-url", awsCmdQueueURL(),
 		"--attribute-name", "ApproximateNumberOfMessages",
-		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL).CombinedOutput(); err != nil {
+		"--region", awsRegion).CombinedOutput(); err != nil {
 
 		panic(err)
 	} else {
@@ -136,7 +134,6 @@ func awsCmdGetQueueArn(url string) string {
 		"get-queue-attributes",
 		"--queue-url", url,
 		"--attribute-names", "QueueArn",
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion,
 		"--query", "Attributes.QueueArn",
 		"--output", "text").CombinedOutput()
@@ -152,7 +149,6 @@ func awsCmdDeleteQueue(url string) {
 		"aws", "sqs",
 		"delete-queue",
 		"--queue-url", url,
-		"--endpoint-url", customAWSEndpointURL,
 		"--region", awsRegion).Run(); err != nil {
 
 		panic(err)
@@ -166,7 +162,6 @@ func awsCmdCheckSQSAttribute(url, attribute, expectedValue string) bool {
 		"get-queue-attributes",
 		"--queue-url", url,
 		"--region", awsRegion,
-		"--endpoint-url", customAWSEndpointURL,
 		"--attribute-names", attribute,
 		"--output", "json").CombinedOutput(); err != nil {
 		panic(err)
