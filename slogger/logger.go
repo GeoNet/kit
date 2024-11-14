@@ -46,8 +46,8 @@ func (sl *SmartLogger) Log(message ...any) int {
 	if repeated && now.Sub(sl.lastLogTime) <= sl.window {
 		sl.repeatCount++
 	} else {
-		log.Println(msgString)
 		if sl.repeatedPrefix != "" && !repeated { //this is a random message
+			log.Println(msgString)
 			sl.lastMessage = ""          // Reset lastMessage to avoid tracking it as a repeated message
 			sl.lastLogTime = time.Time{} // Reset the time
 			return 0
