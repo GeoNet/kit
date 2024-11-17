@@ -2,6 +2,7 @@ package health
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"io"
 	"net/http"
@@ -65,4 +66,15 @@ func CheckStatus(servicePath string, timeout time.Duration) int {
 	}
 
 	return 0
+}
+
+// RunningHealthCheck returns whether the -check flag was used when starting the program.
+// This flag indicates that the program is being used to run a health check on another program.
+func RunningHealthCheck() bool {
+
+	var isHealthCheck bool
+	flag.BoolVar(&isHealthCheck, "check", false, "Whether the program is being used to run a health check")
+	flag.Parse()
+
+	return isHealthCheck
 }
