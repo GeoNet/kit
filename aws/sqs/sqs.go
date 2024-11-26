@@ -320,6 +320,16 @@ func (s *SQS) CreateQueue(queueName string, isFifoQueue bool) (string, error) {
 	return aws.ToString(queue.QueueUrl), err
 }
 
+// checks if the given SQS queue exists.
+func (s *SQS) CheckQueueExists(queueName string) error {
+	// Check if the queue exists.
+	_, err := s.client.GetQueueUrl(context.TODO(), &sqs.GetQueueUrlInput{
+		QueueName: aws.String(queueName),
+	})
+
+	return err
+}
+
 // DeleteQueue deletes an Amazon SQS queue.
 func (s *SQS) DeleteQueue(queueUrl string) error {
 	_, err := s.client.DeleteQueue(context.TODO(), &sqs.DeleteQueueInput{
