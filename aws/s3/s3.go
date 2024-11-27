@@ -271,11 +271,10 @@ func (s *S3) PutWithMetadata(bucket, key string, object []byte, metadata Meta) e
 	return err
 }
 
-// checks if the given S3 bucket exists.
-func (s *S3) CheckBucketExists(bucketName string) error {
-	// Check if the bucket exists.
+// CheckBucket checks if the given S3 bucket exists and is accessible.
+func (s *S3) CheckBucket(bucket string) error {
 	_, err := s.client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
-		Bucket: aws.String(bucketName),
+		Bucket: aws.String(bucket),
 	})
 
 	return err

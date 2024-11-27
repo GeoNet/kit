@@ -116,6 +116,14 @@ func (s *SNS) DeleteTopic(topicArn string) error {
 	return err
 }
 
+// CheckTopic checks if an SNS topic exists and is accessible given its ARN.
+func (s *SNS) CheckTopic(topicArn string) error {
+	_, err := s.client.GetTopicAttributes(context.TODO(), &sns.GetTopicAttributesInput{
+		TopicArn: aws.String(topicArn),
+	})
+	return err
+}
+
 // SubscribeQueue subscribes an SQS queue to an SNS topic.
 func (s *SNS) SubscribeQueue(topicArn string, queueArn string) (string, error) {
 	output, err := s.client.Subscribe(context.TODO(), &sns.SubscribeInput{

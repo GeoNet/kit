@@ -320,13 +320,15 @@ func (s *SQS) CreateQueue(queueName string, isFifoQueue bool) (string, error) {
 	return aws.ToString(queue.QueueUrl), err
 }
 
-// checks if the given SQS queue exists.
-func (s *SQS) CheckQueueExists(queueName string) error {
-	// Check if the queue exists.
-	_, err := s.client.GetQueueUrl(context.TODO(), &sqs.GetQueueUrlInput{
-		QueueName: aws.String(queueName),
-	})
-
+// CheckQueue checks if the given SQS queue exists and is accessible.
+func (s *SQS) CheckQueue(queueUrl string) error {
+	params := sqs.GetQueueAttributesInput{
+		QueueUrl: aws.String(queueUrl),
+		AttributeNames: []types.QueueAttributeName{
+			types.QueueAttributeNameAll,
+		},
+	}
+	_, err := s.client.GetQueueAttributes(context.TODO(), &params)
 	return err
 }
 

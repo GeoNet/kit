@@ -204,6 +204,24 @@ func awsCmdGetTestObject() string {
 
 // THE TESTS
 
+func TestCheckBucket(t *testing.T) {
+	setup()
+	defer teardown()
+
+	// test
+	client, err := New()
+	assert.Nil(t, err)
+	//test existing bucket
+	err = client.CheckBucket(testBucket)
+	assert.Nil(t, err)
+
+	//test none existing bucket
+	testBucket1 := "test1"
+	err = client.CheckBucket(testBucket1)
+	assert.NotNil(t, err)
+
+}
+
 func TestCreateS3ClientAndReady(t *testing.T) {
 	// ARRANGE
 	setup()

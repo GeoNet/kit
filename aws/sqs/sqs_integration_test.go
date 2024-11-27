@@ -182,6 +182,30 @@ func awsCmdCheckSQSAttribute(url, attribute, expectedValue string) bool {
 	return false
 }
 
+func TestCheckQueue(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+
+	// ASSERT
+	require.Nil(t, err)
+
+	//test existing queue
+	queue, err := client.GetQueueUrl(testQueue)
+
+	assert.Nil(t, err)
+
+	err = client.CheckQueue(queue)
+	assert.Nil(t, err)
+
+	//test none existing queue
+	err = client.CheckQueue(queue + "_1")
+	assert.NotNil(t, err)
+
+}
+
 func TestSQSNewAndReady(t *testing.T) {
 	// ARRANGE
 	setup()
