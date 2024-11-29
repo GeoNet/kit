@@ -57,6 +57,26 @@ func teardown(queueArn, topicArn string) {
 	os.Unsetenv("AWS_ENDPOINT_URL")
 }
 
+func TestCheckTopic(t *testing.T) {
+	_, topicArn := setup(false, true)
+	defer teardown("", topicArn)
+
+	client, err := New()
+	ready := client.Ready()
+	// ASSERT
+	require.Nil(t, err)
+	assert.True(t, ready)
+
+	//check existing topic
+	err = client.CheckTopic(topicArn)
+	assert.Nil(t, err)
+
+	//check none existing topic
+	err = client.CheckTopic(topicArn + "_1")
+	assert.NotNil(t, err)
+
+}
+
 func TestSNSNewAndReady(t *testing.T) {
 	// ARRANGE
 	setup(false, false)
