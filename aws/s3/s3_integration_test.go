@@ -55,7 +55,6 @@ func setup() {
 		"--create-bucket-configuration", fmt.Sprintf(
 			"{\"LocationConstraint\": \"%v\"}", testRegion),
 	).Run(); err != nil {
-
 		panic(err)
 	}
 }
@@ -95,6 +94,17 @@ func awsCmdPopulateBucket() {
 
 		panic(err)
 	}
+}
+
+func awsCmdBucketExists(bucket string) bool {
+	if err := exec.Command(
+		"aws", "s3api",
+		"head-bucket",
+		"--bucket", bucket,
+	).Run(); err != nil {
+		return false
+	}
+	return true
 }
 
 func awsCmdExists(key string) bool {
@@ -711,4 +721,44 @@ func TestS3Copy(t *testing.T) {
 
 	// new object exists
 	assert.True(t, awsCmdExists(testNewKey))
+}
+
+func TestS3CreateBucket(t *testing.T) {
+	// ARRANGE
+	setAwsEnv()
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	bucket := "new-bucket"
+	require.False(t, awsCmdBucketExists(bucket), "error arranging test, bucket already exists")
+
+	// ACTION
+	err = client.CreateBucket(bucket)
+	t.Cleanup(func() {
+		if err := client.DeleteBucket(bucket); err != nil {
+			t.Fatalf("Failed to delete bucket during cleanup: %v", err)
+		}
+	})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.True(t, awsCmdBucketExists(bucket))
+}
+
+func TestS3DeleteBucket(t *testing.T) {
+	// ARRANGE
+	setAwsEnv()
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("Error creating s3 client: %v", err))
+
+	bucket := "bucket-to-delete"
+	require.Nil(t, client.CreateBucket(bucket), "error arranging test, couldn't create bucket to delete")
+	require.True(t, awsCmdBucketExists(bucket), "error arranging test, doesn't exist")
+
+	// ACTION
+	err = client.DeleteBucket(bucket)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.False(t, awsCmdBucketExists(bucket))
 }
