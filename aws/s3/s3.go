@@ -562,3 +562,28 @@ func (s *S3) Copy(bucket, key, source string) error {
 
 	return err
 }
+
+// CreateBucket creates a bucket.
+func (s *S3) CreateBucket(bucket string) error {
+	config := types.CreateBucketConfiguration{
+		LocationConstraint: types.BucketLocationConstraint(s.client.Options().Region),
+	}
+
+	input := s3.CreateBucketInput{
+		Bucket:                    aws.String(bucket),
+		CreateBucketConfiguration: &config,
+	}
+	_, err := s.client.CreateBucket(context.TODO(), &input)
+
+	return err
+}
+
+// DeleteBucket deletes a bucket.
+func (s *S3) DeleteBucket(bucket string) error {
+	input := s3.DeleteBucketInput{
+		Bucket: aws.String(bucket),
+	}
+	_, err := s.client.DeleteBucket(context.TODO(), &input)
+
+	return err
+}
