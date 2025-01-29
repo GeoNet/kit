@@ -48,7 +48,7 @@ func packetToBytes(dlp Packet) ([]byte, error) {
 
 	dlp.Preheader = Preheader{
 		DL:           [2]byte{'D', 'L'},
-		HeaderLength: uint8(len(dlp.Header)),
+		HeaderLength: uint8(len(dlp.Header)), //nolint:gosec
 	}
 
 	out := make([]byte, 0, PreheaderSize+len(dlp.Header)+len(dlp.Body))
