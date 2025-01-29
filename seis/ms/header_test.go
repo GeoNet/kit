@@ -296,7 +296,7 @@ func TestBits(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		//nolint:gosec
 		v := setBit(0xff, uint8(i))
-		
+
 		//nolint:gosec
 		if !isBitSet(v, uint8(i)) {
 			t.Errorf("invalid bit test: expected bit to be set %d", i)

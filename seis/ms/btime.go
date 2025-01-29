@@ -36,11 +36,11 @@ func (b BTime) Time() time.Time {
 // NewBTime builds a BTime from a time.Time.
 func NewBTime(t time.Time) BTime {
 	return BTime{
-		Year:   uint16(t.Year()), 				 //nolint:gosec
-		Doy:    uint16(t.YearDay()), 			 //nolint:gosec
-		Hour:   uint8(t.Hour()), 				 //nolint:gosec
-		Minute: uint8(t.Minute()), 				 //nolint:gosec
-		Second: uint8(t.Second()), 				 //nolint:gosec
+		Year:   uint16(t.Year()),                //nolint:gosec
+		Doy:    uint16(t.YearDay()),             //nolint:gosec
+		Hour:   uint8(t.Hour()),                 //nolint:gosec
+		Minute: uint8(t.Minute()),               //nolint:gosec
+		Second: uint8(t.Second()),               //nolint:gosec
 		S0001:  uint16(t.Nanosecond() / 100000), //nolint:gosec
 	}
 }

@@ -268,9 +268,9 @@ func DecodeRecordHeader(data []byte) RecordHeader {
 		DataQualityFlags: h[38],
 
 		NumberOfBlockettesThatFollow: h[39],
-		TimeCorrection:  int32(binary.BigEndian.Uint32(h[40:44])), //nolint:gosec
-		BeginningOfData: binary.BigEndian.Uint16(h[44:46]),
-		FirstBlockette:  binary.BigEndian.Uint16(h[46:48]),
+		TimeCorrection:               int32(binary.BigEndian.Uint32(h[40:44])), //nolint:gosec
+		BeginningOfData:              binary.BigEndian.Uint16(h[44:46]),
+		FirstBlockette:               binary.BigEndian.Uint16(h[46:48]),
 	}
 }
 

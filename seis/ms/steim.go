@@ -6,13 +6,13 @@ import (
 )
 
 func getNibble(word []byte, index int) uint8 {
-	b := word[index/4]                //Which byte we want from within the word (4 bytes per word)
-	var res uint8                     //value
-	i := index % 4                    //which nibble we want from within the byte (4 nibbles per byte)
+	b := word[index/4] //Which byte we want from within the word (4 bytes per word)
+	var res uint8      //value
+	i := index % 4     //which nibble we want from within the byte (4 nibbles per byte)
 	//nolint:gosec
 	res = b & (0x3 << uint8((3-i)*2)) //0x3=00000011 create and apply the correct mask e.g. i=1 mask=00110000
 	//nolint:gosec
-	res = res >> uint8((3-i)*2)       //shift the masked value fully to the right
+	res = res >> uint8((3-i)*2) //shift the masked value fully to the right
 	return res
 }
 
@@ -56,7 +56,7 @@ func applyDifferencesFromWord(w []byte, numdiffs int, diffbits uint32, d []int32
 		//nolint:gosec
 		intn := wint & uint32(mask<<(uint32(i)*diffbits)) //apply a mask over the correct bits
 		//nolint:gosec
-		intn = intn >> (uint32(i) * diffbits)             //shift the masked value fully to the right
+		intn = intn >> (uint32(i) * diffbits) //shift the masked value fully to the right
 		//nolint:gosec
 		diff := uintVarToInt32(intn, uint8(diffbits)) //convert diffbits bit int to int32
 
