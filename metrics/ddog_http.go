@@ -177,7 +177,7 @@ func dogHttp(apiKey, hostName, appName string, m runtime.MemStats, t []TimerStat
 			}
 		}
 		// non nil connection error, sleep and try again
-		time.Sleep(time.Second << uint(tries))
+		time.Sleep(time.Second << uint(tries)) //nolint:gosec
 	}
 	if res != nil {
 		res.Body.Close()

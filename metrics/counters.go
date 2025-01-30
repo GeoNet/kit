@@ -161,5 +161,5 @@ func StatusServiceUnavailable() {
 
 // Written increments the bytes sent counter by n.
 func Written(n int64) {
-	atomic.AddUint64(&httpCounters[7], uint64(n))
+	atomic.AddUint64(&httpCounters[7], uint64(n)) //nolint:gosec
 }

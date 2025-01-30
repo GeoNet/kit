@@ -269,41 +269,51 @@ func TestBits(t *testing.T) {
 	for i := 0; i < 8; i++ {
 		r := byte(0x01 << i)
 
+		//nolint:gosec
 		if v := setBit(0, uint8(i)); v != r {
 			t.Errorf("invalid bit set: expected %v but got %v for %d", r, v, i)
 		}
 	}
 
 	for i := 0; i < 8; i++ {
+		//nolint:gosec
 		v := setBit(0, uint8(i))
 
+		//nolint:gosec
 		if !isBitSet(v, uint8(i)) {
 			t.Errorf("invalid bit test: expected bit to be set %d", i)
 		}
 
+		//nolint:gosec
 		v = clearBit(v, uint8(i))
 
+		//nolint:gosec
 		if isBitSet(v, uint8(i)) {
 			t.Errorf("invalid bit test: expected bit to not be set %d", i)
 		}
 	}
 
 	for i := 0; i < 8; i++ {
+		//nolint:gosec
 		v := setBit(0xff, uint8(i))
 
+		//nolint:gosec
 		if !isBitSet(v, uint8(i)) {
 			t.Errorf("invalid bit test: expected bit to be set %d", i)
 		}
 
+		//nolint:gosec
 		v = clearBit(v, uint8(i))
 
 		for j := 0; j < i; j++ {
+			//nolint:gosec
 			if !isBitSet(v, uint8(j)) {
 				t.Errorf("invalid bit test: expected bit to be set %d/%d", i, j)
 			}
 		}
 
 		for j := i + 1; j < 8; j++ {
+			//nolint:gosec
 			if !isBitSet(v, uint8(j)) {
 				t.Errorf("invalid bit test: expected bit to be set %d/%d", i, j)
 			}
