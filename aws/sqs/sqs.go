@@ -92,6 +92,11 @@ func (s *SQS) Ready() bool {
 	return s.client != nil
 }
 
+// Client returns the underlying SQS client.
+func (s *SQS) Client() *sqs.Client {
+	return s.client
+}
+
 // Receive receives a raw message or error from the queue.
 // After a successful receive the message will be in flight
 // until it is either deleted or the visibility timeout expires

@@ -206,6 +206,24 @@ func TestCheckQueue(t *testing.T) {
 
 }
 
+func TestSQSClient(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	ready := client.Ready()
+
+	require.Nil(t, err)
+	require.True(t, ready)
+
+	// ACTION
+	underlyingClient := client.Client()
+
+	// ASSERT
+	assert.NotNil(t, underlyingClient)
+}
+
 func TestSQSNewAndReady(t *testing.T) {
 	// ARRANGE
 	setup()
