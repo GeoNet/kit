@@ -1,10 +1,9 @@
-//go:build localstack
-// +build localstack
-
 package sqs
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -462,4 +461,77 @@ func TestDeleteQueue(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Panics(t, func() { awsCmdDeleteQueue(newQueueUrl) })
+}
+
+func TestSendBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	var maxBytes int = 262144
+	maxSizeSingleMessage := ""
+	for _ = range maxBytes {
+		maxSizeSingleMessage += "a"
+	}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+
+	// ACTION
+	tooLargeSingleMessage := maxSizeSingleMessage + "a"
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{tooLargeSingleMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	// ACTION
+	var maxHalfBytes int = 131072
+	maxHalfSizeMessage := ""
+	for _ = range maxHalfBytes {
+		maxHalfSizeMessage += "a"
+	}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, maxHalfSizeMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, maxHalfSizeMessage, awsCmdReceiveMessage())
+	assert.Equal(t, maxHalfSizeMessage, awsCmdReceiveMessage())
+
+	// ACTION
+	tooLargeHalfSizeMessage := maxHalfSizeMessage + "a"
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, tooLargeHalfSizeMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	var sbe *SendBatchError
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 2, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	// ACTION
+	validMessage := "test"
+	invalidMessage := "\u0000"
+
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{validMessage, invalidMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	sbe = nil
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 1, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	assert.Equal(t, validMessage, awsCmdReceiveMessage())
 }

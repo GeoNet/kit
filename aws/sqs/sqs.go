@@ -231,11 +231,29 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 	return "", nil
 }
 
+type SendBatchError struct {
+	err  error
+	info []SendBatchErrorInfo
+}
+type SendBatchErrorInfo struct {
+	entry types.BatchResultErrorEntry
+	body  string
+}
+
+func (s *SendBatchError) Error() string {
+	if s.err != nil {
+		return fmt.Sprintf("error sending batch: %v", s.err)
+	}
+	return fmt.Sprintf("%v messages failed to send", len(s.info))
+}
+
+func (s *SendBatchError) Info() []SendBatchErrorInfo {
+	return s.info
+}
+
 // Leverage the sendbatch api for uploading large numbers of messages
 func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) error {
-	if len(bodies) > 11 {
-		return errors.New("too many messages to batch")
-	}
+
 	var err error
 	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
 	for j, body := range bodies {
@@ -244,11 +262,35 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 			MessageBody: aws.String(body),
 		}
 	}
-	_, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+	output, err := s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
 		Entries:  entries,
 		QueueUrl: &queueURL,
 	})
-	return err
+	if err != nil {
+		info := make([]SendBatchErrorInfo, len(entries))
+		for i, entry := range entries {
+			info[i] = SendBatchErrorInfo{
+				body: aws.ToString(entry.MessageBody),
+			}
+		}
+		return &SendBatchError{err: err, info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]SendBatchErrorInfo, len(output.Failed))
+		for i, entry := range output.Failed {
+			for _, msg := range entries {
+				if msg.Id == entry.Id {
+					info[i] = SendBatchErrorInfo{
+						entry: entry,
+						body:  aws.ToString(msg.MessageBody),
+					}
+					break
+				}
+			}
+		}
+		return &SendBatchError{info: info}
+	}
+	return nil
 }
 
 func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
