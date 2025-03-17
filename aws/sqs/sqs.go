@@ -240,7 +240,7 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
 	for j, body := range bodies {
 		entries[j] = types.SendMessageBatchRequestEntry{
-			Id:          aws.String(fmt.Sprintf("gamitjob%d", j)),
+			Id:          aws.String(fmt.Sprintf("message-%d", j)),
 			MessageBody: aws.String(body),
 		}
 	}
