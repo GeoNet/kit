@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"strings"
 
@@ -293,24 +292,63 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 	return nil
 }
 
-func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
-	var (
-		bodiesLen = len(bodies)
-		maxlen    = 10
-		times     = int(math.Ceil(float64(bodiesLen) / float64(maxlen)))
+func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) (int, error) {
+
+	const (
+		maxCount = 10
+		maxSize  = 262144 // 256 KiB
 	)
-	for i := 0; i < times; i++ {
-		batch_end := maxlen * (i + 1)
-		if maxlen*(i+1) > bodiesLen {
-			batch_end = bodiesLen
+
+	info := make([]SendBatchErrorInfo, 0)
+	batchesSent := 0
+
+	batchStartIndex := 0
+	totalSize := 0
+
+	sendBatch := func(batchEndIndex int) {
+		if batchStartIndex < batchEndIndex {
+			err := s.SendBatch(ctx, queueURL, bodies[batchStartIndex:batchEndIndex])
+			var sbe *SendBatchError
+			if errors.As(err, &sbe) {
+				info = append(info, sbe.Info()...)
+			}
+			batchesSent++
 		}
-		var bodies_batch = bodies[maxlen*i : batch_end]
-		err := s.SendBatch(ctx, queueURL, bodies_batch)
-		if err != nil {
-			return err
+		batchStartIndex = batchEndIndex
+		totalSize = 0
+	}
+
+	for i := range bodies {
+		// Check if any single message is too big
+		if len(bodies[i]) > maxSize {
+			sendBatch(i)
+			info = append(info, SendBatchErrorInfo{
+				entry: types.BatchResultErrorEntry{
+					Message: aws.String("message too big to send"),
+				},
+				body: bodies[i],
+			})
+			continue
+		}
+
+		// If adding the current message would exceed the batch max size or count, send the current batch.
+		if totalSize+len(bodies[i]) > maxSize || (i-batchStartIndex) == maxCount {
+			sendBatch(i)
+		}
+		totalSize += len(bodies[i])
+	}
+
+	if totalSize > 0 {
+		sendBatch(len(bodies))
+	}
+
+	if len(info) > 0 {
+		return batchesSent, &SendBatchError{
+			info: info,
 		}
 	}
-	return nil
+
+	return batchesSent, nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.

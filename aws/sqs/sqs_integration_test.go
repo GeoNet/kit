@@ -110,6 +110,31 @@ func awsCmdReceiveMessage() string {
 	}
 }
 
+func awsCmdReceiveMessages() []string {
+	if out, err := exec.Command(
+		"aws", "sqs",
+		"receive-message",
+		"--queue-url", awsCmdQueueURL(),
+		"--attribute-names", "body",
+		"--region", awsRegion,
+		"--max-number-of-messages", "10", // AWS SQS allows up to 10 messages at a time
+	).CombinedOutput(); err != nil {
+
+		panic(err)
+	} else {
+		var payload map[string][]map[string]string
+		json.Unmarshal(out, &payload)
+
+		var bodies []string
+		for _, msg := range payload["Messages"] {
+			if body, ok := msg["Body"]; ok {
+				bodies = append(bodies, body)
+			}
+		}
+		return bodies
+	}
+}
+
 func awsCmdQueueCount() int {
 	if out, err := exec.Command(
 		"aws", "sqs",
@@ -534,4 +559,71 @@ func TestSendBatch(t *testing.T) {
 	}
 
 	assert.Equal(t, validMessage, awsCmdReceiveMessage())
+}
+
+func TestSendNBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	var maxBytes int = 262144
+	maxSizeSingleMessage := ""
+	for _ = range maxBytes {
+		maxSizeSingleMessage += "a"
+	}
+	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, maxSizeSingleMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 2, batchesSent)
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+
+	assert.Equal(t, 0, awsCmdQueueCount())
+
+	// ACTION
+	tooLargeSingleMessage := maxSizeSingleMessage + "a"
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, tooLargeSingleMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+	assert.Equal(t, 1, batchesSent)
+
+	var sbe *SendBatchError
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 1, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+	assert.Equal(t, 0, awsCmdQueueCount())
+
+	// ACTION
+	smallMessageText := "small"
+	smallMessageCount := 21
+	smallMessages := make([]string, smallMessageCount)
+	for i := range smallMessageCount {
+		smallMessages[i] = smallMessageText
+	}
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), smallMessages)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 3, batchesSent)
+
+	receiveCount := 0
+	for _ = range 3 {
+		messages := awsCmdReceiveMessages()
+		for _, m := range messages {
+			if m == smallMessageText {
+				receiveCount++
+			}
+		}
+	}
+	assert.Equal(t, smallMessageCount, receiveCount)
 }
