@@ -378,6 +378,69 @@ func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) 
 	return batchesSent, nil
 }
 
+// TODO: code review this delete batch stuff
+type DeleteBatchError struct {
+	err  error
+	info []DeleteBatchErrorInfo
+}
+
+type DeleteBatchErrorInfo struct {
+	entry         types.BatchResultErrorEntry
+	receiptHandle string
+}
+
+func (d *DeleteBatchError) Error() string {
+	if d.err != nil {
+		return fmt.Sprintf("error deleting batch: %v", d.err)
+	}
+	return fmt.Sprintf("%v messages failed to delete", len(d.info))
+}
+
+func (d *DeleteBatchError) Info() []DeleteBatchErrorInfo {
+	return d.info
+}
+
+// DeleteBatch deletes multiple messages from an SQS queue in a single batch
+func (s *SQS) DeleteBatch(ctx context.Context, queueURL string, receiptHandles []string) error {
+	entries := make([]types.DeleteMessageBatchRequestEntry, len(receiptHandles))
+	for i, receipt := range receiptHandles {
+		entries[i] = types.DeleteMessageBatchRequestEntry{
+			Id:            aws.String(fmt.Sprintf("delete-message-%d", i)),
+			ReceiptHandle: aws.String(receipt),
+		}
+	}
+
+	output, err := s.client.DeleteMessageBatch(ctx, &sqs.DeleteMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: &queueURL,
+	})
+	if err != nil {
+		info := make([]DeleteBatchErrorInfo, len(entries))
+		for i, entry := range entries {
+			info[i] = DeleteBatchErrorInfo{
+				receiptHandle: aws.ToString(entry.ReceiptHandle),
+			}
+		}
+		return &DeleteBatchError{err: err, info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]DeleteBatchErrorInfo, len(output.Failed))
+		for i, errorEntry := range output.Failed {
+			for _, requestEntry := range entries {
+				if requestEntry.Id == errorEntry.Id {
+					info[i] = DeleteBatchErrorInfo{
+						entry:         errorEntry,
+						receiptHandle: aws.ToString(requestEntry.ReceiptHandle),
+					}
+					break
+				}
+			}
+		}
+		return &DeleteBatchError{info: info}
+	}
+	return nil
+}
+
 // GetQueueUrl returns an AWS SQS queue URL given its name.
 func (s *SQS) GetQueueUrl(name string) (string, error) {
 	params := sqs.GetQueueUrlInput{
