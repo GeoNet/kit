@@ -152,6 +152,25 @@ func awsCmdQueueCount() int {
 	}
 }
 
+func awsCmdQueueInFlightCount() int {
+	out, err := exec.Command(
+		"aws", "sqs",
+		"get-queue-attributes",
+		"--queue-url", awsCmdQueueURL(),
+		"--attribute-name", "ApproximateNumberOfMessagesNotVisible",
+		"--region", awsRegion).CombinedOutput()
+
+	if err != nil {
+		panic(err)
+	}
+
+	var payload map[string]map[string]string
+	json.Unmarshal(out, &payload)
+
+	rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessagesNotVisible"])
+	return rvalue
+}
+
 func awsCmdGetQueueArn(url string) string {
 	arn, err := exec.Command(
 		"aws", "sqs",
@@ -368,8 +387,9 @@ func TestSQSDelete(t *testing.T) {
 	client, err := New()
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
-	receivedMessage, err := client.Receive(awsCmdQueueURL(), 1)
+	receivedMessage, err := client.Receive(awsCmdQueueURL(), 30)
 	require.Nil(t, err, fmt.Sprintf("Error receiving test message: %v", err))
+	require.Equal(t, 1, awsCmdQueueInFlightCount())
 
 	// ACTION
 	err = client.Delete(awsCmdQueueURL(), receivedMessage.ReceiptHandle)
@@ -377,6 +397,7 @@ func TestSQSDelete(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
 }
 
 func TestSQSSend(t *testing.T) {
@@ -662,10 +683,12 @@ func TestDeleteBatch(t *testing.T) {
 	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), messages)
 	require.Nil(t, err)
 	require.Equal(t, 3, awsCmdQueueCount())
+	require.Equal(t, 0, awsCmdQueueInFlightCount())
 
 	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
 	require.Nil(t, err)
 	require.Equal(t, 3, len(receivedMessages))
+	require.Equal(t, 3, awsCmdQueueInFlightCount())
 	receiptHandles := make([]string, 0)
 	for _, rm := range receivedMessages {
 		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
@@ -677,6 +700,7 @@ func TestDeleteBatch(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
 
 	// ACTION
 	invalidReceiptHandle := "invalid-receipt-handle"
