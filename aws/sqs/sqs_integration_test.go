@@ -38,7 +38,7 @@ func setup() {
 }
 
 func teardown() {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"delete-queue",
 		"--queue-url", awsCmdQueueURL(),
@@ -75,13 +75,13 @@ func awsCmdQueueURL() string {
 		panic(err)
 	} else {
 		var payload map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		return payload["QueueUrl"]
 	}
 }
 
 func awsCmdSendMessage() {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"send-message",
 		"--queue-url", awsCmdQueueURL(),
@@ -94,7 +94,7 @@ func awsCmdSendMessage() {
 }
 
 func awsCmdReceiveMessage() string {
-	if out, err := exec.Command(
+	if out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"receive-message",
 		"--queue-url", awsCmdQueueURL(),
@@ -105,13 +105,13 @@ func awsCmdReceiveMessage() string {
 		panic(err)
 	} else {
 		var payload map[string][]map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		return payload["Messages"][0]["Body"]
 	}
 }
 
 func awsCmdReceiveMessages() []string {
-	if out, err := exec.Command(
+	if out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"receive-message",
 		"--queue-url", awsCmdQueueURL(),
@@ -123,7 +123,7 @@ func awsCmdReceiveMessages() []string {
 		panic(err)
 	} else {
 		var payload map[string][]map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 
 		var bodies []string
 		for _, msg := range payload["Messages"] {
@@ -136,7 +136,7 @@ func awsCmdReceiveMessages() []string {
 }
 
 func awsCmdQueueCount() int {
-	if out, err := exec.Command(
+	if out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"get-queue-attributes",
 		"--queue-url", awsCmdQueueURL(),
@@ -146,14 +146,14 @@ func awsCmdQueueCount() int {
 		panic(err)
 	} else {
 		var payload map[string]map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessages"])
 		return rvalue
 	}
 }
 
 func awsCmdQueueInFlightCount() int {
-	out, err := exec.Command(
+	out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"get-queue-attributes",
 		"--queue-url", awsCmdQueueURL(),
@@ -165,7 +165,7 @@ func awsCmdQueueInFlightCount() int {
 	}
 
 	var payload map[string]map[string]string
-	json.Unmarshal(out, &payload)
+	_ = json.Unmarshal(out, &payload)
 
 	rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessagesNotVisible"])
 	return rvalue
@@ -541,7 +541,7 @@ func TestSendBatch(t *testing.T) {
 	// ACTION
 	var maxBytes int = 262144
 	maxSizeSingleMessage := ""
-	for _ = range maxBytes {
+	for range maxBytes {
 		maxSizeSingleMessage += "a"
 	}
 	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage})
@@ -560,7 +560,7 @@ func TestSendBatch(t *testing.T) {
 	// ACTION
 	var maxHalfBytes int = 131072
 	maxHalfSizeMessage := ""
-	for _ = range maxHalfBytes {
+	for range maxHalfBytes {
 		maxHalfSizeMessage += "a"
 	}
 	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, maxHalfSizeMessage})
@@ -614,7 +614,7 @@ func TestSendNBatch(t *testing.T) {
 	// ACTION
 	var maxBytes int = 262144
 	maxSizeSingleMessage := ""
-	for _ = range maxBytes {
+	for range maxBytes {
 		maxSizeSingleMessage += "a"
 	}
 	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, maxSizeSingleMessage})
@@ -659,7 +659,7 @@ func TestSendNBatch(t *testing.T) {
 	assert.Equal(t, 3, batchesSent)
 
 	receiveCount := 0
-	for _ = range 3 {
+	for range batchesSent {
 		messages := awsCmdReceiveMessages()
 		for _, m := range messages {
 			if m == smallMessageText {
