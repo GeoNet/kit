@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -439,6 +440,40 @@ func (s *SQS) DeleteBatch(ctx context.Context, queueURL string, receiptHandles [
 		return &DeleteBatchError{info: info}
 	}
 	return nil
+}
+
+func (s *SQS) DeleteNBatch(ctx context.Context, queueURL string, receiptHandles []string) (int, error) {
+
+	var (
+		receiptCount = len(receiptHandles)
+		maxlen       = 10
+		times        = int(math.Ceil(float64(receiptCount) / float64(maxlen)))
+	)
+
+	info := make([]DeleteBatchErrorInfo, 0)
+	batchesDeleted := 0
+
+	for i := 0; i < times; i++ {
+		batch_end := maxlen * (i + 1)
+		if maxlen*(i+1) > receiptCount {
+			batch_end = receiptCount
+		}
+		var receipt_batch = receiptHandles[maxlen*i : batch_end]
+
+		err := s.DeleteBatch(ctx, queueURL, receipt_batch)
+		var dbe *DeleteBatchError
+		if errors.As(err, &dbe) {
+			info = append(info, dbe.Info()...)
+		}
+		batchesDeleted++
+	}
+
+	if len(info) > 0 {
+		return batchesDeleted, &DeleteBatchError{
+			info: info,
+		}
+	}
+	return batchesDeleted, nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.
