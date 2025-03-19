@@ -127,34 +127,40 @@ func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string,
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(ctx, &input)
-}
-
-// receiveMessage is the common code used internally to receive an SQS message based
-// on the provided input.
-func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput) (Raw, error) {
-	r, err := s.client.ReceiveMessage(ctx, input)
+	msgs, err := s.receiveMessages(ctx, &input)
 	if err != nil {
 		return Raw{}, err
+	}
+	return msgs[0], err
+}
+
+// receiveMessages is the common code used internally to receive SQS messages based
+// on the provided input.
+func (s *SQS) receiveMessages(ctx context.Context, input *sqs.ReceiveMessageInput) ([]Raw, error) {
+	r, err := s.client.ReceiveMessage(ctx, input)
+	if err != nil {
+		return []Raw{}, err
 	}
 
 	switch {
 	case r == nil || len(r.Messages) == 0:
 		// no message received
-		return Raw{}, ErrNoMessages
+		return []Raw{}, ErrNoMessages
 
-	case len(r.Messages) == 1:
-		raw := r.Messages[0]
+	case len(r.Messages) >= 1:
 
-		m := Raw{
-			Body:          aws.ToString(raw.Body),
-			ReceiptHandle: aws.ToString(raw.ReceiptHandle),
-			Attributes:    raw.Attributes,
+		messages := make([]Raw, len(r.Messages))
+		for i := range r.Messages {
+			messages[i] = Raw{
+				Body:          aws.ToString(r.Messages[i].Body),
+				ReceiptHandle: aws.ToString(r.Messages[i].ReceiptHandle),
+				Attributes:    r.Messages[i].Attributes,
+			}
 		}
-		return m, nil
+		return messages, nil
 
 	default:
-		return Raw{}, fmt.Errorf("received unexpected messages: %d", len(r.Messages))
+		return []Raw{}, fmt.Errorf("received unexpected number of messages: %d", len(r.Messages)) // Probably an impossible case
 	}
 }
 
@@ -169,7 +175,28 @@ func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilit
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
-	return s.receiveMessage(ctx, &input)
+	msgs, err := s.receiveMessages(ctx, &input)
+	if err != nil {
+		return Raw{}, err
+	}
+	return msgs[0], err
+}
+
+// ReceiveBatch is similar to Receive, however it can return up to 10 messages.
+func (s *SQS) ReceiveBatch(ctx context.Context, queueURL string, visibilityTimeout int32) ([]Raw, error) {
+
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+	}
+
+	msgs, err := s.receiveMessages(ctx, &input)
+	if err != nil {
+		return []Raw{}, err
+	}
+	return msgs, nil
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
@@ -231,44 +258,222 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 	return "", nil
 }
 
+type SendBatchError struct {
+	err  error
+	info []SendBatchErrorInfo
+}
+type SendBatchErrorInfo struct {
+	entry types.BatchResultErrorEntry
+	body  string
+}
+
+func (s *SendBatchError) Error() string {
+	if s.err != nil {
+		return fmt.Sprintf("error sending batch: %v", s.err)
+	}
+	return fmt.Sprintf("%v messages failed to send", len(s.info))
+}
+
+func (s *SendBatchError) Info() []SendBatchErrorInfo {
+	return s.info
+}
+
 // Leverage the sendbatch api for uploading large numbers of messages
 func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) error {
-	if len(bodies) > 11 {
-		return errors.New("too many messages to batch")
-	}
+
 	var err error
 	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
 	for j, body := range bodies {
 		entries[j] = types.SendMessageBatchRequestEntry{
-			Id:          aws.String(fmt.Sprintf("gamitjob%d", j)),
+			Id:          aws.String(fmt.Sprintf("message-%d", j)),
 			MessageBody: aws.String(body),
 		}
 	}
-	_, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+	output, err := s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
 		Entries:  entries,
 		QueueUrl: &queueURL,
 	})
-	return err
-}
-
-func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
-	var (
-		bodiesLen = len(bodies)
-		maxlen    = 10
-		times     = int(math.Ceil(float64(bodiesLen) / float64(maxlen)))
-	)
-	for i := 0; i < times; i++ {
-		batch_end := maxlen * (i + 1)
-		if maxlen*(i+1) > bodiesLen {
-			batch_end = bodiesLen
+	if err != nil {
+		info := make([]SendBatchErrorInfo, len(entries))
+		for i, entry := range entries {
+			info[i] = SendBatchErrorInfo{
+				body: aws.ToString(entry.MessageBody),
+			}
 		}
-		var bodies_batch = bodies[maxlen*i : batch_end]
-		err := s.SendBatch(ctx, queueURL, bodies_batch)
-		if err != nil {
-			return err
+		return &SendBatchError{err: err, info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]SendBatchErrorInfo, len(output.Failed))
+		for i, entry := range output.Failed {
+			for _, msg := range entries {
+				if msg.Id == entry.Id {
+					info[i] = SendBatchErrorInfo{
+						entry: entry,
+						body:  aws.ToString(msg.MessageBody),
+					}
+					break
+				}
+			}
 		}
+		return &SendBatchError{info: info}
 	}
 	return nil
+}
+
+func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) (int, error) {
+
+	const (
+		maxCount = 10
+		maxSize  = 262144 // 256 KiB
+	)
+
+	info := make([]SendBatchErrorInfo, 0)
+	batchesSent := 0
+
+	batchStartIndex := 0
+	totalSize := 0
+
+	sendBatch := func(batchEndIndex int) {
+		if batchStartIndex < batchEndIndex {
+			err := s.SendBatch(ctx, queueURL, bodies[batchStartIndex:batchEndIndex])
+			var sbe *SendBatchError
+			if errors.As(err, &sbe) {
+				info = append(info, sbe.Info()...)
+			}
+			batchesSent++
+		}
+		batchStartIndex = batchEndIndex
+		totalSize = 0
+	}
+
+	for i := range bodies {
+		// Check if any single message is too big
+		if len(bodies[i]) > maxSize {
+			sendBatch(i)
+			info = append(info, SendBatchErrorInfo{
+				entry: types.BatchResultErrorEntry{
+					Message: aws.String("message too big to send"),
+				},
+				body: bodies[i],
+			})
+			continue
+		}
+
+		// If adding the current message would exceed the batch max size or count, send the current batch.
+		if totalSize+len(bodies[i]) > maxSize || (i-batchStartIndex) == maxCount {
+			sendBatch(i)
+		}
+		totalSize += len(bodies[i])
+	}
+
+	if totalSize > 0 {
+		sendBatch(len(bodies))
+	}
+
+	if len(info) > 0 {
+		return batchesSent, &SendBatchError{
+			info: info,
+		}
+	}
+
+	return batchesSent, nil
+}
+
+// TODO: code review this delete batch stuff
+type DeleteBatchError struct {
+	err  error
+	info []DeleteBatchErrorInfo
+}
+
+type DeleteBatchErrorInfo struct {
+	entry         types.BatchResultErrorEntry
+	receiptHandle string
+}
+
+func (d *DeleteBatchError) Error() string {
+	if d.err != nil {
+		return fmt.Sprintf("error deleting batch: %v", d.err)
+	}
+	return fmt.Sprintf("%v messages failed to delete", len(d.info))
+}
+
+func (d *DeleteBatchError) Info() []DeleteBatchErrorInfo {
+	return d.info
+}
+
+// DeleteBatch deletes multiple messages from an SQS queue in a single batch
+func (s *SQS) DeleteBatch(ctx context.Context, queueURL string, receiptHandles []string) error {
+	entries := make([]types.DeleteMessageBatchRequestEntry, len(receiptHandles))
+	for i, receipt := range receiptHandles {
+		entries[i] = types.DeleteMessageBatchRequestEntry{
+			Id:            aws.String(fmt.Sprintf("delete-message-%d", i)),
+			ReceiptHandle: aws.String(receipt),
+		}
+	}
+
+	output, err := s.client.DeleteMessageBatch(ctx, &sqs.DeleteMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: &queueURL,
+	})
+	if err != nil {
+		info := make([]DeleteBatchErrorInfo, len(entries))
+		for i, entry := range entries {
+			info[i] = DeleteBatchErrorInfo{
+				receiptHandle: aws.ToString(entry.ReceiptHandle),
+			}
+		}
+		return &DeleteBatchError{err: err, info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]DeleteBatchErrorInfo, len(output.Failed))
+		for i, errorEntry := range output.Failed {
+			for _, requestEntry := range entries {
+				if requestEntry.Id == errorEntry.Id {
+					info[i] = DeleteBatchErrorInfo{
+						entry:         errorEntry,
+						receiptHandle: aws.ToString(requestEntry.ReceiptHandle),
+					}
+					break
+				}
+			}
+		}
+		return &DeleteBatchError{info: info}
+	}
+	return nil
+}
+
+func (s *SQS) DeleteNBatch(ctx context.Context, queueURL string, receiptHandles []string) (int, error) {
+
+	var (
+		receiptCount = len(receiptHandles)
+		maxlen       = 10
+		times        = int(math.Ceil(float64(receiptCount) / float64(maxlen)))
+	)
+
+	info := make([]DeleteBatchErrorInfo, 0)
+	batchesDeleted := 0
+
+	for i := 0; i < times; i++ {
+		batch_end := maxlen * (i + 1)
+		if maxlen*(i+1) > receiptCount {
+			batch_end = receiptCount
+		}
+		var receipt_batch = receiptHandles[maxlen*i : batch_end]
+
+		err := s.DeleteBatch(ctx, queueURL, receipt_batch)
+		var dbe *DeleteBatchError
+		if errors.As(err, &dbe) {
+			info = append(info, dbe.Info()...)
+		}
+		batchesDeleted++
+	}
+
+	if len(info) > 0 {
+		return batchesDeleted, &DeleteBatchError{
+			info: info,
+		}
+	}
+	return batchesDeleted, nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.

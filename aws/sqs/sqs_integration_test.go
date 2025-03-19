@@ -1,10 +1,9 @@
-//go:build localstack
-// +build localstack
-
 package sqs
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -39,7 +38,7 @@ func setup() {
 }
 
 func teardown() {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"delete-queue",
 		"--queue-url", awsCmdQueueURL(),
@@ -76,13 +75,13 @@ func awsCmdQueueURL() string {
 		panic(err)
 	} else {
 		var payload map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		return payload["QueueUrl"]
 	}
 }
 
 func awsCmdSendMessage() {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"send-message",
 		"--queue-url", awsCmdQueueURL(),
@@ -95,7 +94,7 @@ func awsCmdSendMessage() {
 }
 
 func awsCmdReceiveMessage() string {
-	if out, err := exec.Command(
+	if out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"receive-message",
 		"--queue-url", awsCmdQueueURL(),
@@ -106,13 +105,38 @@ func awsCmdReceiveMessage() string {
 		panic(err)
 	} else {
 		var payload map[string][]map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		return payload["Messages"][0]["Body"]
 	}
 }
 
+func awsCmdReceiveMessages() []string {
+	if out, err := exec.Command( //nolint:gosec
+		"aws", "sqs",
+		"receive-message",
+		"--queue-url", awsCmdQueueURL(),
+		"--attribute-names", "body",
+		"--region", awsRegion,
+		"--max-number-of-messages", "10", // AWS SQS allows up to 10 messages at a time
+	).CombinedOutput(); err != nil {
+
+		panic(err)
+	} else {
+		var payload map[string][]map[string]string
+		_ = json.Unmarshal(out, &payload)
+
+		var bodies []string
+		for _, msg := range payload["Messages"] {
+			if body, ok := msg["Body"]; ok {
+				bodies = append(bodies, body)
+			}
+		}
+		return bodies
+	}
+}
+
 func awsCmdQueueCount() int {
-	if out, err := exec.Command(
+	if out, err := exec.Command( //nolint:gosec
 		"aws", "sqs",
 		"get-queue-attributes",
 		"--queue-url", awsCmdQueueURL(),
@@ -122,10 +146,29 @@ func awsCmdQueueCount() int {
 		panic(err)
 	} else {
 		var payload map[string]map[string]string
-		json.Unmarshal(out, &payload)
+		_ = json.Unmarshal(out, &payload)
 		rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessages"])
 		return rvalue
 	}
+}
+
+func awsCmdQueueInFlightCount() int {
+	out, err := exec.Command( //nolint:gosec
+		"aws", "sqs",
+		"get-queue-attributes",
+		"--queue-url", awsCmdQueueURL(),
+		"--attribute-name", "ApproximateNumberOfMessagesNotVisible",
+		"--region", awsRegion).CombinedOutput()
+
+	if err != nil {
+		panic(err)
+	}
+
+	var payload map[string]map[string]string
+	_ = json.Unmarshal(out, &payload)
+
+	rvalue, _ := strconv.Atoi(payload["Attributes"]["ApproximateNumberOfMessagesNotVisible"])
+	return rvalue
 }
 
 func awsCmdGetQueueArn(url string) string {
@@ -312,6 +355,27 @@ func TestSQSReceiveWithAttributes(t *testing.T) {
 	assert.True(t, len(receivedMessage.Attributes) > 0)
 }
 
+func TestSQSReceiveBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdSendMessage()
+	awsCmdSendMessage()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+
+	// ASSERT
+	assert.Nil(t, err)
+	for _, receivedMessage := range receivedMessages {
+		assert.Equal(t, testMessage, receivedMessage.Body)
+	}
+}
+
 func TestSQSDelete(t *testing.T) {
 	// ARRANGE
 	setup()
@@ -323,8 +387,9 @@ func TestSQSDelete(t *testing.T) {
 	client, err := New()
 	require.Nil(t, err, fmt.Sprintf("Error creating sqs client: %v", err))
 
-	receivedMessage, err := client.Receive(awsCmdQueueURL(), 1)
+	receivedMessage, err := client.Receive(awsCmdQueueURL(), 30)
 	require.Nil(t, err, fmt.Sprintf("Error receiving test message: %v", err))
+	require.Equal(t, 1, awsCmdQueueInFlightCount())
 
 	// ACTION
 	err = client.Delete(awsCmdQueueURL(), receivedMessage.ReceiptHandle)
@@ -332,6 +397,7 @@ func TestSQSDelete(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
 }
 
 func TestSQSSend(t *testing.T) {
@@ -462,4 +528,267 @@ func TestDeleteQueue(t *testing.T) {
 	// ASSERT
 	assert.Nil(t, err)
 	assert.Panics(t, func() { awsCmdDeleteQueue(newQueueUrl) })
+}
+
+func TestSendBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	var maxBytes int = 262144
+	maxSizeSingleMessage := ""
+	for range maxBytes {
+		maxSizeSingleMessage += "a"
+	}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+
+	// ACTION
+	tooLargeSingleMessage := maxSizeSingleMessage + "a"
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{tooLargeSingleMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	// ACTION
+	var maxHalfBytes int = 131072
+	maxHalfSizeMessage := ""
+	for range maxHalfBytes {
+		maxHalfSizeMessage += "a"
+	}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, maxHalfSizeMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, maxHalfSizeMessage, awsCmdReceiveMessage())
+	assert.Equal(t, maxHalfSizeMessage, awsCmdReceiveMessage())
+
+	// ACTION
+	tooLargeHalfSizeMessage := maxHalfSizeMessage + "a"
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, tooLargeHalfSizeMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	var sbe *SendBatchError
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 2, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	// ACTION
+	validMessage := "test"
+	invalidMessage := "\u0000"
+
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{validMessage, invalidMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	sbe = nil
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 1, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	assert.Equal(t, validMessage, awsCmdReceiveMessage())
+}
+
+func TestSendNBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	var maxBytes int = 262144
+	maxSizeSingleMessage := ""
+	for range maxBytes {
+		maxSizeSingleMessage += "a"
+	}
+	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, maxSizeSingleMessage})
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 2, batchesSent)
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+
+	assert.Equal(t, 0, awsCmdQueueCount())
+
+	// ACTION
+	tooLargeSingleMessage := maxSizeSingleMessage + "a"
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, tooLargeSingleMessage})
+
+	// ASSERT
+	assert.NotNil(t, err)
+	assert.Equal(t, 1, batchesSent)
+
+	var sbe *SendBatchError
+	if errors.As(err, &sbe) {
+		assert.Equal(t, 1, len(sbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+
+	assert.Equal(t, maxSizeSingleMessage, awsCmdReceiveMessage())
+	assert.Equal(t, 0, awsCmdQueueCount())
+
+	// ACTION
+	smallMessageText := "small"
+	smallMessageCount := 21
+	smallMessages := make([]string, smallMessageCount)
+	for i := range smallMessageCount {
+		smallMessages[i] = smallMessageText
+	}
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), smallMessages)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 3, batchesSent)
+
+	receiveCount := 0
+	for range batchesSent {
+		messages := awsCmdReceiveMessages()
+		for _, m := range messages {
+			if m == smallMessageText {
+				receiveCount++
+			}
+		}
+	}
+	assert.Equal(t, smallMessageCount, receiveCount)
+}
+
+func TestDeleteBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// Send and receive messages to get receipt handles
+	messages := []string{"message1", "message2", "message3"}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), messages)
+	require.Nil(t, err)
+	require.Equal(t, 3, awsCmdQueueCount())
+	require.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 3, len(receivedMessages))
+	require.Equal(t, 3, awsCmdQueueInFlightCount())
+	receiptHandles := make([]string, 0)
+	for _, rm := range receivedMessages {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+
+	// ACTION
+	err = client.DeleteBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	// ACTION
+	invalidReceiptHandle := "invalid-receipt-handle"
+	err = client.DeleteBatch(context.TODO(), awsCmdQueueURL(), []string{invalidReceiptHandle})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	var dbe *DeleteBatchError
+	if errors.As(err, &dbe) {
+		assert.Equal(t, 1, len(dbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+}
+
+func TestDeleteNBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// Send and receive messages to get receipt handles
+	messages := []string{"msg1", "msg2", "msg3", "msg4", "msg5", "msg6", "msg7", "msg8", "msg9", "msg10", "msg11"}
+	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), messages)
+
+	require.Nil(t, err)
+	require.Equal(t, 2, batchesSent)
+
+	receivedMessages1, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 10, len(receivedMessages1))
+	receivedMessages2, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(receivedMessages2))
+
+	require.Equal(t, 11, awsCmdQueueInFlightCount())
+
+	receiptHandles := make([]string, 0)
+	for _, rm := range receivedMessages1 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+	for _, rm := range receivedMessages2 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+
+	// ACTION
+	batchesDeleted, err := client.DeleteNBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 2, batchesDeleted)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	// ARRANGE
+
+	// Send and receive messages to get receipt handles
+	messages = []string{"msg1", "msg2", "msg3"}
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), messages)
+
+	require.Nil(t, err)
+	require.Equal(t, 1, batchesSent)
+
+	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 3, len(receivedMessages))
+	require.Equal(t, 3, awsCmdQueueInFlightCount())
+
+	receiptHandles = make([]string, 0)
+	for _, rm := range receivedMessages {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+	receiptHandles[0] = "invalid-receipt-handle" // Replace a valid receipt handle with an invalid one.
+
+	// ACTION
+	batchesDeleted, err = client.DeleteNBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+	assert.NotNil(t, err)
+
+	var dbe *DeleteBatchError
+	if errors.As(err, &dbe) {
+		assert.Equal(t, 1, len(dbe.Info()))
+	} else {
+		t.Error("unexpected error type")
+	}
+	assert.Equal(t, 1, batchesDeleted)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 1, awsCmdQueueInFlightCount())
 }
