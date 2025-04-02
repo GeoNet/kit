@@ -22,7 +22,7 @@ Postgres 9.* with Postgis 2.*
 ##  Using the Assembled Data
 
 * Create the tables (and associated indexed) `public.map180_layers` and `public.map180_labels`.  See `etc/nz_map180_layer.ddl`
-* Load the data e.g., for the fits db: `psql -h 127.0.0.1 fits postgres -f data/new_zealand_map_layers.ddl`
+* Load the data e.g.: `psql -h 127.0.0.1 example_db postgres -f data/new_zealand_map_layers.ddl`
 
 If necessary change the schema, table, and user access as required.  They can be specificed in map180.Init()
 
@@ -37,7 +37,7 @@ was made from shape files that where loaded into the DB and then cut and transfo
 The files `etc/load-nz-shp.sh` and `etc/nz_map180_layer.ddl` document the process of creating `public.map180_layers`.  This was then dumped using:
 
 ```
-pg_dump -h 127.0.0.1 --table=public.map180_layers --table=public.map180_labels --data-only -U postgres  fits -f data/new_zealand_map_layers.ddl
+pg_dump -h 127.0.0.1 --table=public.map180_layers --table=public.map180_labels --data-only -U postgres example_db -f data/new_zealand_map_layers.ddl
 ```
 
 The assembled New Zealand data set uses data sourced from:
