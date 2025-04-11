@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"math"
 	"os"
 	"strings"
 
@@ -247,6 +246,20 @@ func (s *SendBatchError) Unwrap() error {
 	return s.Err
 }
 
+type SendNBatchError struct {
+	Errors []error
+	Info   []SendBatchErrorEntry
+}
+
+func (s *SendNBatchError) Error() string {
+	var allErrors string
+	for _, err := range s.Errors {
+		allErrors += fmt.Sprintf("%s,", err.Error())
+	}
+	allErrors = strings.TrimSuffix(allErrors, ",")
+	return fmt.Sprintf("%v error(s) sending batches: %s", len(s.Errors), allErrors)
+}
+
 // SendBatch sends up to 10 messages to a given SQS queue with one API call.
 // If an error occurs on any or all messages, a SendBatchError is returned that lets
 // the caller know the index of the message/s in bodies that failed.
@@ -291,24 +304,80 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 	return nil
 }
 
-func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
-	var (
-		bodiesLen = len(bodies)
-		maxlen    = 10
-		times     = int(math.Ceil(float64(bodiesLen) / float64(maxlen)))
+// SendNBatch sends any number of messages to a given SQS queue via a series of SendBatch calls.
+// If an error occurs on any or all messages, a SendNBatchError is returned that lets
+// the caller know the index of the message/s in bodies that failed.
+// Returns the number of API calls to SendBatch made.
+func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) (int, error) {
+
+	const (
+		maxCount = 10
+		maxSize  = 262144 // 256 KiB
 	)
-	for i := 0; i < times; i++ {
-		batch_end := maxlen * (i + 1)
-		if maxlen*(i+1) > bodiesLen {
-			batch_end = bodiesLen
+
+	allErrors := make([]error, 0)
+	allInfo := make([]SendBatchErrorEntry, 0)
+
+	batchesSent := 0
+
+	batch := make([]int, 0)
+	totalSize := 0
+
+	sendBatch := func() {
+		batchBodies := make([]string, len(batch))
+
+		for i, batchIndex := range batch {
+			batchBodies[i] = bodies[batchIndex]
 		}
-		var bodies_batch = bodies[maxlen*i : batch_end]
-		err := s.SendBatch(ctx, queueURL, bodies_batch)
-		if err != nil {
-			return err
+
+		err := s.SendBatch(ctx, queueURL, batchBodies)
+		var sbe *SendBatchError
+		if errors.As(err, &sbe) {
+			allErrors = append(allErrors, err)
+
+			// Update index so that index refers to the position in given bodies slice.
+			for i := range sbe.Info {
+				sbe.Info[i].Index = batch[sbe.Info[i].Index]
+			}
+
+			allInfo = append(allInfo, sbe.Info...)
+		}
+
+		batchesSent++
+		batch = batch[:0]
+		totalSize = 0
+	}
+
+	for i, body := range bodies {
+
+		// Check if any single message is too big
+		if len(body) > maxSize {
+			allErrors = append(allErrors, errors.New("message too big to send"))
+			allInfo = append(allInfo, SendBatchErrorEntry{
+				Index: i,
+			})
+			continue
+		}
+		// If adding the current message would exceed the batch max size or count, send the current batch.
+		if totalSize+len(body) > maxSize || len(batch) == maxCount {
+			sendBatch()
+		}
+		batch = append(batch, i)
+		totalSize += len(body)
+	}
+
+	if len(batch) > 0 {
+		sendBatch()
+	}
+
+	if len(allErrors) > 0 {
+		return batchesSent, &SendNBatchError{
+			Errors: allErrors,
+			Info:   allInfo,
 		}
 	}
-	return nil
+
+	return batchesSent, nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.
