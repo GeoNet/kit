@@ -407,6 +407,67 @@ func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) 
 	return batchesSent, nil
 }
 
+type DeleteBatchError struct {
+	Err  error
+	Info []DeleteBatchErrorEntry
+}
+
+type DeleteBatchErrorEntry struct {
+	Entry types.BatchResultErrorEntry
+	Index int
+}
+
+func (d *DeleteBatchError) Error() string {
+	return fmt.Sprintf("%v: %v messages failed to delete", d.Err, len(d.Info))
+}
+
+func (d *DeleteBatchError) Unwrap() error {
+	return d.Err
+}
+
+// DeleteBatch deletes up to 10 messages from an SQS queue in a single batch.
+// If an error occurs on any or all messages, a DeleteBatchError is returned that lets
+// the caller know the indice/s in receiptHandles that failed.
+func (s *SQS) DeleteBatch(ctx context.Context, queueURL string, receiptHandles []string) error {
+	entries := make([]types.DeleteMessageBatchRequestEntry, len(receiptHandles))
+	for i, receipt := range receiptHandles {
+		entries[i] = types.DeleteMessageBatchRequestEntry{
+			Id:            aws.String(fmt.Sprintf("delete-message-%d", i)),
+			ReceiptHandle: aws.String(receipt),
+		}
+	}
+
+	output, err := s.client.DeleteMessageBatch(ctx, &sqs.DeleteMessageBatchInput{
+		Entries:  entries,
+		QueueUrl: &queueURL,
+	})
+	if err != nil {
+		info := make([]DeleteBatchErrorEntry, len(entries))
+		for i := range entries {
+			info[i] = DeleteBatchErrorEntry{
+				Index: i,
+			}
+		}
+		return &DeleteBatchError{Err: err, Info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]DeleteBatchErrorEntry, len(output.Failed))
+		for i, errorEntry := range output.Failed {
+			for j, requestEntry := range entries {
+				if aws.ToString(requestEntry.Id) == aws.ToString(errorEntry.Id) {
+					info[i] = DeleteBatchErrorEntry{
+						Entry: errorEntry,
+						Index: j,
+					}
+					break
+				}
+			}
+		}
+		return &DeleteBatchError{Info: info}
+	}
+	return nil
+}
+
 // GetQueueUrl returns an AWS SQS queue URL given its name.
 func (s *SQS) GetQueueUrl(name string) (string, error) {
 	params := sqs.GetQueueUrlInput{

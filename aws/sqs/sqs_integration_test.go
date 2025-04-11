@@ -631,6 +631,54 @@ func indexIsPresent(info []SendBatchErrorEntry, index int) bool {
 	return false
 }
 
+func TestDeleteBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// Send and receive messages to get receipt handles
+	messages := []string{"message1", "message2", "message3"}
+	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), messages)
+	require.Nil(t, err)
+	require.Equal(t, 3, awsCmdQueueCount())
+	require.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 3, len(receivedMessages))
+	require.Equal(t, 3, awsCmdQueueInFlightCount())
+	receiptHandles := make([]string, 0)
+	for _, rm := range receivedMessages {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+
+	// ACTION
+	err = client.DeleteBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	// ACTION
+	invalidReceiptHandle := "invalid-receipt-handle"
+	err = client.DeleteBatch(context.TODO(), awsCmdQueueURL(), []string{invalidReceiptHandle})
+
+	// ASSERT
+	assert.NotNil(t, err)
+
+	var dbe *DeleteBatchError
+	if errors.As(err, &dbe) {
+		assert.Equal(t, 1, len(dbe.Info))
+		assert.Equal(t, 0, dbe.Info[0].Index)
+	} else {
+		t.Error("unexpected error type")
+	}
+}
+
 func TestGetQueueUrl(t *testing.T) {
 	// ARRANGE
 	setup()
