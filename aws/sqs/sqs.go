@@ -231,11 +231,27 @@ func (s *SQS) SendFifoMessage(queue, group, dedupe string, msg []byte) (string, 
 	return "", nil
 }
 
-// Leverage the sendbatch api for uploading large numbers of messages
+type SendBatchError struct {
+	Err  error
+	Info []SendBatchErrorEntry
+}
+type SendBatchErrorEntry struct {
+	Entry types.BatchResultErrorEntry
+	Index int
+}
+
+func (s *SendBatchError) Error() string {
+	return fmt.Sprintf("%v: %v messages failed to send", s.Err, len(s.Info))
+}
+func (s *SendBatchError) Unwrap() error {
+	return s.Err
+}
+
+// SendBatch sends up to 10 messages to a given SQS queue with one API call.
+// If an error occurs on any or all messages, a SendBatchError is returned that lets
+// the caller know the index of the message/s in bodies that failed.
 func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) error {
-	if len(bodies) > 11 {
-		return errors.New("too many messages to batch")
-	}
+
 	var err error
 	entries := make([]types.SendMessageBatchRequestEntry, len(bodies))
 	for j, body := range bodies {
@@ -244,11 +260,35 @@ func (s *SQS) SendBatch(ctx context.Context, queueURL string, bodies []string) e
 			MessageBody: aws.String(body),
 		}
 	}
-	_, err = s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
+	output, err := s.client.SendMessageBatch(ctx, &sqs.SendMessageBatchInput{
 		Entries:  entries,
 		QueueUrl: &queueURL,
 	})
-	return err
+	if err != nil {
+		info := make([]SendBatchErrorEntry, len(entries))
+		for i := range entries {
+			info[i] = SendBatchErrorEntry{
+				Index: i,
+			}
+		}
+		return &SendBatchError{Err: err, Info: info}
+	}
+	if len(output.Failed) > 0 {
+		info := make([]SendBatchErrorEntry, len(output.Failed))
+		for i, entry := range output.Failed {
+			for j, msg := range entries {
+				if aws.ToString(msg.Id) == aws.ToString(entry.Id) {
+					info[i] = SendBatchErrorEntry{
+						Entry: entry,
+						Index: j,
+					}
+					break
+				}
+			}
+		}
+		return &SendBatchError{Err: errors.New("partial message failure"), Info: info}
+	}
+	return nil
 }
 
 func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) error {
