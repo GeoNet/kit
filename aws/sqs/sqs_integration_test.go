@@ -111,6 +111,31 @@ func awsCmdReceiveMessage() string {
 	}
 }
 
+func awsCmdReceiveMessages() []string {
+	if out, err := exec.Command( //nolint:gosec
+		"aws", "sqs",
+		"receive-message",
+		"--queue-url", awsCmdQueueURL(),
+		"--attribute-names", "body",
+		"--region", awsRegion,
+		"--max-number-of-messages", "10", // AWS SQS allows up to 10 messages at a time
+	).CombinedOutput(); err != nil {
+
+		panic(err)
+	} else {
+		var payload map[string][]map[string]string
+		_ = json.Unmarshal(out, &payload)
+
+		var bodies []string
+		for _, msg := range payload["Messages"] {
+			if body, ok := msg["Body"]; ok {
+				bodies = append(bodies, body)
+			}
+		}
+		return bodies
+	}
+}
+
 func awsCmdQueueCount() int {
 	if out, err := exec.Command(
 		"aws", "sqs",
