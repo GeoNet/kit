@@ -358,6 +358,27 @@ func TestSQSReceiveWithAttributes(t *testing.T) {
 	assert.True(t, len(receivedMessage.Attributes) > 0)
 }
 
+func TestSQSReceiveBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdSendMessage()
+	awsCmdSendMessage()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// ACTION
+	receivedMessages, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+
+	// ASSERT
+	assert.Nil(t, err)
+	for _, receivedMessage := range receivedMessages {
+		assert.Equal(t, testMessage, receivedMessage.Body)
+	}
+}
+
 func TestSQSDelete(t *testing.T) {
 	// ARRANGE
 	setup()

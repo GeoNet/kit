@@ -126,34 +126,40 @@ func (s *SQS) ReceiveWithContextAttributes(ctx context.Context, queueURL string,
 		WaitTimeSeconds:     20,
 		AttributeNames:      attrs,
 	}
-	return s.receiveMessage(ctx, &input)
-}
-
-// receiveMessage is the common code used internally to receive an SQS message based
-// on the provided input.
-func (s *SQS) receiveMessage(ctx context.Context, input *sqs.ReceiveMessageInput) (Raw, error) {
-	r, err := s.client.ReceiveMessage(ctx, input)
+	msgs, err := s.receiveMessages(ctx, &input)
 	if err != nil {
 		return Raw{}, err
+	}
+	return msgs[0], err
+}
+
+// receiveMessages is the common code used internally to receive an SQS messages based
+// on the provided input.
+func (s *SQS) receiveMessages(ctx context.Context, input *sqs.ReceiveMessageInput) ([]Raw, error) {
+	r, err := s.client.ReceiveMessage(ctx, input)
+	if err != nil {
+		return []Raw{}, err
 	}
 
 	switch {
 	case r == nil || len(r.Messages) == 0:
 		// no message received
-		return Raw{}, ErrNoMessages
+		return []Raw{}, ErrNoMessages
 
-	case len(r.Messages) == 1:
-		raw := r.Messages[0]
+	case len(r.Messages) >= 1:
 
-		m := Raw{
-			Body:          aws.ToString(raw.Body),
-			ReceiptHandle: aws.ToString(raw.ReceiptHandle),
-			Attributes:    raw.Attributes,
+		messages := make([]Raw, len(r.Messages))
+		for i := range r.Messages {
+			messages[i] = Raw{
+				Body:          aws.ToString(r.Messages[i].Body),
+				ReceiptHandle: aws.ToString(r.Messages[i].ReceiptHandle),
+				Attributes:    r.Messages[i].Attributes,
+			}
 		}
-		return m, nil
+		return messages, nil
 
 	default:
-		return Raw{}, fmt.Errorf("received unexpected messages: %d", len(r.Messages))
+		return []Raw{}, fmt.Errorf("received unexpected number of messages: %d", len(r.Messages)) // Probably an impossible case
 	}
 }
 
@@ -168,7 +174,28 @@ func (s *SQS) ReceiveWithContext(ctx context.Context, queueURL string, visibilit
 		VisibilityTimeout:   visibilityTimeout,
 		WaitTimeSeconds:     20,
 	}
-	return s.receiveMessage(ctx, &input)
+	msgs, err := s.receiveMessages(ctx, &input)
+	if err != nil {
+		return Raw{}, err
+	}
+	return msgs[0], err
+}
+
+// ReceiveBatch is similar to Receive, however it can return up to 10 messages.
+func (s *SQS) ReceiveBatch(ctx context.Context, queueURL string, visibilityTimeout int32) ([]Raw, error) {
+
+	input := sqs.ReceiveMessageInput{
+		QueueUrl:            aws.String(queueURL),
+		MaxNumberOfMessages: 10,
+		VisibilityTimeout:   visibilityTimeout,
+		WaitTimeSeconds:     20,
+	}
+
+	msgs, err := s.receiveMessages(ctx, &input)
+	if err != nil {
+		return []Raw{}, err
+	}
+	return msgs, nil
 }
 
 // Delete deletes the message referred to by receiptHandle from the queue.
