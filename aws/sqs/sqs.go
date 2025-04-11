@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"strings"
 
@@ -425,6 +426,20 @@ func (d *DeleteBatchError) Unwrap() error {
 	return d.Err
 }
 
+type DeleteNBatchError struct {
+	Errors []error
+	Info   []DeleteBatchErrorEntry
+}
+
+func (s *DeleteNBatchError) Error() string {
+	var allErrors string
+	for _, err := range s.Errors {
+		allErrors += fmt.Sprintf("%s,", err.Error())
+	}
+	allErrors = strings.TrimSuffix(allErrors, ",")
+	return fmt.Sprintf("%v error(s) deleting batches: %s", len(s.Errors), allErrors)
+}
+
 // DeleteBatch deletes up to 10 messages from an SQS queue in a single batch.
 // If an error occurs on any or all messages, a DeleteBatchError is returned that lets
 // the caller know the indice/s in receiptHandles that failed.
@@ -466,6 +481,61 @@ func (s *SQS) DeleteBatch(ctx context.Context, queueURL string, receiptHandles [
 		return &DeleteBatchError{Info: info}
 	}
 	return nil
+}
+
+// DeleteNBatch deletes any number of messages from a given SQS queue via a series of DeleteBatch calls.
+// If an error occurs on any or all messages, a DeleteNBatchError is returned that lets
+// the caller know the receipt handles that failed.
+// Returns the number of API calls to DeleteBatch made.
+func (s *SQS) DeleteNBatch(ctx context.Context, queueURL string, receiptHandles []string) (int, error) {
+
+	var (
+		receiptCount = len(receiptHandles)
+		maxlen       = 10
+		times        = int(math.Ceil(float64(receiptCount) / float64(maxlen)))
+	)
+
+	allErrors := make([]error, 0)
+	allInfo := make([]DeleteBatchErrorEntry, 0)
+
+	batchesDeleted := 0
+
+	for i := 0; i < times; i++ {
+		batch_end := maxlen * (i + 1)
+		if maxlen*(i+1) > receiptCount {
+			batch_end = receiptCount
+		}
+		var receipt_batch = receiptHandles[maxlen*i : batch_end]
+
+		indexMap := make(map[int]int, 0)
+		count := 0
+		for j := maxlen * i; j < batch_end; j++ {
+			indexMap[count] = j
+			count++
+		}
+
+		err := s.DeleteBatch(ctx, queueURL, receipt_batch)
+		var dbe *DeleteBatchError
+		if errors.As(err, &dbe) {
+			allErrors = append(allErrors, err)
+
+			// Update index so that index refers to the position in given receiptHandles slice.
+			for i := range dbe.Info {
+				dbe.Info[i].Index = indexMap[dbe.Info[i].Index]
+			}
+
+			allInfo = append(allInfo, dbe.Info...)
+		}
+		batchesDeleted++
+	}
+
+	if len(allErrors) > 0 {
+		return batchesDeleted, &DeleteNBatchError{
+			Errors: allErrors,
+			Info:   allInfo,
+		}
+	}
+	return batchesDeleted, nil
 }
 
 // GetQueueUrl returns an AWS SQS queue URL given its name.

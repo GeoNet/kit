@@ -679,6 +679,92 @@ func TestDeleteBatch(t *testing.T) {
 	}
 }
 
+func TestDeleteNBatch(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
+
+	// Send and receive messages to get receipt handles
+	messages := []string{"msg1", "msg2", "msg3", "msg4", "msg5", "msg6", "msg7", "msg8", "msg9", "msg10", "msg11"}
+	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), messages)
+
+	require.Nil(t, err)
+	require.Equal(t, 2, batchesSent)
+
+	receivedMessages1, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 10, len(receivedMessages1))
+	receivedMessages2, err := client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 1, len(receivedMessages2))
+
+	require.Equal(t, 11, awsCmdQueueInFlightCount())
+
+	receiptHandles := make([]string, 0)
+	for _, rm := range receivedMessages1 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+	for _, rm := range receivedMessages2 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+
+	// ACTION
+	batchesDeleted, err := client.DeleteNBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, 2, batchesDeleted)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 0, awsCmdQueueInFlightCount())
+
+	// ARRANGE
+
+	// Send and receive messages to get receipt handles
+	messages = []string{"msg1", "msg2", "msg3", "msg4", "msg5", "msg6", "msg7", "msg8", "msg9", "msg10", "msg11", "msg12"}
+	batchesSent, err = client.SendNBatch(context.TODO(), awsCmdQueueURL(), messages)
+
+	require.Nil(t, err)
+	require.Equal(t, 2, batchesSent)
+
+	receivedMessages1, err = client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 10, len(receivedMessages1))
+	receivedMessages2, err = client.ReceiveBatch(context.TODO(), awsCmdQueueURL(), 30)
+	require.Nil(t, err)
+	require.Equal(t, 2, len(receivedMessages2))
+	require.Equal(t, 12, awsCmdQueueInFlightCount())
+
+	receiptHandles = make([]string, 0)
+	for _, rm := range receivedMessages1 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+	for _, rm := range receivedMessages2 {
+		receiptHandles = append(receiptHandles, rm.ReceiptHandle)
+	}
+	invalidReceiptHandle := "invalid-receipt-handle"
+	receiptHandles[0] = invalidReceiptHandle                      // Replace a valid receipt handle with an invalid one.
+	receiptHandles = append(receiptHandles, invalidReceiptHandle) // Append an invalid receipt handle (index 12)
+
+	// ACTION
+	batchesDeleted, err = client.DeleteNBatch(context.TODO(), awsCmdQueueURL(), receiptHandles)
+	assert.NotNil(t, err)
+
+	var dbe *DeleteNBatchError
+	if errors.As(err, &dbe) {
+		assert.Equal(t, 2, len(dbe.Info))
+		assert.Equal(t, 0, dbe.Info[0].Index)
+		assert.Equal(t, 12, dbe.Info[1].Index)
+	} else {
+		t.Error("unexpected error type")
+	}
+	assert.Equal(t, 2, batchesDeleted)
+	assert.Equal(t, 0, awsCmdQueueCount())
+	assert.Equal(t, 1, awsCmdQueueInFlightCount())
+}
+
 func TestGetQueueUrl(t *testing.T) {
 	// ARRANGE
 	setup()
