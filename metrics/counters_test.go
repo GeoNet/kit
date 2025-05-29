@@ -79,6 +79,7 @@ func TestHttpCounters(t *testing.T) {
 		{i: l(), f: metrics.StatusNotFound, e: metrics.HttpCounters{StatusNotFound: 1}},
 		{i: l(), f: metrics.StatusInternalServerError, e: metrics.HttpCounters{StatusInternalServerError: 1}},
 		{i: l(), f: metrics.StatusServiceUnavailable, e: metrics.HttpCounters{StatusServiceUnavailable: 1}},
+		{i: l(), f: metrics.StatusTooManyRequests, e: metrics.HttpCounters{StatusTooManyRequests: 1}},
 	}
 
 	var m metrics.HttpCounters
@@ -108,6 +109,9 @@ func TestHttpCounters(t *testing.T) {
 		if m.StatusServiceUnavailable != 0 {
 			t.Errorf("expected 0 got %d", m.StatusServiceUnavailable)
 		}
+		if m.StatusTooManyRequests != 0 {
+			t.Errorf("expected 0 got %d", m.StatusTooManyRequests)
+		}
 
 		// increment one counter
 		// and check we incremented the correct counter
@@ -136,7 +140,9 @@ func TestHttpCounters(t *testing.T) {
 		if m.StatusServiceUnavailable != v.e.StatusServiceUnavailable {
 			t.Errorf("%s StatusServiceUnavailable expected %d got %d", v.i, v.e.StatusServiceUnavailable, m.StatusServiceUnavailable)
 		}
-
+		if m.StatusTooManyRequests != v.e.StatusTooManyRequests {
+			t.Errorf("%s StatusTooManyRequests expected %d got %d", v.i, v.e.StatusTooManyRequests, m.StatusTooManyRequests)
+		}
 	}
 }
 
