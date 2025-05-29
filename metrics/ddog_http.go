@@ -113,6 +113,12 @@ func dogHttp(apiKey, hostName, appName string, m runtime.MemStats, t []TimerStat
 			Host:   hostName,
 		},
 		{
+			Metric: appName + ".http.429",
+			Points: []point{[2]float64{now, float64(c.StatusTooManyRequests)}},
+			Type:   "counter",
+			Host:   hostName,
+		},
+		{
 			Metric: appName + ".http.500",
 			Points: []point{[2]float64{now, float64(c.StatusInternalServerError)}},
 			Type:   "counter",
