@@ -851,3 +851,29 @@ func TestDeleteQueue(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Panics(t, func() { awsCmdDeleteQueue(newQueueUrl) })
 }
+
+func TestMessageVisibility(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	require.Nil(t, err, "error with test setup")
+
+	require.Nil(t, client.Send(awsCmdQueueURL(), testMessage), "error with test setup")
+
+	// receive, with visibility timeout of 5min
+	receivedMessage, err := client.Receive(awsCmdQueueURL(), 5*60)
+
+	require.Nil(t, err, "error with test setup")
+	require.Equal(t, awsCmdQueueCount(), 0)
+
+	// ACTION
+	// set visibility timeout to 10 s
+	client.SetMessageVisibility(awsCmdQueueURL(), receivedMessage.ReceiptHandle, 10)
+
+	// ASSERT
+	assert.Equal(t, awsCmdQueueCount(), 0) // not visible yet
+	time.Sleep(11 * time.Second)
+	assert.Equal(t, awsCmdQueueCount(), 1) // message visible now
+}

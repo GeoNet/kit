@@ -211,6 +211,19 @@ func (s *SQS) Delete(queueURL, receiptHandle string) error {
 	return err
 }
 
+// SetMessageVisibility sets the visibility timeout for a message.
+func (s *SQS) SetMessageVisibility(queueURL, receiptHandle string, visibilityTimeout int32) error {
+	params := sqs.ChangeMessageVisibilityInput{
+		QueueUrl:          aws.String(queueURL),
+		ReceiptHandle:     aws.String(receiptHandle),
+		VisibilityTimeout: visibilityTimeout,
+	}
+
+	_, err := s.client.ChangeMessageVisibility(context.TODO(), &params)
+
+	return err
+}
+
 // Send sends the message body to the SQS queue referred to by queueURL.
 func (s *SQS) Send(queueURL string, body string) error {
 	params := sqs.SendMessageInput{
