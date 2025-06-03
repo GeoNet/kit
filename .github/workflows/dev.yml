@@ -1,0 +1,14 @@
+name: kit-dev
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+      - ready_for_review
+    branches:
+      - main
+  workflow_dispatch: {}
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
