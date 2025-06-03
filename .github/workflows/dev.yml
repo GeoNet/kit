@@ -12,3 +12,9 @@ on:
 jobs:
   build:
     uses: ./.github/workflows/build.yml
+  success:
+    runs-on: ubuntu-latest
+    if: success()
+    needs: [build]
+    steps:
+        - run: echo "workflow was successful"
