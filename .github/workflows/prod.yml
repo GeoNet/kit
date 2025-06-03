@@ -1,0 +1,12 @@
+name: kit-prod
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: {}
+jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+    with:
+      test-coverage-upload-role: arn:aws:iam::615890063537:role/tf-dev-github-actions-geonet-s3-coverage-kit
+      test-coverage-upload-bucket: dev-geonet-webscan

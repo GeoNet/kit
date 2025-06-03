@@ -1,9 +1,15 @@
-name: kit
+name: build
 on:
-  push: {}
-  release:
-    types: [published]
-  workflow_dispatch: {}
+  workflow_call:
+    inputs:
+      test-coverage-upload-role:
+        description: role to assume to upload test coverage results to S3.
+        type: string
+        required: false
+      test-coverage-upload-bucket:
+        description: S3 bucket to upload test coverage results to.
+        type: string
+        required: false
 permissions:
   packages: write
   contents: write
@@ -24,3 +30,5 @@ jobs:
           sleep 1s
         done
       goTestExtraArgs: -p 1 --tags localstack
+      test-coverage-upload-role: ${{ inputs.test-coverage-upload-role }}
+      test-coverage-upload-bucket: ${{ inputs.test-coverage-upload-bucket }}
