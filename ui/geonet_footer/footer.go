@@ -2,8 +2,9 @@ package geonet_footer
 
 import (
 	"bytes"
-	_ "embed"
+	"embed"
 	"html/template"
+	"net/http"
 )
 
 //go:embed footer.html
@@ -13,14 +14,14 @@ var footerTmpl = template.Must(template.New("footer").Parse(footerHTML))
 //go:embed images/geonet_logo.svg
 var geonetLogo template.HTML
 
-//go:embed images/gns_logo.svg
-var gnsLogo template.HTML
-
 //go:embed images/toka_tu_ake_nhc_logo.svg
 var nhcLogo template.HTML
 
 //go:embed images/toka_tu_ake_nhc_logo_stacked.svg
 var nhcLogoStacked template.HTML
+
+//go:embed images/footer_pngs/*
+var FooterAssetServer embed.FS
 
 type FooterConfig struct {
 	// Whether to use relative links in footer. If false, uses www.geonet.org.nz.
@@ -28,9 +29,9 @@ type FooterConfig struct {
 	// The origin to be used at the beginning of GeoNet links in the footer.
 	// Cannot be changed.
 	Origin string
-	// The GeoNet, GNS, and NHC logos are fixed and cannot be changed.
+	// The GeoNet, ESI, and NHC logos are fixed and cannot be changed.
 	GeoNetLogo     template.HTML
-	GnsLogo        template.HTML
+	EsiLogo        string
 	NhcLogo        template.HTML
 	NhcLogoStacked template.HTML
 	// URLs for extra logos to be added to the footer can be passed in.
@@ -54,7 +55,7 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 	var contents template.HTML
 
 	config.GeoNetLogo = geonetLogo
-	config.GnsLogo = gnsLogo
+	config.EsiLogo = "/images/footer_pngs/esi_logo_cropped_downsized.png"
 	config.NhcLogo = nhcLogo
 	config.NhcLogoStacked = nhcLogoStacked
 
@@ -67,4 +68,14 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 		return contents, err
 	}
 	return template.HTML(b.String()), nil // nolint: gosec // The source is our HTML file.
+}
+
+// ReturnFooterAssetServer returns a handler for serving embedded PNGs for the footer.
+func ReturnFooterAssetServer() http.Handler {
+	return http.FileServer(http.FS(FooterAssetServer))
+}
+
+// ReturnFooterAssetPattern returns the path pattern for the footer asset server.
+func ReturnFooterAssetPattern() string {
+	return "/images/footer_pngs/"
 }

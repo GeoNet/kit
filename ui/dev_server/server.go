@@ -32,6 +32,7 @@ func main() {
 	http.Handle("/", fs) // Serve static files
 	http.Handle("/geonetheader", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetfooter", http.HandlerFunc(testUIhandler))
+	http.Handle(footer.ReturnFooterAssetPattern(), footer.ReturnFooterAssetServer())
 	http.Handle("/geonetheaderbasic", http.HandlerFunc(testUIhandler))
 
 	log.Println("starting server")
