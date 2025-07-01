@@ -5,6 +5,7 @@ import (
 	"embed"
 	"html/template"
 	"net/http"
+	"path"
 )
 
 //go:embed footer.html
@@ -22,6 +23,8 @@ var nhcLogoStacked template.HTML
 
 //go:embed images/footer_pngs/*
 var FooterAssetServer embed.FS
+
+const FOOTER_ASSET_DIR = "/images/footer_pngs/"
 
 type FooterConfig struct {
 	// Whether to use relative links in footer. If false, uses www.geonet.org.nz.
@@ -55,7 +58,7 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 	var contents template.HTML
 
 	config.GeoNetLogo = geonetLogo
-	config.EsiLogo = "/images/footer_pngs/esi_logo_cropped_downsized.png"
+	config.EsiLogo = path.Join(FOOTER_ASSET_DIR, "esi_logo_cropped_downsized.png")
 	config.NhcLogo = nhcLogo
 	config.NhcLogoStacked = nhcLogoStacked
 
@@ -77,5 +80,5 @@ func ReturnFooterAssetServer() http.Handler {
 
 // ReturnFooterAssetPattern returns the path pattern for the footer asset server.
 func ReturnFooterAssetPattern() string {
-	return "/images/footer_pngs/"
+	return FOOTER_ASSET_DIR
 }
