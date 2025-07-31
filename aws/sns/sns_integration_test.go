@@ -128,6 +128,24 @@ func TestSNSNewWithRetries(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
+func TestSNSClient(t *testing.T) {
+	// ARRANGE
+	setup(false, false)
+	defer teardown("", "")
+
+	client, err := New()
+	ready := client.Ready()
+
+	require.Nil(t, err)
+	require.True(t, ready)
+
+	// ACTION
+	underlyingClient := client.Client()
+
+	// ASSERT
+	assert.NotNil(t, underlyingClient)
+}
+
 func TestSNSPublish(t *testing.T) {
 	// ARRANGE
 	queueArn, topicArn := setup(true, true)
