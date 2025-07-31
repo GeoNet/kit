@@ -321,6 +321,24 @@ func TestCreateS3ClientWithOptions(t *testing.T) {
 	assert.Nil(t, err)
 }
 
+func TestS3Client(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := New()
+	ready := client.Ready()
+
+	require.Nil(t, err)
+	require.True(t, ready)
+
+	// ACTION
+	underlyingClient := client.Client()
+
+	// ASSERT
+	assert.NotNil(t, underlyingClient)
+}
+
 func TestS3Get(t *testing.T) {
 	// ARRANGE
 	setup()
