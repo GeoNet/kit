@@ -77,6 +77,11 @@ func (s *SNS) Ready() bool {
 	return s.client != nil
 }
 
+// Client returns the underlying SNS client.
+func (s *SNS) Client() *sns.Client {
+	return s.client
+}
+
 // Publish publishes message to topicArn.
 func (s *SNS) Publish(topicArn string, message []byte) error {
 	input := sns.PublishInput{

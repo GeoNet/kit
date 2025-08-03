@@ -121,6 +121,11 @@ func (s *S3) Ready() bool {
 	return s.client != nil
 }
 
+// Client returns the underlying S3 client.
+func (s *S3) Client() *s3.Client {
+	return s.client
+}
+
 // Get gets the object referred to by key and version from bucket and writes it into b.
 // Version can be empty.
 func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
