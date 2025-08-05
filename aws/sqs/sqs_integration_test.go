@@ -455,11 +455,8 @@ func TestSendBatch(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
 
 	// ACTION
-	var maxBytes int = 262144
-	maxSizeSingleMessage := ""
-	for range maxBytes {
-		maxSizeSingleMessage += "a"
-	}
+	var maxBytes int = 1048576
+	maxSizeSingleMessage := strings.Repeat("a", maxBytes)
 	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage})
 
 	// ASSERT
@@ -474,11 +471,8 @@ func TestSendBatch(t *testing.T) {
 	assert.NotNil(t, err)
 
 	// ACTION
-	var maxHalfBytes int = 131072
-	maxHalfSizeMessage := ""
-	for range maxHalfBytes {
-		maxHalfSizeMessage += "a"
-	}
+	var maxHalfBytes int = 524288
+	maxHalfSizeMessage := strings.Repeat("a", maxHalfBytes)
 	err = client.SendBatch(context.TODO(), awsCmdQueueURL(), []string{maxHalfSizeMessage, maxHalfSizeMessage})
 
 	// ASSERT
@@ -531,11 +525,8 @@ func TestSendNBatch(t *testing.T) {
 	require.Nil(t, err, fmt.Sprintf("error creating sqs client: %v", err))
 
 	// ACTION
-	var maxBytes int = 262144
-	maxSizeSingleMessage := ""
-	for range maxBytes {
-		maxSizeSingleMessage += "a"
-	}
+	var maxBytes int = 1048576
+	maxSizeSingleMessage := strings.Repeat("a", maxBytes)
 	batchesSent, err := client.SendNBatch(context.TODO(), awsCmdQueueURL(), []string{maxSizeSingleMessage, maxSizeSingleMessage})
 
 	// ASSERT
