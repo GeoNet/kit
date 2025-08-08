@@ -59,11 +59,11 @@ var compressibleMimes = map[string]bool{
 
 var defaultCsp = map[string]string{
 	"default-src":     "'none'",
-	"img-src":         "'self' *.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com",
-	"font-src":        "'self' https://fonts.gstatic.com",
-	"style-src":       "'self'",
+	"img-src":         "'self' *.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com https://basemaps.linz.govt.nz",
+	"font-src":        "'self' https://fonts.gstatic.com https://basemaps.linz.govt.nz",
+	"style-src":       "'self' blob:",
 	"script-src":      "'self'",
-	"connect-src":     "'self' https://*.geonet.org.nz https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com",
+	"connect-src":     "'self' blob: https://*.geonet.org.nz https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://basemaps.linz.govt.nz",
 	"frame-src":       "'self' https://www.youtube.com https://www.google.com",
 	"form-action":     "'self' https://*.geonet.org.nz",
 	"base-uri":        "'none'",
