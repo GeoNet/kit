@@ -89,7 +89,7 @@ func TestLoadAssets(t *testing.T) {
 }
 
 func TestCreateSubResourceTag(t *testing.T) {
-	err := initAssets("testdata", "testdata")
+	err := InitAssets("testdata", "testdata")
 	if err != nil {
 		t.Error(err)
 	}
@@ -138,7 +138,7 @@ func TestCreateSubResourceTag(t *testing.T) {
 }
 
 func TestCreateSubResourcePreloadTag(t *testing.T) {
-	err := initAssets("testdata", "testdata")
+	err := InitAssets("testdata", "testdata")
 	if err != nil {
 		t.Error(err)
 	}
@@ -177,7 +177,7 @@ func TestCreateSubResourcePreloadTag(t *testing.T) {
 }
 
 func TestCreateImportTag(t *testing.T) {
-	err := initAssets("testdata", "testdata")
+	err := InitAssets("testdata", "testdata")
 	if err != nil {
 		t.Error(err)
 	}
