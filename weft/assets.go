@@ -27,15 +27,21 @@ type asset struct {
 	sri        string
 }
 
+// debug print helper (to skip `b`)
+func (a asset) String() string {
+	return fmt.Sprintf("asset{path:%s, hashedPath:%s, mime:%s, fileType:%s, sri:%s}", a.path, a.hashedPath, a.mime, a.fileType, a.sri)
+}
+
 // assets is populated during init and then is only used for reading.
-var assets = make(map[string]*asset)
+var assets map[string]*asset
 
 // assetHashes maps asset filename to the corresponding hash-prefixed asset pathname.
-var assetHashes = make(map[string]string)
+var assetHashes map[string]string
 var assetError error
 
 func init() {
-	assetError = initAssets("assets/assets", "assets")
+	// optionally, one can call InitAssets() to re-init to another directory
+	assetError = InitAssets("assets/assets", "assets")
 }
 
 // As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
@@ -320,35 +326,40 @@ func loadAsset(file, prefix string) (*asset, error) {
 	return &a, nil
 }
 
-// initAssets loads all assets below dir into global maps.
-func initAssets(dir, prefix string) error {
+// InitAssets loads all assets below dir into global maps.
+func InitAssets(dir, prefix string) error {
 	var fileList []string
 
-	err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
-		fileList = append(fileList, path)
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	for _, v := range fileList {
-		fi, err := os.Stat(v)
+	assets = make(map[string]*asset)
+	assetHashes = make(map[string]string)
+	assetError = func() error {
+		err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
+			fileList = append(fileList, path)
+			return nil
+		})
 		if err != nil {
 			return err
 		}
 
-		switch mode := fi.Mode(); {
-		case mode.IsRegular():
-			a, err := loadAsset(v, prefix)
+		for _, v := range fileList {
+			fi, err := os.Stat(v)
 			if err != nil {
 				return err
 			}
-			assets[a.hashedPath] = a
-			assets[a.path] = a
-			assetHashes[a.path] = a.hashedPath
-		}
-	}
 
-	return nil
+			switch mode := fi.Mode(); {
+			case mode.IsRegular():
+				a, err := loadAsset(v, prefix)
+				if err != nil {
+					return err
+				}
+				assets[a.hashedPath] = a
+				assets[a.path] = a
+				assetHashes[a.path] = a.hashedPath
+			}
+		}
+		return nil
+	}()
+
+	return assetError
 }
