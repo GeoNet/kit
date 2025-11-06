@@ -52,8 +52,8 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 	// Add leading HTML. Every page includes Bootstrap CSS/JS and fonts.
 	// Each page can then also have its own custom CSS/JS files.
 	leadingHTML := `<!DOCTYPE html><html><head>
-	<link rel="stylesheet" href="/bootstrap.v5.min.css">
-	<link rel="stylesheet" href="/font/css/font-awesome-6.1.1.min.css">`
+	<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
+	<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">`
 
 	path := req.URL.Path
 	switch path {
@@ -134,7 +134,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	leadingHTML += `<script src="/bootstrap.v5.bundle.min.js"></script></head><body>`
+	leadingHTML += `<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script></head><body>`
 
 	// Write leading HTML to writer
 	_, err = w.Write([]byte(leadingHTML))
