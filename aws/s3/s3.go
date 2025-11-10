@@ -530,6 +530,26 @@ func (s *S3) PutStream(bucket, key string, reader io.ReadCloser) error {
 // File is split up into parts and downloaded concurrently into an os.File,
 // so is useful for getting large files. Returns number of bytes downloaded.
 func (s *S3) Download(bucket, key string, f *os.File) (int64, error) {
+	return s.download(context.TODO(), bucket, key, f)
+}
+
+// DownloadWithContext is the same as Download but uses
+// the provided context.
+func (s *S3) DownloadWithContext(
+	ctx context.Context,
+	bucket, key string,
+	f *os.File,
+) (int64, error) {
+	return s.download(ctx, bucket, key, f)
+}
+
+// download is the common code used internally to download an S3 object
+// using the downloader based on the provided input.
+func (s *S3) download(
+	ctx context.Context,
+	bucket, key string,
+	f *os.File,
+) (int64, error) {
 	if s.downloader == nil {
 		return 0, errors.New("error downloading from S3, downloader not initialised")
 	}
@@ -537,7 +557,7 @@ func (s *S3) Download(bucket, key string, f *os.File) (int64, error) {
 		Bucket: aws.String(bucket),
 		Key:    aws.String(key),
 	}
-	numBytes, err := s.downloader.Download(context.TODO(), f, &input)
+	numBytes, err := s.downloader.Download(ctx, f, &input)
 	if err != nil {
 		return 0, err
 	}

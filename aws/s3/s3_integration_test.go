@@ -2,6 +2,7 @@ package s3
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -454,6 +455,94 @@ func TestS3GetContentSizeTime(t *testing.T) {
 	assert.Nil(t, err)
 	assert.Equal(t, meta.contentLength, contentLength)
 	assert.Equal(t, meta.lastModified, lastModified)
+}
+
+func TestS3Download(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating s3 client: %v", err))
+
+	err = client.AddDownloader()
+	require.Nil(t, err, fmt.Sprintf("error adding s3 downloader: %v", err))
+
+	dir := t.TempDir()
+	dataFile, err := os.CreateTemp(dir, "test")
+	require.Nil(t, err, fmt.Sprintf("error creating file: %v", err))
+
+	getSize := func(*os.File) int64 {
+		info, err := dataFile.Stat()
+		require.Nil(t, err, fmt.Sprintf("error getting file info: %v", err))
+		return info.Size()
+	}
+	require.Equal(t, int64(0), getSize(dataFile))
+
+	// ACTION
+	bytesDownloaded, err := client.Download(testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, getSize(dataFile), bytesDownloaded)
+	assert.Equal(t, getSize(dataFile), int64(len(testObjectData)))
+
+	buf := make([]byte, len(testObjectData))
+	_, err = dataFile.Read(buf)
+	require.Nil(t, err, fmt.Sprintf("error reading file: %v", err))
+	assert.Equal(t, testObjectData, string(buf))
+}
+
+func TestS3DownloadWithContext(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating s3 client: %v", err))
+
+	err = client.AddDownloader()
+	require.Nil(t, err, fmt.Sprintf("error adding s3 downloader: %v", err))
+
+	dir := t.TempDir()
+	dataFile, err := os.CreateTemp(dir, "test")
+	require.Nil(t, err, fmt.Sprintf("error creating file: %v", err))
+
+	getSize := func(*os.File) int64 {
+		info, err := dataFile.Stat()
+		require.Nil(t, err, fmt.Sprintf("error getting file info: %v", err))
+		return info.Size()
+	}
+	require.Equal(t, int64(0), getSize(dataFile))
+
+	// ACTION
+	ctx := context.Background()
+	bytesDownloaded, err := client.DownloadWithContext(ctx, testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.Nil(t, err)
+	assert.Equal(t, getSize(dataFile), bytesDownloaded)
+	assert.Equal(t, getSize(dataFile), int64(len(testObjectData)))
+
+	buf := make([]byte, len(testObjectData))
+	_, err = dataFile.Read(buf)
+	require.Nil(t, err, fmt.Sprintf("error reading file: %v", err))
+	assert.Equal(t, testObjectData, string(buf))
+
+	timeoutCtx, cancel := context.WithTimeout(
+		context.Background(), 1*time.Nanosecond, // Should timeout
+	)
+	defer cancel()
+
+	// ACTION
+	_, err = client.DownloadWithContext(timeoutCtx, testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestS3Put(t *testing.T) {
