@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"os"
 	"sync"
@@ -509,6 +508,18 @@ func (s *S3) ListAllObjectsConcurrently(bucket string, prefixes []string) ([]typ
 
 // PutStream puts the data stream to key in bucket.
 func (s *S3) PutStream(bucket, key string, reader io.ReadCloser) error {
+	return s.putStream(context.TODO(), bucket, key, reader)
+}
+
+// PutStreamWithContext is the same as PutStream but uses
+// the provided context.
+func (s *S3) PutStreamWithContext(ctx context.Context, bucket, key string, reader io.ReadCloser) error {
+	return s.putStream(ctx, bucket, key, reader)
+}
+
+// putStream is the common code used internally to upload a data stream to
+// an S3 bucket using the client's uploader.
+func (s *S3) putStream(ctx context.Context, bucket, key string, reader io.ReadCloser) error {
 	defer reader.Close()
 
 	if s.uploader == nil {
@@ -519,9 +530,9 @@ func (s *S3) PutStream(bucket, key string, reader io.ReadCloser) error {
 		Key:    aws.String(key),
 		Body:   reader,
 	}
-	_, err := s.uploader.Upload(context.TODO(), &input)
+	_, err := s.uploader.Upload(ctx, &input)
 	if err != nil {
-		return fmt.Errorf("error uploading to s3 for key %s, error: %s", key, err.Error())
+		return err
 	}
 	return nil
 }

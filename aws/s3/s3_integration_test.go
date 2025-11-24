@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -583,6 +584,102 @@ func TestS3PutWithMetadata(t *testing.T) {
 	// test meta data
 	metaData := awsCmdMeta()
 	assert.Equal(t, testMetaValue, metaData.meta[testMetaKey])
+}
+
+func TestS3PutStream(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating s3 client: %v", err))
+
+	err = client.AddUploader()
+	require.Nil(t, err, fmt.Sprintf("error adding s3 uploader: %v", err))
+
+	dir := t.TempDir()
+	dataFile, err := os.CreateTemp(dir, "test")
+	require.Nil(t, err, fmt.Sprintf("error creating file: %v", err))
+
+	bytesInFile, err := dataFile.WriteString(testObjectData)
+	require.Nil(t, err, fmt.Sprintf("error writing to file: %v", err))
+	require.Equal(t, len(testObjectData), bytesInFile)
+
+	_, err = dataFile.Seek(0, io.SeekStart)
+	require.Nil(t, err, fmt.Sprintf("error setting file offset back to start: %v", err))
+
+	// ACTION
+	err = client.PutStream(testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// Check the file uploaded is the same
+	buf := bytes.NewBuffer(nil)
+	err = client.Get(testBucket, testObjectKey, "", buf)
+	require.Nil(t, err, fmt.Sprintf("error getting object to check: %v", err))
+
+	contents := buf.Bytes()
+	assert.Equal(t, bytesInFile, len(contents))
+	assert.Equal(t, testObjectData, string(contents))
+}
+
+func TestS3PutStreamWithContext(t *testing.T) {
+
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	awsCmdPopulateBucket()
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating s3 client: %v", err))
+
+	err = client.AddUploader()
+	require.Nil(t, err, fmt.Sprintf("error adding s3 uploader: %v", err))
+
+	dir := t.TempDir()
+	dataFile, err := os.CreateTemp(dir, "test")
+	require.Nil(t, err, fmt.Sprintf("error creating file: %v", err))
+
+	bytesInFile, err := dataFile.WriteString(testObjectData)
+	require.Nil(t, err, fmt.Sprintf("error writing to file: %v", err))
+	require.Equal(t, len(testObjectData), bytesInFile)
+
+	_, err = dataFile.Seek(0, io.SeekStart)
+	require.Nil(t, err, fmt.Sprintf("error setting file offset back to start: %v", err))
+
+	// ACTION
+	ctx := context.Background()
+	err = client.PutStreamWithContext(ctx, testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.Nil(t, err)
+
+	// Check the file uploaded is the same
+	buf := bytes.NewBuffer(nil)
+	err = client.Get(testBucket, testObjectKey, "", buf)
+	require.Nil(t, err, fmt.Sprintf("error getting object to check: %v", err))
+
+	contents := buf.Bytes()
+	assert.Equal(t, bytesInFile, len(contents))
+	assert.Equal(t, testObjectData, string(contents))
+
+	// ARRANGE
+	timeoutCtx, cancel := context.WithTimeout(
+		context.Background(), 1*time.Nanosecond, // Should timeout
+	)
+	defer cancel()
+	dataFile, err = os.Open(dataFile.Name())
+	require.Nil(t, err, fmt.Sprintf("error opening file: %v", err))
+
+	// ACTION
+	err = client.PutStreamWithContext(timeoutCtx, testBucket, testObjectKey, dataFile)
+
+	// ASSERT
+	assert.ErrorIs(t, err, context.DeadlineExceeded)
 }
 
 func TestS3Exists(t *testing.T) {
