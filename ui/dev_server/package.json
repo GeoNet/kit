@@ -1,0 +1,15 @@
+{
+  "name": "ui",
+  "version": "1.0.0",
+  "description": "UI dev server",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "GeoNet",
+  "license": "UNLICENSED",
+  "private": true,
+  "dependencies": {
+    "@fortawesome/fontawesome-free": "6.7.2",
+    "geonet-bootstrap": "https://static.geonet.org.nz/packages/npm/geonet-bootstrap/geonet-bootstrap-1.0.0.tgz"
+  }
+}
