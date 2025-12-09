@@ -1,14 +1,6 @@
 /* Projects that import the GeoNet header must contain the following CSS in
-the HTML files that use it. These are CSS for some image/s, and extra styles on top of the standard
+the HTML files that use it. These are extra styles on top of the standard
 GeoNet Bootstrap.css file (which also needs to be present) */
-
-.esi-logo {
-    object-fit: contain;
-    max-width: 180px;
-    max-height: 68.7px;
-    width: 100%;
-    height: 100%
-}
 
 /* Bootstrap overrides - this should be changed in the main Bootstrap file at some point*/
 #footer .row {
