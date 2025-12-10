@@ -2,10 +2,8 @@ package geonet_footer
 
 import (
 	"bytes"
-	"embed"
+	_ "embed"
 	"html/template"
-	"net/http"
-	"path"
 )
 
 //go:embed footer.html
@@ -21,10 +19,11 @@ var nhcLogo template.HTML
 //go:embed images/toka_tu_ake_nhc_logo_stacked.svg
 var nhcLogoStacked template.HTML
 
-//go:embed images/footer_pngs/*
-var FooterAssetServer embed.FS
+//go:embed images/esnz_logo.svg
+var esnzLogo template.HTML
 
-const FOOTER_ASSET_DIR = "/images/footer_pngs/"
+//go:embed images/esnz_logo_stacked.svg
+var esnzLogoStacked template.HTML
 
 type FooterConfig struct {
 	// Whether to use relative links in footer. If false, uses www.geonet.org.nz.
@@ -32,11 +31,12 @@ type FooterConfig struct {
 	// The origin to be used at the beginning of GeoNet links in the footer.
 	// Cannot be changed.
 	Origin string
-	// The GeoNet, ESI, and NHC logos are fixed and cannot be changed.
-	GeoNetLogo     template.HTML
-	EsiLogo        string
-	NhcLogo        template.HTML
-	NhcLogoStacked template.HTML
+	// The GeoNet, ESNZ, and NHC logos are fixed and cannot be changed.
+	GeoNetLogo      template.HTML
+	EsnzLogo        template.HTML
+	EsnzLogoStacked template.HTML
+	NhcLogo         template.HTML
+	NhcLogoStacked  template.HTML
 	// URLs for extra logos to be added to the footer can be passed in.
 	ExtraLogos []FooterLogo
 	// Set whether footer is a stripped down, basic version.
@@ -49,6 +49,8 @@ type FooterLogo struct {
 	URL string
 	// The URL to the logo image.
 	LogoURL string
+	// The alt text to add to the logo image.
+	Alt string
 }
 
 // ReturnGeoNetFooter returns HTML for the main GeoNet footer that
@@ -58,7 +60,8 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 	var contents template.HTML
 
 	config.GeoNetLogo = geonetLogo
-	config.EsiLogo = path.Join(FOOTER_ASSET_DIR, "esi_logo_cropped_downsized.png")
+	config.EsnzLogo = esnzLogo
+	config.EsnzLogoStacked = esnzLogoStacked
 	config.NhcLogo = nhcLogo
 	config.NhcLogoStacked = nhcLogoStacked
 
@@ -71,14 +74,4 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 		return contents, err
 	}
 	return template.HTML(b.String()), nil // nolint: gosec // The source is our HTML file.
-}
-
-// ReturnFooterAssetServer returns a handler for serving embedded PNGs for the footer.
-func ReturnFooterAssetServer() http.Handler {
-	return http.FileServer(http.FS(FooterAssetServer))
-}
-
-// ReturnFooterAssetPattern returns the path pattern for the footer asset server.
-func ReturnFooterAssetPattern() string {
-	return FOOTER_ASSET_DIR
 }

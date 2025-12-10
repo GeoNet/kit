@@ -32,7 +32,6 @@ func main() {
 	http.Handle("/", fs) // Serve static files
 	http.Handle("/geonetheader", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetfooter", http.HandlerFunc(testUIhandler))
-	http.Handle(footer.ReturnFooterAssetPattern(), footer.ReturnFooterAssetServer())
 	http.Handle("/geonetheaderbasic", http.HandlerFunc(testUIhandler))
 
 	log.Println("starting server")
@@ -63,6 +62,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 				{
 					URL:     "https://www.rcet.science",
 					LogoURL: "/example_extra_logo.png",
+					Alt:     "RCET logo",
 				},
 			},
 		}
