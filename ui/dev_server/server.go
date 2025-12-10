@@ -62,6 +62,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 				{
 					URL:     "https://www.rcet.science",
 					LogoURL: "/example_extra_logo.png",
+					Alt:     "RCET logo",
 				},
 			},
 		}

@@ -49,6 +49,8 @@ type FooterLogo struct {
 	URL string
 	// The URL to the logo image.
 	LogoURL string
+	// The alt text to add to the logo image.
+	Alt string
 }
 
 // ReturnGeoNetFooter returns HTML for the main GeoNet footer that
