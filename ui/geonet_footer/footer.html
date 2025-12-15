@@ -30,7 +30,7 @@
         <div class="row">
             <div class="col-12 d-md-none pb-4">
                 <a target="_blank" href="https://earthsciences.nz" rel="external noopener noreferrer">
-                    <img class="esi-logo" src={{.EsiLogo}} alt="Earth Sciences New Zealand logo">
+                    {{.EsnzLogo}}
                 </a>
             </div>
         </div>
@@ -45,7 +45,7 @@
         <div class="row">
             <div class="col-12 d-md-none pb-4">
                 <a target="_blank" href="{{$logo.URL}}" rel="external noopener noreferrer">
-                    <img src="{{$logo.LogoURL}}" width="150px">
+                    <img src="{{$logo.LogoURL}}" width="150px" alt="{{$logo.Alt}}">
                 </a>
             </div>
         </div>
@@ -67,8 +67,11 @@
             <div class="col-md-3 d-none d-md-block">
                 <div class="row d-flex align-items-center">
                     <div class="col-xl-6 col-12">
-                        <a target="_blank" href="https://earthsciences.nz" rel="external noopener noreferrer">
-                            <img class="esi-logo" src={{.EsiLogo}} alt="Earth Sciences New Zealand logo">
+                        <a class="d-none d-xl-block pt-1" target="_blank" href="https://earthsciences.nz" rel="external noopener noreferrer">
+                            {{.EsnzLogoStacked}}
+                        </a>
+                        <a class="d-block d-xl-none" target="_blank" href="https://earthsciences.nz" rel="external noopener noreferrer">
+                            {{.EsnzLogo}}
                         </a>
                     </div>
                     <div class="col-xl-6 col-12">
@@ -84,7 +87,7 @@
                 <div class="row">
                     <div class="col-12">
                         <a target="_blank" href="{{$logo.URL}}" rel="external noopener noreferrer">
-                            <img src="{{$logo.LogoURL}}" class="pt-3" width="100%">
+                            <img src="{{$logo.LogoURL}}" class="pt-3" width="100%" alt="{{$logo.Alt}}">
                         </a>
                     </div>
                 </div>
