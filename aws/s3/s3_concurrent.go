@@ -188,6 +188,89 @@ func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []type
 	return s.manager.Process(processFunc, objects)
 }
 
+// GetAllConcurrently gets the objects with provided context, from specified bucket and writes the resulting HydratedFiles
+// to the returned output channel. The closure of this channel is handled, however it's the caller's
+// responsibility to purge the channel, and handle any errors present in the HydratedFiles.
+// If the ConcurrencyManager is not initialised before calling GetAllConcurrently, an output channel
+// containing a single HydratedFile with an error is returned.
+// Version can be empty, but must be the same for all objects.
+func (s *S3Concurrent) GetAllConcurrentlyWithContext(
+	ctx context.Context,
+	bucket, version string,
+	objects []types.Object,
+) chan HydratedFile {
+
+	output := make(chan HydratedFile, 1)
+
+	// Early cancel check
+	select {
+	case <-ctx.Done():
+		output <- HydratedFile{Error: ctx.Err()}
+		close(output)
+		return output
+	default:
+	}
+
+	if s.manager == nil {
+		output <- HydratedFile{
+			Error: errors.New("error getting files from S3, Concurrency Manager not initialised"),
+		}
+		close(output)
+		return output
+	}
+
+	if s.manager.memoryTotalSize < s.manager.calculateRequiredMemoryFor(objects) {
+		output <- HydratedFile{
+			Error: fmt.Errorf(
+				"error: bytes requested greater than max allowed by server (%v)",
+				s.manager.memoryTotalSize,
+			),
+		}
+		close(output)
+		return output
+	}
+	// Secure memory for all objects upfront.
+	s.manager.secureMemory(objects) // 0.
+
+	// IMPORTANT: ensure memory is released if context cancels before processing finishes
+	go func() {
+		<-ctx.Done()
+		// Best-effort cleanup: release all secured memory
+		for _, o := range objects {
+			s.manager.releaseMemory(aws.ToInt64(o.Size))
+		}
+	}()
+
+	processFunc := func(input types.Object) HydratedFile {
+		// Respect cancellation before starting work
+		select {
+		case <-ctx.Done():
+			return HydratedFile{Error: ctx.Err()}
+		default:
+		}
+
+		buf := bytes.NewBuffer(make([]byte, 0, int(*input.Size)))
+		key := aws.ToString(input.Key)
+
+		// Prefer context-aware S3 call if available
+		_, err := s.GetWithContext(ctx, bucket, key, version, buf)
+
+		// If context was cancelled during S3 read, surface that
+		if ctx.Err() != nil {
+			return HydratedFile{Error: ctx.Err()}
+		}
+
+		return HydratedFile{
+			Key:   key,
+			Data:  buf.Bytes(),
+			Error: err,
+		}
+	}
+
+	// Process already accepts a context internally, so pass it through
+	return s.manager.ProcessWithContext(ctx, processFunc, objects)
+}
+
 // getWorker retrieves a number of workers from the manager's worker pool.
 func (cm *ConcurrencyManager) getWorkers(number int) []*worker {
 	cm.workerPool.mutex.Lock()
@@ -257,6 +340,33 @@ func (cm *ConcurrencyManager) Process(asyncProcessor FileProcessor, objects []ty
 		workerGroup.stopWork() // 9.
 	}()
 	return workerGroup.returnOutput() // 2.
+}
+
+// Functions for providing a fan-out/fan-in operation with provided context. Workers are taken from the
+// worker pool and added to a WorkerGroup. All workers are returned to the pool once
+// the jobs have finished.
+func (cm *ConcurrencyManager) ProcessWithContext(
+	ctx context.Context,
+	asyncProcessor FileProcessor,
+	objects []types.Object,
+) chan HydratedFile {
+
+	workerGroup := cm.newWorkerGroup(ctx, asyncProcessor, cm.maxWorkersPerRequest)
+
+	go func() {
+		for _, obj := range objects {
+			select {
+			case <-ctx.Done():
+				workerGroup.stopWork()
+				return
+			default:
+				workerGroup.addWork(obj)
+			}
+		}
+		workerGroup.stopWork()
+	}()
+
+	return workerGroup.returnOutput()
 }
 
 // start begins a worker's process of making itself available for work, doing the work,

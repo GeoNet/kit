@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"context"
 	"fmt"
 	"testing"
 	"time"
@@ -120,4 +121,59 @@ func TestS3GetAllConcurrently(t *testing.T) {
 			return
 		}
 	}
+}
+
+// go test --run TestS3GetAllConcurrentlyWithContext_Cancel -v
+func TestS3GetAllConcurrentlyWithContext_Cancel(t *testing.T) {
+	// ARRANGE
+	setup()
+	defer teardown()
+
+	client, err := NewConcurrent(100, 10, 1000)
+	require.NoError(t, err)
+
+	total := 20
+	keys := make([]string, total)
+	for i := 0; i < total; i++ {
+		keys[i] = fmt.Sprintf("%s-%v", testObjectKey, i)
+	}
+	awsCmdPutKeys(keys)
+	objects, _ := client.ListAllObjects(testBucket, "")
+
+	t.Run("early-cancel-before-start", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		out := client.GetAllConcurrentlyWithContext(ctx, testBucket, "", objects)
+
+		var got []HydratedFile
+		for hf := range out {
+			got = append(got, hf)
+		}
+		require.Len(t, got, 1)
+		require.ErrorIs(t, got[0].Error, context.Canceled)
+
+		time.Sleep(200 * time.Millisecond)
+		assert.Equal(t, 100, len(client.manager.workerPool.channel))
+		assert.Equal(t, 100, len(client.manager.memoryPool.channel))
+	})
+	t.Run("cancel-during-processing", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		out := client.GetAllConcurrentlyWithContext(ctx, testBucket, "", objects)
+
+		collected := make([]HydratedFile, 0, len(objects))
+		cancelAfter := 3
+
+		for hf := range out {
+			collected = append(collected, hf)
+			if len(collected) == cancelAfter {
+				cancel()
+			}
+		}
+		// At least some work completed
+		require.GreaterOrEqual(t, len(collected), cancelAfter)
+		// But not all objects should be processed
+		require.Less(t, len(collected), len(objects))
+	})
 }
