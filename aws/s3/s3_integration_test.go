@@ -50,17 +50,20 @@ func setup() {
 	// setup environment variable to run AWS CLI/SDK
 	setAwsEnv()
 
-	// create bucket
-	cmd := exec.Command( //nolint:gosec
-		"aws", "s3api",
-		"create-bucket",
-		"--bucket", testBucket,
-		"--create-bucket-configuration", fmt.Sprintf(
-			"{\"LocationConstraint\": \"%v\"}", testRegion),
-	)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		fmt.Printf("Command failed: %v\nOutput: %s\n", err, string(output))
-		panic(err)
+	// check if bucket exists before creating
+	if !awsCmdBucketExists(testBucket) {
+		// create bucket
+		cmd := exec.Command( //nolint:gosec
+			"aws", "s3api",
+			"create-bucket",
+			"--bucket", testBucket,
+			"--create-bucket-configuration", fmt.Sprintf(
+				"{\"LocationConstraint\": \"%v\"}", testRegion),
+		)
+		if output, err := cmd.CombinedOutput(); err != nil {
+			fmt.Printf("Command failed: %v\nOutput: %s\n", err, string(output))
+			panic(err)
+		}
 	}
 }
 

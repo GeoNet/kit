@@ -157,41 +157,13 @@ func newConcurrencyManager(maxWorkers, maxWorkersPerRequest, maxBytes int) *Conc
 // containing a single HydratedFile with an error is returned.
 // Version can be empty, but must be the same for all objects.
 func (s *S3Concurrent) GetAllConcurrently(bucket, version string, objects []types.Object) chan HydratedFile {
-
-	if s.manager == nil {
-		output := make(chan HydratedFile, 1)
-		output <- HydratedFile{Error: errors.New("error getting files from S3, Concurrency Manager not initialised")}
-		close(output)
-		return output
-	}
-
-	if s.manager.memoryTotalSize < s.manager.calculateRequiredMemoryFor(objects) {
-		output := make(chan HydratedFile, 1)
-		output <- HydratedFile{Error: fmt.Errorf("error: bytes requested greater than max allowed by server (%v)", s.manager.memoryTotalSize)}
-		close(output)
-		return output
-	}
-	// Secure memory for all objects upfront.
-	s.manager.secureMemory(objects) // 0.
-
-	processFunc := func(input types.Object) HydratedFile {
-		buf := bytes.NewBuffer(make([]byte, 0, int(*input.Size)))
-		key := aws.ToString(input.Key)
-		err := s.Get(bucket, key, version, buf)
-
-		return HydratedFile{
-			Key:   key,
-			Data:  buf.Bytes(),
-			Error: err,
-		}
-	}
-	return s.manager.Process(processFunc, objects)
+	return s.GetAllConcurrentlyWithContext(context.Background(), bucket, version, objects)
 }
 
-// GetAllConcurrently gets the objects with provided context, from specified bucket and writes the resulting HydratedFiles
+// GetAllConcurrentlyWithContext gets the objects with provided context, from specified bucket and writes the resulting HydratedFiles
 // to the returned output channel. The closure of this channel is handled, however it's the caller's
 // responsibility to purge the channel, and handle any errors present in the HydratedFiles.
-// If the ConcurrencyManager is not initialised before calling GetAllConcurrently, an output channel
+// If the ConcurrencyManager is not initialised before calling GetAllConcurrentlyWithContext, an output channel
 // containing a single HydratedFile with an error is returned.
 // Version can be empty, but must be the same for all objects.
 func (s *S3Concurrent) GetAllConcurrentlyWithContext(
@@ -229,19 +201,35 @@ func (s *S3Concurrent) GetAllConcurrentlyWithContext(
 		close(output)
 		return output
 	}
+
 	// Secure memory for all objects upfront.
 	s.manager.secureMemory(objects) // 0.
 
-	// IMPORTANT: ensure memory is released if context cancels before processing finishes
+	// Track which objects have been dispatched to workers
+	// so we know which memory to release on cancellation
+	var dispatchedMutex sync.Mutex
+	dispatchedObjects := make(map[string]bool)
+
+	// ensure memory is released if context cancels before processing finishes
 	go func() {
 		<-ctx.Done()
-		// Best-effort cleanup: release all secured memory
+		// Only release memory for objects that were never dispatched
+		dispatchedMutex.Lock()
+		defer dispatchedMutex.Unlock()
 		for _, o := range objects {
-			s.manager.releaseMemory(aws.ToInt64(o.Size))
+			key := aws.ToString(o.Key)
+			if !dispatchedObjects[key] {
+				s.manager.releaseMemory(aws.ToInt64(o.Size))
+			}
 		}
 	}()
 
 	processFunc := func(input types.Object) HydratedFile {
+		// Mark as dispatched
+		dispatchedMutex.Lock()
+		dispatchedObjects[aws.ToString(input.Key)] = true
+		dispatchedMutex.Unlock()
+
 		// Respect cancellation before starting work
 		select {
 		case <-ctx.Done():
@@ -252,7 +240,6 @@ func (s *S3Concurrent) GetAllConcurrentlyWithContext(
 		buf := bytes.NewBuffer(make([]byte, 0, int(*input.Size)))
 		key := aws.ToString(input.Key)
 
-		// Prefer context-aware S3 call if available
 		_, err := s.GetWithContext(ctx, bucket, key, version, buf)
 
 		// If context was cancelled during S3 read, surface that
@@ -267,8 +254,8 @@ func (s *S3Concurrent) GetAllConcurrentlyWithContext(
 		}
 	}
 
-	// Process already accepts a context internally, so pass it through
-	return s.manager.ProcessWithContext(ctx, processFunc, objects)
+	// Process with a context
+	return s.manager.Process(ctx, processFunc, objects)
 }
 
 // getWorker retrieves a number of workers from the manager's worker pool.
@@ -327,25 +314,10 @@ func (cm *ConcurrencyManager) releaseMemory(size int64) {
 	}
 }
 
-// Functions for providing a fan-out/fan-in operation. Workers are taken from the
-// worker pool and added to a WorkerGroup. All workers are returned to the pool once
-// the jobs have finished.
-func (cm *ConcurrencyManager) Process(asyncProcessor FileProcessor, objects []types.Object) chan HydratedFile {
-	workerGroup := cm.newWorkerGroup(context.Background(), asyncProcessor, cm.maxWorkersPerRequest) // 1.
-
-	go func() {
-		for _, obj := range objects {
-			workerGroup.addWork(obj)
-		}
-		workerGroup.stopWork() // 9.
-	}()
-	return workerGroup.returnOutput() // 2.
-}
-
 // Functions for providing a fan-out/fan-in operation with provided context. Workers are taken from the
 // worker pool and added to a WorkerGroup. All workers are returned to the pool once
 // the jobs have finished.
-func (cm *ConcurrencyManager) ProcessWithContext(
+func (cm *ConcurrencyManager) Process(
 	ctx context.Context,
 	asyncProcessor FileProcessor,
 	objects []types.Object,
@@ -354,35 +326,48 @@ func (cm *ConcurrencyManager) ProcessWithContext(
 	workerGroup := cm.newWorkerGroup(ctx, asyncProcessor, cm.maxWorkersPerRequest)
 
 	go func() {
+		defer func() {
+			close(workerGroup.reception)
+			workerGroup.stopWork() // 9.
+		}()
+
 		for _, obj := range objects {
 			select {
 			case <-ctx.Done():
-				workerGroup.stopWork()
 				return
 			default:
-				workerGroup.addWork(obj)
+				if !workerGroup.addWork(ctx, obj) {
+					return
+				}
 			}
 		}
-		workerGroup.stopWork()
 	}()
 
-	return workerGroup.returnOutput()
+	return workerGroup.returnOutput() // 2.
 }
 
 // start begins a worker's process of making itself available for work, doing the work,
 // and repeat, until all work is done.
-func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan *worker, wg *sync.WaitGroup) {
+func (w *worker) start( // 4.
+	ctx context.Context,
+	processor FileProcessor,
+	roster chan *worker,
+	wg *sync.WaitGroup,
+) {
 	go func() {
 		defer func() {
 			wg.Done()
 
-			// Make sure workers contents have been consumed
-			// before returning to pool.
-			if len(w.input) > 0 {
-				input := <-w.input
+			// Process any remaining input before returning to pool
+			select {
+			case input := <-w.input:
 				w.output <- processor(input)
-				w.manager.releaseMemory(int64(*input.Size))
+				w.manager.releaseMemory(aws.ToInt64(input.Size))
+			default:
+				// No pending input
 			}
+
+			// Wait for output to be consumed
 			for len(w.output) > 0 {
 				time.Sleep(1 * time.Millisecond)
 			}
@@ -390,12 +375,19 @@ func (w *worker) start(ctx context.Context, processor FileProcessor, roster chan
 			w.manager.returnWorker(w) // 10.
 		}()
 		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				// Non-blocking check allows us to add to roster
+			}
+
 			roster <- w // 3., 7.
 
 			select {
 			case input := <-w.input: // 5.
 				w.output <- processor(input) // 6.
-				w.manager.releaseMemory(int64(*input.Size))
+				w.manager.releaseMemory(aws.ToInt64(input.Size))
 			case <-ctx.Done(): // 9.
 				return
 			}
@@ -451,7 +443,7 @@ func (wg *workerGroup) startOutput() {
 func (wg *workerGroup) cleanUp(ctx context.Context) {
 	<-ctx.Done()
 	wg.group.Wait() // 9.
-	close(wg.reception)
+	//close(wg.reception)
 	close(wg.roster)
 }
 
@@ -459,12 +451,18 @@ func (wg *workerGroup) cleanUp(ctx context.Context) {
 // roster, and gives it an S3 Object to download. The worker's output
 // channel is registered to the workerGroup's reception so that
 // order is retained.
-func (wg *workerGroup) addWork(newWork types.Object) { // 4.
+func (wg *workerGroup) addWork(ctx context.Context, newWork types.Object) bool {
 	for w := range wg.roster {
-		w.input <- newWork
-		wg.reception <- w.output
-		break
+		select {
+		case <-ctx.Done():
+			return false
+		default:
+			w.input <- newWork
+			wg.reception <- w.output
+			return true
+		}
 	}
+	return false
 }
 
 // returnOutput returns the workerGroup's output channel.
