@@ -128,22 +128,40 @@ func (s *S3) Client() *s3.Client {
 // Get gets the object referred to by key and version from bucket and writes it into b.
 // Version can be empty.
 func (s *S3) Get(bucket, key, version string, b *bytes.Buffer) error {
+	_, err := s.GetWithContext(context.Background(), bucket, key, version, b)
+	return err
+}
+
+// Get gets the object referred to by key and version from bucket and writes it into b.
+// with the provided context.
+// Version can be empty.
+func (s *S3) GetWithContext(
+	ctx context.Context,
+	bucket, key, version string,
+	w io.Writer,
+) (int64, error) {
+
 	input := s3.GetObjectInput{
-		Key:    aws.String(key),
 		Bucket: aws.String(bucket),
+		Key:    aws.String(key),
 	}
 	if version != "" {
 		input.VersionId = aws.String(version)
 	}
-	result, err := s.client.GetObject(context.TODO(), &input)
+
+	result, err := s.client.GetObject(ctx, &input)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer result.Body.Close()
 
-	_, err = b.ReadFrom(result.Body)
+	n, err := io.Copy(w, result.Body)
 
-	return err
+	// Distinguish cancellation from real errors
+	if ctx.Err() != nil {
+		return n, ctx.Err()
+	}
+	return n, err
 }
 
 // GetByteRange gets the specified byte range of an object referred to by key and version
