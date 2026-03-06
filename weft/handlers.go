@@ -59,7 +59,7 @@ var compressibleMimes = map[string]bool{
 
 var defaultCsp = map[string]string{
 	"default-src":     "'none'",
-	"img-src":         "'self' *.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com",
+	"img-src":         "'self' https://*.geonet.org.nz data: https://*.google-analytics.com https://*.googletagmanager.com",
 	"font-src":        "'self' https://fonts.gstatic.com",
 	"style-src":       "'self'",
 	"script-src":      "'self'",
