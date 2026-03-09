@@ -169,24 +169,27 @@ func CreateSubResourcePreload(args ...string) (template.HTML, error) {
 }
 
 // CreateImportMap generates an import map script tag which maps JS module asset filenames to their
-// respectful hash-prefixed path name. eg:
+// respectful hash-prefixed path name. Also includes subresource integrity values for these files. eg:
 //
-//	<script type="importmap" nonce="abcdefghijklmnop">
-//	{
-//		"imports":{
-//			"geonet-map.mjs":"/assets/js/77da7c4e-geonet-map.mjs"
+//		<script type="importmap" nonce="abcdefghijklmnop">
+//		{
+//			"imports":{
+//				"geonet-map.mjs":"/assets/js/77da7c4e-geonet-map.mjs"
+//			},
+//	        "integrity":{
+//	            "/assets/js/77da7c4e-geonet-map.mjs":"sha384-VbVf44SP6Q7kBOpKwzEQ3qhLRurPJ04Nrzv1JlaXnmSBXClEC94+WLmc97N8GfM1"
+//	        }
 //		}
-//	}
-//	</script>
+//		</script>
 func CreateImportMap(nonce string) template.HTML {
 
-	importMapping := make(map[string]string, 0)
-	for k, v := range assetHashes {
+	importMapping := make(map[string]*asset, 0)
+	for k, _ := range assetHashes {
 		if !strings.HasSuffix(k, ".mjs") {
 			continue
 		}
 		filename := path.Base(k)
-		importMapping[filename] = v
+		importMapping[filename] = assets[k]
 	}
 	if len(importMapping) == 0 {
 		return template.HTML("")
@@ -198,7 +201,7 @@ func CreateImportMap(nonce string) template.HTML {
 
 // createImportMapTag returns the <script> tag of type "importmap" to faciliate browser with
 // module resolution. Formatted to make readable in resulting source file.
-func createImportMapTag(importMapping map[string]string, nonce string) string {
+func createImportMapTag(importMapping map[string]*asset, nonce string) string {
 
 	importMap := "<script type=\"importmap\""
 	if nonce != "" {
@@ -214,9 +217,17 @@ func createImportMapTag(importMapping map[string]string, nonce string) string {
 	sort.Strings(keys)
 
 	for _, k := range keys {
-		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", k, importMapping[k])
+		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", k, importMapping[k].hashedPath)
 	}
 	importMap = strings.TrimSuffix(importMap, ",")
+
+	// Add subresource integrity values
+	importMap += "\n\t},\n\t\"integrity\":{"
+	for _, k := range keys {
+		importMap += fmt.Sprintf("\n\t\t\"%s\":\"%s\",", importMapping[k].hashedPath, importMapping[k].sri)
+	}
+	importMap = strings.TrimSuffix(importMap, ",")
+
 	importMap += "\n\t}\n}\n</script>"
 
 	return importMap
