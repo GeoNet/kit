@@ -185,19 +185,25 @@ func TestCreateImportTag(t *testing.T) {
 	work := []struct {
 		testName      string
 		nonce         string
-		importMapping map[string]string
+		importMapping map[string]*asset
 		expected      string
 	}{
 		{
 			"No nonce, one module file",
 			"",
-			map[string]string{
-				"test.mjs": "/assets/js/hashprefix-test.mjs",
+			map[string]*asset{
+				"test.mjs": &asset{
+					hashedPath: "/assets/js/hashprefix-test.mjs",
+					sri:        "sha384-abcd",
+				},
 			},
 			`<script type="importmap">
 {
 	"imports":{
 		"test.mjs":"/assets/js/hashprefix-test.mjs"
+	},
+	"integrity":{
+		"/assets/js/hashprefix-test.mjs":"sha384-abcd"
 	}
 }
 </script>`,
@@ -205,15 +211,25 @@ func TestCreateImportTag(t *testing.T) {
 		{
 			"Nonce present, two module files",
 			"abcdefg",
-			map[string]string{
-				"test1.mjs": "/assets/js/hashprefix-test1.mjs",
-				"test2.mjs": "/assets/js/hashprefix-test2.mjs",
+			map[string]*asset{
+				"test1.mjs": &asset{
+					hashedPath: "/assets/js/hashprefix-test1.mjs",
+					sri:        "sha384-efgh",
+				},
+				"test2.mjs": &asset{
+					hashedPath: "/assets/js/hashprefix-test2.mjs",
+					sri:        "sha384-ijkl",
+				},
 			},
 			`<script type="importmap" nonce="abcdefg">
 {
 	"imports":{
 		"test1.mjs":"/assets/js/hashprefix-test1.mjs",
 		"test2.mjs":"/assets/js/hashprefix-test2.mjs"
+	},
+	"integrity":{
+		"/assets/js/hashprefix-test1.mjs":"sha384-efgh",
+		"/assets/js/hashprefix-test2.mjs":"sha384-ijkl"
 	}
 }
 </script>`,
