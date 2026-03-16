@@ -353,7 +353,7 @@ func (s *SQS) SendNBatch(ctx context.Context, queueURL string, bodies []string) 
 
 	const (
 		maxCount = 10
-		maxSize  = 262144 // 256 KiB
+		maxSize  = 1048576 // 1 MiB
 	)
 
 	allErrors := make([]error, 0)
