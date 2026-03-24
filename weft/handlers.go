@@ -263,7 +263,9 @@ func writeResponseAndLogMetrics(err error, w http.ResponseWriter, r *http.Reques
 		if strings.Contains(r.Header.Get("Accept-Encoding"), GZIP) && compressibleMimes[contentType] && b.Len() > 20 {
 			w.Header().Set("Content-Encoding", GZIP)
 			gz := gzip.NewWriter(w)
-			defer gz.Close()
+			defer func() {
+				_ = gz.Close()
+			}()
 			w.WriteHeader(status)
 			n, writeErr = b.WriteTo(gz)
 		} else {
@@ -328,7 +330,7 @@ func SetBestPracticeHeaders(w http.ResponseWriter, r *http.Request, customCsp ma
 		csp.WriteString(" ")
 
 		if k == "script-src" && nonce != "" && s != "'none'" { //add nonce to CSP
-			csp.WriteString(fmt.Sprintf(" 'nonce-%s' 'strict-dynamic' ", nonce))
+			fmt.Fprintf(&csp, " 'nonce-%s' 'strict-dynamic' ", nonce)
 		}
 		csp.WriteString(s)
 		csp.WriteString("; ")

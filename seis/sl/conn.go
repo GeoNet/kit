@@ -95,7 +95,7 @@ func NewConn(service string, timeout time.Duration) (*Conn, error) {
 }
 
 func (c *Conn) setDeadline() error {
-	if !(c.timeout > 0) {
+	if c.timeout < 1 {
 		return nil
 	}
 	return c.SetDeadline(time.Now().Add(c.timeout))

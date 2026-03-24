@@ -138,8 +138,8 @@ func (w *Map180) SVG(boundingBox string, width int, markers []Marker, insetBbox 
 	}
 
 	buf.WriteString(`<?xml version="1.0"?>`)
-	buf.WriteString(fmt.Sprintf("<svg height=\"%d\" width=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">",
-		m.height, m.width))
+	fmt.Fprintf(&buf, "<svg height=\"%d\" width=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">",
+		m.height, m.width)
 	if b.title != "" {
 		buf.WriteString(`<title>Map of ` + b.title + `.</title>`)
 	} else {
@@ -201,8 +201,8 @@ func (w *Map180) SVG(boundingBox string, width int, markers []Marker, insetBbox 
 			ibboxul.y = ibboxul.y - 2
 		}
 
-		buf.WriteString(fmt.Sprintf("<g transform=\"translate(10,10)\"><rect x=\"-3\" y=\"-3\" width=\"%d\" height=\"%d\" rx=\"10\" ry=\"10\" fill=\"white\"/>",
-			in.width+6, in.height+6))
+		fmt.Fprintf(&buf, "<g transform=\"translate(10,10)\"><rect x=\"-3\" y=\"-3\" width=\"%d\" height=\"%d\" rx=\"10\" ry=\"10\" fill=\"white\"/>",
+			in.width+6, in.height+6)
 
 		buf.WriteString(insetMap)
 
@@ -245,8 +245,8 @@ func (w *Map180) Map(boundingBox string, width int, pts Points, insetBbox string
 	}
 
 	buf.WriteString(`<?xml version="1.0"?>`)
-	buf.WriteString(fmt.Sprintf("<svg  viewBox=\"0 0 %d %d\"  xmlns=\"http://www.w3.org/2000/svg\">",
-		m.width, m.height))
+	fmt.Fprintf(buf, "<svg  viewBox=\"0 0 %d %d\"  xmlns=\"http://www.w3.org/2000/svg\">",
+		m.width, m.height)
 	if b.title != "" {
 		buf.WriteString(`<title>Map of ` + b.title + `.</title>`)
 	} else {
@@ -308,8 +308,8 @@ func (w *Map180) Map(boundingBox string, width int, pts Points, insetBbox string
 			ibboxul.y = ibboxul.y - 2
 		}
 
-		buf.WriteString(fmt.Sprintf("<g transform=\"translate(10,10)\"><rect x=\"-3\" y=\"-3\" width=\"%d\" height=\"%d\" rx=\"10\" ry=\"10\" fill=\"white\"/>",
-			in.width+6, in.height+6))
+		fmt.Fprintf(buf, "<g transform=\"translate(10,10)\"><rect x=\"-3\" y=\"-3\" width=\"%d\" height=\"%d\" rx=\"10\" ry=\"10\" fill=\"white\"/>",
+			in.width+6, in.height+6)
 
 		buf.WriteString(insetMap)
 
@@ -454,8 +454,8 @@ func layerGetter(ctx context.Context, key string, dest groupcache.Sink) error {
 
 	var b bytes.Buffer
 
-	b.WriteString(fmt.Sprintf("<path fill=\"wheat\" stroke-width=\"1\"  stroke-linejoin=\"round\" stroke=\"lightslategrey\" d=\"%s\"/>", land))
-	b.WriteString(fmt.Sprintf("<path fill=\"azure\" stroke-width=\"1\"  stroke=\"lightslategrey\" d=\"%s\"/>", lakes))
+	fmt.Fprintf(&b, "<path fill=\"wheat\" stroke-width=\"1\"  stroke-linejoin=\"round\" stroke=\"lightslategrey\" d=\"%s\"/>", land)
+	fmt.Fprintf(&b, "<path fill=\"azure\" stroke-width=\"1\"  stroke=\"lightslategrey\" d=\"%s\"/>", lakes)
 	b.WriteString(labelsToSVG(l))
 
 	return dest.SetString(b.String())
@@ -497,7 +497,7 @@ func (m *map3857) toKey() string {
 func fromKey(key string) (m map3857, err error) {
 	k := strings.Split(key, ",")
 	if len(k) != 12 {
-		err = fmt.Errorf("Wrong length for key exptected 12 got %d", len(k))
+		err = fmt.Errorf("wrong length for key exptected 12 got %d", len(k))
 		return
 	}
 

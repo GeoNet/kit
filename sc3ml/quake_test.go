@@ -10,7 +10,7 @@ import (
 
 func TestFromSC3ML(t *testing.T) {
 	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml"} {
-		r, err := os.Open("testdata/" + input)
+		r, err := os.Open("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -19,7 +19,10 @@ func TestFromSC3ML(t *testing.T) {
 		if err != nil {
 			t.Errorf("%s: %s", input, err.Error())
 		}
-		r.Close()
+		err = r.Close()
+		if err != nil {
+			t.Fatal(err)
+		}
 
 		if e.PublicID != "2015p768477" {
 			t.Errorf("%s: expected publicID 2015p768477 got %s", input, e.PublicID)

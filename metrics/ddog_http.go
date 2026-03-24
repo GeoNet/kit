@@ -186,7 +186,7 @@ func dogHttp(apiKey, hostName, appName string, m runtime.MemStats, t []TimerStat
 		time.Sleep(time.Second << uint(tries)) //nolint:gosec
 	}
 	if res != nil {
-		res.Body.Close()
+		_ = res.Body.Close()
 	}
 
 	return err

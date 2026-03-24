@@ -39,11 +39,11 @@ const (
 // helper functions
 
 func setAwsEnv() {
-	os.Setenv("AWS_REGION", testRegion)
-	os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
-	os.Setenv("AWS_ACCESS_KEY_ID", "test")
-	os.Setenv("AWS_ENDPOINT_URL", customAWSEndpoint)
-	os.Setenv("AWS_S3_DISABLE_CHECKSUM", "true")
+	_ = os.Setenv("AWS_REGION", testRegion)
+	_ = os.Setenv("AWS_SECRET_ACCESS_KEY", "test")
+	_ = os.Setenv("AWS_ACCESS_KEY_ID", "test")
+	_ = os.Setenv("AWS_ENDPOINT_URL", customAWSEndpoint)
+	_ = os.Setenv("AWS_S3_DISABLE_CHECKSUM", "true")
 }
 
 func setup() {
@@ -79,21 +79,21 @@ func teardown() {
 
 func awsCmdPopulateBucket() {
 	// create test data
-	tmpDir, _ := os.MkdirTemp("", "")
-	defer os.RemoveAll(tmpDir)
+	testFile, _ := os.CreateTemp("", "data-*.txt")
+	defer func() {
+		_ = os.Remove(testFile.Name())
+	}()
 
-	testDataFilepath := filepath.Join(tmpDir, "data.txt")
-	testFile, _ := os.Create(testDataFilepath)
 	_, _ = testFile.WriteString(testObjectData)
-	testFile.Close()
+	_ = testFile.Close()
 
 	// populate bucket
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"put-object",
 		"--bucket", testBucket,
 		"--key", testObjectKey,
-		"--body", testDataFilepath,
+		"--body", testFile.Name(),
 		"--metadata", fmt.Sprintf("%v=%v", testMetaKey, testMetaValue),
 	).Run(); err != nil {
 
@@ -102,7 +102,7 @@ func awsCmdPopulateBucket() {
 }
 
 func awsCmdBucketExists(bucket string) bool {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"head-bucket",
 		"--bucket", bucket,
@@ -113,7 +113,7 @@ func awsCmdBucketExists(bucket string) bool {
 }
 
 func awsCmdExists(key string) bool {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"head-object",
 		"--bucket", testBucket,
@@ -126,7 +126,7 @@ func awsCmdExists(key string) bool {
 }
 
 func awsCmdPutKey(key string) {
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"put-object",
 		"--bucket", testBucket,
@@ -140,16 +140,18 @@ func awsCmdPutKey(key string) {
 func awsCmdPutKeys(keys []string) {
 	// create test data
 	tmpDir, _ := os.MkdirTemp("", "")
-	defer os.RemoveAll(tmpDir)
+	defer func() {
+		_ = os.RemoveAll(tmpDir)
+	}()
 
 	for _, k := range keys {
 		testDataFilepath := filepath.Join(tmpDir, k)
-		testFile, _ := os.Create(testDataFilepath)
+		testFile, _ := os.Create(testDataFilepath) //nolint:gosec
 		_, _ = testFile.WriteString(testObjectData)
-		testFile.Close()
+		_ = testFile.Close()
 	}
 	// sync to bucket
-	cmd := exec.Command(
+	cmd := exec.Command( //nolint:gosec
 		"aws", "s3",
 		"sync", tmpDir, fmt.Sprintf("s3://%v", testBucket),
 	)
@@ -200,21 +202,21 @@ func awsCmdMeta() awsMeta {
 }
 
 func awsCmdGetTestObject() string {
-	tmpDir, _ := os.MkdirTemp("", "")
-	defer os.RemoveAll(tmpDir)
+	testFile, _ := os.CreateTemp("", "data-*.txt")
+	defer func() {
+		_ = os.Remove(testFile.Name())
+	}()
 
-	testDataFilepath := filepath.Join(tmpDir, "data.txt")
-
-	if err := exec.Command(
+	if err := exec.Command( //nolint:gosec
 		"aws", "s3api",
 		"get-object",
 		"--bucket", testBucket,
 		"--key", testObjectKey,
-		testDataFilepath).Run(); err != nil {
+		testFile.Name()).Run(); err != nil {
 		panic(err)
 	}
 
-	testFileContents, _ := os.ReadFile(testDataFilepath)
+	testFileContents, _ := os.ReadFile(testFile.Name())
 	return string(testFileContents)
 }
 
@@ -255,7 +257,8 @@ func TestCreateS3ClientAndReady(t *testing.T) {
 	// test bad case
 
 	// ARRANGE
-	os.Unsetenv("AWS_REGION")
+	err = os.Unsetenv("AWS_REGION")
+	require.Nil(t, err)
 
 	// ACTION
 	client, err = New()
@@ -279,7 +282,8 @@ func TestCreateS3ClientWithMaxRetries(t *testing.T) {
 	// test bad case
 
 	// ARRANGE
-	os.Unsetenv("AWS_REGION")
+	err = os.Unsetenv("AWS_REGION")
+	require.Nil(t, err)
 
 	// ACTION
 	_, err = NewWithMaxRetries(2)

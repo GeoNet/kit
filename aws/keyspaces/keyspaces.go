@@ -131,7 +131,7 @@ func generateAuthenticator() (gocql.Authenticator, error) {
 	if err != nil {
 		return nil, err
 	}
-	var auth sigv4.AwsAuthenticator = sigv4.NewAwsAuthenticator()
+	auth := sigv4.NewAwsAuthenticator()
 	auth.Region = cfg.Region
 	auth.AccessKeyId = creds.AccessKeyID
 	auth.SecretAccessKey = creds.SecretAccessKey

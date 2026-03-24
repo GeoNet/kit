@@ -70,7 +70,9 @@ func getCspNonce(len int) (string, error) {
 	}
 	var buf bytes.Buffer
 	enc := base64.NewEncoder(base64.StdEncoding, &buf)
-	defer enc.Close()
+	defer func() {
+		_ = enc.Close()
+	}()
 	_, err := enc.Write(b)
 	if err != nil {
 		return "", fmt.Errorf("failed to create nonce: %v", err)
@@ -256,11 +258,13 @@ func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
 // loadAsset loads file and finger prints it with a sha256 hash.  prefix is stripped
 // from path members in the returned asset.
 func loadAsset(file, prefix string) (*asset, error) {
-	f, err := os.Open(file)
+	f, err := os.Open(file) //nolint:gosec
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
+	defer func() {
+		_ = f.Close()
+	}()
 
 	// calculate a hash for the file and prefix the asset name with a short hash.
 	h := sha256.New()

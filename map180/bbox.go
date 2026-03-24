@@ -65,25 +65,25 @@ func newBbox(boundingBox string) (b bbox, err error) {
 
 	b.llx, err = strconv.ParseFloat(s[0], 64)
 	if err != nil {
-		err = fmt.Errorf("Invalid boundingBox: %s", boundingBox)
+		err = fmt.Errorf("invalid boundingBox: %s", boundingBox)
 		return
 	}
 
 	b.lly, err = strconv.ParseFloat(s[1], 64)
 	if err != nil {
-		err = fmt.Errorf("Invalid boundingBox: %s", boundingBox)
+		err = fmt.Errorf("invalid boundingBox: %s", boundingBox)
 		return
 	}
 
 	b.urx, err = strconv.ParseFloat(s[2], 64)
 	if err != nil {
-		err = fmt.Errorf("Invalid boundingBox: %s", boundingBox)
+		err = fmt.Errorf("invalid boundingBox: %s", boundingBox)
 		return
 	}
 
 	b.ury, err = strconv.ParseFloat(s[3], 64)
 	if err != nil {
-		err = fmt.Errorf("Invalid boundingBox: %s", boundingBox)
+		err = fmt.Errorf("invalid boundingBox: %s", boundingBox)
 		return
 	}
 
@@ -176,7 +176,7 @@ func (b *bbox) newMap3857(width int) (m map3857, err error) {
 	// tried using st_MakeEnvelope so that only needed to hit DB once
 	// but it does not do what I for crossing 180
 	err = db.QueryRow(`with p as (
-		select st_transform(st_setsrid(st_makepoint($1, $2), 4326), 3857) as pt 
+		select st_transform(st_setsrid(st_makepoint($1, $2), 4326), 3857) as pt
 		)
 	select ST_X(pt), ST_Y(pt) from p;`, b.llx, b.lly).Scan(&m.llx, &m.lly)
 	if err != nil {
@@ -184,7 +184,7 @@ func (b *bbox) newMap3857(width int) (m map3857, err error) {
 	}
 
 	err = db.QueryRow(`with p as (
-		select st_transform(st_setsrid(st_makepoint($1, $2), 4326), 3857) as pt 
+		select st_transform(st_setsrid(st_makepoint($1, $2), 4326), 3857) as pt
 		)
 	select ST_X(pt), ST_Y(pt) from p;`, b.urx, b.ury).Scan(&m.urx, &m.ury)
 	if err != nil {

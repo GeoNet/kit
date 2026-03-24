@@ -141,7 +141,7 @@ func (d *DLConn) WriteMS(srcname string, start, end time.Time, data []byte) erro
 }
 
 func (d *DLConn) setDeadline() error {
-	if !(d.timeout > 0) {
+	if d.timeout < 1 {
 		return nil
 	}
 	return d.SetDeadline(time.Now().Add(d.timeout))

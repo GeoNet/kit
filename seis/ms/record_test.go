@@ -20,7 +20,7 @@ func TestRecord_Unpack(t *testing.T) {
 
 	for _, k := range files {
 		t.Run("unpack header: "+k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + k)
+			raw, err := os.ReadFile("testdata/" + k) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -47,7 +47,7 @@ func TestRecord_File(t *testing.T) {
 
 	for k, v := range files {
 		t.Run("unpack header: "+k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + k)
+			raw, err := os.ReadFile("testdata/" + k) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}

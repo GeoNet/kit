@@ -16,7 +16,7 @@ func TestRecord_Bytes(t *testing.T) {
 
 	for k, v := range files {
 		t.Run("decode data: "+k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + k)
+			raw, err := os.ReadFile("testdata/" + k) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -58,7 +58,7 @@ func TestRecord_Int32s(t *testing.T) {
 
 	for k, v := range files {
 		t.Run("decode data: "+k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + k)
+			raw, err := os.ReadFile("testdata/" + k) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -95,7 +95,7 @@ func TestRecord_Float32s(t *testing.T) {
 
 	for k, v := range files {
 		t.Run("decode data: "+k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + k)
+			raw, err := os.ReadFile("testdata/" + k) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}

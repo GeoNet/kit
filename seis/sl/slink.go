@@ -209,7 +209,9 @@ func (s *SLink) CollectWithContext(ctx context.Context, fn CollectFunc) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() {
+		_ = conn.Close()
+	}()
 
 	for _, l := range list {
 		if err := conn.CommandStation(l.station, l.network); err != nil {
@@ -231,7 +233,7 @@ func (s *SLink) CollectWithContext(ctx context.Context, fn CollectFunc) error {
 				return err
 			}
 			// there may be a sequence number
-		case !(sequence < 0):
+		case sequence >= 0:
 			//convert the next sequence number into uppercase hex
 			seq := fmt.Sprintf("%06X", (s.Sequence+1)&0xffffff)
 			if err := conn.CommandData(seq, starttime); err != nil {
