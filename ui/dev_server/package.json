@@ -10,6 +10,8 @@
   "private": true,
   "dependencies": {
     "@fortawesome/fontawesome-free": "6.7.2",
-    "geonet-bootstrap": "https://static.geonet.org.nz/packages/npm/geonet-bootstrap/geonet-bootstrap-1.0.0.tgz"
+    "geonet-bootstrap": "https://static.geonet.org.nz/packages/npm/geonet-bootstrap/geonet-bootstrap-1.0.0.tgz",
+    "geonet-fonts": "https://static.geonet.org.nz/packages/npm/geonet-fonts/geonet-fonts-1.0.2.tgz",
+    "geonet-design-system": "https://static.geonet.org.nz/packages/npm/geonet-design-system/geonet-design-system-1.0.16.tgz"
   }
 }

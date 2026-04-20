@@ -7,9 +7,9 @@ import (
 	"html/template"
 )
 
-//go:embed header.html
-var headerHTML string
-var headerTmpl = template.Must(template.New("header").Parse(headerHTML))
+//go:embed header-v1.html
+var headerHtmlV1 string
+var headerTmplV1 = template.Must(template.New("header").Parse(headerHtmlV1))
 
 //go:embed icons/home.svg
 var homeIcon template.HTML
@@ -47,7 +47,7 @@ func ReturnGeoNetHeader(config HeaderConfig) (template.HTML, error) {
 	config.NewsIcon = newsIcon
 	config.GeoNetLogo = geonetLogo
 
-	if err := headerTmpl.ExecuteTemplate(&b, "header", config); err != nil {
+	if err := headerTmplV1.ExecuteTemplate(&b, "header", config); err != nil {
 		fmt.Println(err)
 		return contents, err
 	}

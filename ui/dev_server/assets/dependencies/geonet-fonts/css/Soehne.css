@@ -1,0 +1,39 @@
+@font-face {
+  font-family: 'Sohne';
+  font-style: normal;
+  font-weight: 300;
+  font-display: swap;
+  src: url('../webfonts/Soehne/soehne-leicht.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sohne';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../webfonts/Soehne/soehne-buch.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sohne';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../webfonts/Soehne/soehne-buch-kursiv.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sohne';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../webfonts/Soehne/soehne-kraftig.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Sohne';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../webfonts/Soehne/soehne-halbfett.woff2') format('woff2');
+}

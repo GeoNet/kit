@@ -1,0 +1,380 @@
+{{define "header"}}
+<header class="geonet-header -inactive">
+    <img class="logo" src={{.IconPath}}/geonet.svg />
+    <img
+      class="logo -on-dark"
+      aria-hidden="true"
+      src={{.IconPath}}/geonet-on-dark.svg
+    />
+	<div class="mobilemenu">
+		<a href="{{.Origin}}/search" class="search"></a>
+		<button class="menubutton" aria-controls="primarynav secondarynav" aria-expanded="false">
+			<span class="text">Menu</span>
+		</button>
+	</div>
+	<nav id="primarynav" class="primarynav -mobile-closed">
+		<ul class="list">
+			<li class="item {{if eq .CurrentItem 1}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-earthquake" aria-expanded="false">
+					<span class="text">Earthquake</span>
+				</a>
+				<div id="menu-earthquake" class="geonet-menu -is-animating">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Earthquake</h2>
+							<p class="description">Find the latest quakes, search the full catalogue, and learn about our monitoring.</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/weak" aria-expanded="false">Earthquakes</a>
+							</li>
+							<li class="item">
+								<a class="link" href="https://quakesearch.geonet.org.nz" aria-expanded="false">Search</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/drums" aria-expanded="false">Drums</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/forecast" aria-expanded="false">Forecasts</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/story" aria-expanded="false">Historical events</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/sse/hikurangi" aria-expanded="false">Slow slip</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/swarms" aria-expanded="false">Swarms</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/statistics" aria-expanded="false">Statistics</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/strong" aria-expanded="false">Strong motion</a>
+							</li>
+						</ul>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/faq" aria-expanded="false">FAQ</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/gallery" aria-expanded="false">Gallery</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/glossary" aria-expanded="false">Glossary</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/how" aria-expanded="false">How</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/intensity" aria-expanded="false">Intensity</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/earthquake/videos" aria-expanded="false">Videos</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 2}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-volcano" aria-expanded="false">
+					<span class="text">Volcano</span>
+				</a>
+				<div id="menu-volcano" class="geonet-menu -is-animating">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Volcano</h2>
+							<p class="description">View current volcanic activity, alert levels, and updates, and learn how
+							GeoNet monitors New Zealand's active volcanoes.
+							</p>
+							<button class="button -forward-arrow -medium">Go to section overview</button>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/ruapehu" aria-expanded="false">Volcanoes</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/vab" aria-expanded="false">Activity bulletins</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano" aria-expanded="false">Alert levels</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/acc" aria-expanded="false">Aviation Colour Code</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/cameras" aria-expanded="false">Cameras</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/drums" aria-expanded="false">Drums</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/rsamssam" aria-expanded="false">RSAM & SSAM</a>
+							</li>
+						</ul>
+                        <ul class="list">
+							<li class="item">
+								<a class="link" href="{.Origin}}/volcano/faq" aria-expanded="false">FAQ</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/gallery" aria-expanded="false">Gallery</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/glossary" aria-expanded="false">Glossary</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/how" aria-expanded="false">How</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/volcano/videos" aria-expanded="false">Videos</a>
+							</li>
+                        </ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 3}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-landslide" aria-expanded="false">
+					<span class="text">Landslide</span>
+				</a>
+				<div id="menu-landslide" class="geonet-menu">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Landslide</h2>
+							<p class="description">Find information on recent landslides, understand landslide hazards, and learn how
+							landslides are monitored and assessed.
+							</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/reports" aria-expanded="false">Reports</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/projects" aria-expanded="false">Monitoring & projects</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/dam" aria-expanded="false">Dams</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/fox-glacier-valley" aria-expanded="false">Fox Glacier Valley</a>
+							</li>
+						</ul>
+                        <ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/faq" aria-expanded="false">FAQ</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/glossary" aria-expanded="false">Glossary</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/how" aria-expanded="false">How</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/landslide/videos" aria-expanded="false">Videos</a>
+							</li>
+                        </ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 4}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-tsunami" aria-expanded="false">
+					<span class="text">Tsunami</span>
+				</a>
+				<div id="menu-tsunami" class="geonet-menu">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Tsunami</h2>
+							<p class="description">Learn about tsunami hazards, warning signs, and alerts,
+							and how tsunamis are monitored in New Zealand and the Pacific region.
+							</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/tsunami" aria-expanded="false">Gauges</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/tsunami/gauges" aria-expanded="false">Tsunami gauge network</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/tsunami/dart" aria-expanded="false">DART network</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/tsunami/story" aria-expanded="false">Historical events</a>
+							</li>
+						</ul>
+						<ul class="list">
+    						<li class="item">
+    							<a class="link" href="{{.Origin}}/tsunami/faq" aria-expanded="false">FAQ</a>
+    						</li>
+    						<li class="item">
+    							<a class="link" href="{{.Origin}}/tsunami/glossary" aria-expanded="false">Glossary</a>
+    						</li>
+    						<li class="item">
+    							<a class="link" href="{{.Origin}}/tsunami/how" aria-expanded="false">How</a>
+    						</li>
+    						<li class="item">
+    							<a class="link" href="{{.Origin}}/tsunami/videos" aria-expanded="false">Videos</a>
+    						</li>
+						</ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 5}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-data-discovery" aria-expanded="false">
+					<span class="text">Data Discovery</span>
+				</a>
+				<div id="menu-data-discovery" class="geonet-menu -is-animating">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Data discovery</h2>
+							<p class="description">Explore GeoNet's data visualisations, maps, and catalogues.</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="/earthquake" aria-expanded="false">Sensor map</a>
+							</li>
+							<li class="item">
+								<a class="link" href="/" aria-expanded="false">Quake search</a>
+							</li>
+							<li class="item">
+								<a class="link" href="/" aria-expanded="false">Geodetic map</a>
+							</li>
+							<li class="item">
+								<a class="link" href="/" aria-expanded="false">Geomagnetic dashboard</a>
+							</li>
+							<li class="item">
+								<a class="link -external" href="https://strongmotion.geonet.org.nz" target="_blank" aria-expanded="false">Strong motion</a>
+							</li>
+							<li class="item">
+								<a class="link -external" href="https://tilde.geonet.org.nz/ui/data-discovery" target="_blank" aria-expanded="false">Tilde data discovery</a>
+							</li>
+							<li class="item">
+								<a class="link -external" href="https://tilde.geonet.org.nz/ui/data-exploration" target="_blank" aria-expanded="false">Tilde data exploration</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 6}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-data-types" aria-expanded="false">
+					<span class="text">Data Types</span>
+				</a>
+				<div id="menu-data-types" class="geonet-menu">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Data types</h2>
+							<p class="description">Get an overview of the different kinds of data available on GeoNet and what each one shows.</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/geodetic" aria-expanded="false">Geodetic</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/camera" aria-expanded="false">Cameras</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/eq_catalogue" aria-expanded="false">Earthquake catalogue</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/felt" aria-expanded="false">Felt reports</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/seismic_waveforms" aria-expanded="false">Seismic waveforms</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/strong_motion" aria-expanded="false">Strong motion data products</a>
+							</li>
+						</ul>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/tidal_gauges" aria-expanded="false">Tsunami gauges</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/geomag" aria-expanded="false">Geomagnetic</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/volcano_monitoring" aria-expanded="false">Volcano monitoring</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/environmental" aria-expanded="false">Environmental data</a>
+							</li>
+							<li class="item">
+    							<a class="link -external" href="https://shakinglayers.geonet.org.nz" target="_blank" aria-expanded="false">Shaking layers data</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/types/structural_arrays" aria-expanded="false">Structural arrays</a>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</li>
+			<li class="item {{if eq .CurrentItem 7}}-current{{end}}">
+				<a class="link" href="#" aria-controls="menu-data-access" aria-expanded="false">
+					<span class="text">Data Access</span>
+				</a>
+				<div id="menu-data-discovery" class="geonet-menu -is-animating">
+					<div class="wrapper">
+						<div class="overview">
+							<h2 class="header">Data access</h2>
+							<p class="description">Find ways to view, download, and use GeoNet data and services.</p>
+						</div>
+						<ul class="list">
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/access/FDSN" aria-expanded="false">FDSN</a>
+							</li>
+							<li class="item">
+							    <a class="link -external" href="https://wfs.geonet.org.nz" target="_blank" aria-expanded="false">WFS</a>
+							</li>
+							<li class="item">
+							    <a class="link -external" href="https://api.geonet.org.nz" target="_blank" aria-expanded="false">GeoNet API</a>
+							</li>
+							<li class="item">
+							    <a class="link -external" href="https://tilde.geonet.org.nz" target="_blank" aria-expanded="false">Tilde time series API</a>
+							</li>
+							<li class="item">
+								<a class="link -external" href="https://shakinglayers.geonet.org.nz/api" target="_blank" aria-expanded="false">Shaking layers API</a>
+							</li>
+							<li class="item">
+								<a class="link -external" href="https://data.geonet.org.nz" target="_blank" aria-expanded="false">Data API</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/access/aws" aria-expanded="false">AWS open data</a>
+							</li>
+							<li class="item">
+								<a class="link" href="{{.Origin}}/data/access/tutorials" aria-expanded="false">Data tutorials</a>
+							</li>
+
+						</ul>
+					</div>
+				</div>
+			</li>
+		</ul>
+	</nav>
+	<nav id="secondarynav" class="secondarynav -mobile-closed">
+		<ul class="list">
+			<li class="item {{if eq .CurrentItem 8}}-current{{end}}">
+				<a class="link" href="{{.Origin}}/news">
+					<span class="text">News</span>
+				</a>
+			</li>
+			<li class="item {{if eq .CurrentItem 9}}-current{{end}}">
+				<a class="link" href="#">
+					<span class="text">About</span>
+				</a>
+			</li>
+			<li class="item {{if eq .CurrentItem 10}}-current{{end}}">
+				<a href="https://earthsciences.nz" class="link -external">
+					<span class="text">Earth Sciences NZ</span>
+				</a>
+			</li>
+			<li class="item {{if eq .CurrentItem 11}}-current{{end}}">
+				<a href="{{.Origin}}/search" class="link -search">
+					<span class="text">Search</span>
+				</a>
+			</li>
+		</ul>
+	</nav>
+	<div class="divider">
+		<span class="indicator"></span>
+	</div>
+</header>
+{{end}}

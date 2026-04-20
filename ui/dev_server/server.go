@@ -31,6 +31,8 @@ func main() {
 
 	http.Handle("/", fs) // Serve static files
 	http.Handle("/geonetheader", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetheaderv2", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetheaderv1", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetfooter", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetheaderbasic", http.HandlerFunc(testUIhandler))
 
@@ -48,11 +50,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 	var html template.HTML
 	var err error
 
-	// Add leading HTML. Every page includes Bootstrap CSS/JS and fonts.
-	// Each page can then also have its own custom CSS/JS files.
-	leadingHTML := `<!DOCTYPE html><html><head>
-	<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
-	<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">`
+	leadingHTML := `<!DOCTYPE html><html><head>`
 
 	path := req.URL.Path
 	switch path {
@@ -66,22 +64,44 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 				},
 			},
 		}
-		leadingHTML += `<link rel="stylesheet" href="/local/footer.css">
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
+		<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">
+		<link rel="stylesheet" href="/local/footer.css">
+		<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script>
 		<script src="/local/footer.js"></script>`
 
 		html, err = footer.ReturnGeoNetFooter(config)
 		if err != nil {
 			log.Println(err)
 		}
-	case "/geonetheader":
+	case "/geonetheader", "/geonetheaderv2":
+		config := header.HeaderConfigV2{
+			Origin:      "https://www.geonet.org.nz",
+			CurrentItem: 1,
+			IconPath:    "/dependencies/geonet-design-system/icons",
+		}
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-design-system/css/geonet-design-system.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Aspekta.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Soehne.css">
+		<script type="module" src="/dependencies/geonet-design-system/js/geonet-design-system.js"></script>
+		<script type="module" src="/local/header-v2.js"></script>`
+
+		html, err = header.ReturnGeoNetHeaderV2(config)
+		if err != nil {
+			log.Println(err)
+		}
+	case "/geonetheaderv1":
 		config := header.HeaderConfig{
 			Origin: "https://www.geonet.org.nz",
 			Active: header.Active{
 				Home: true,
 			},
 		}
-		leadingHTML += `<link rel="stylesheet" href="/local/header.css">
-		<script src="/local/header.js"></script>`
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
+		<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">
+		<link rel="stylesheet" href="/local/header-v1.css">
+		<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script>
+		<script src="/local/header-v1.js"></script>`
 
 		html, err = header.ReturnGeoNetHeader(config)
 		if err != nil {
@@ -124,7 +144,10 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 			Logo:  logo,
 			Items: items,
 		}
-		leadingHTML += `<link rel="stylesheet" href="/local/header_basic.css">`
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
+		<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">
+		<link rel="stylesheet" href="/local/header_basic.css">
+		<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script>`
 
 		html, err = header_basic.ReturnGeoNetHeaderBasic(config)
 		if err != nil {
@@ -134,7 +157,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		w.WriteHeader(http.StatusNotFound)
 	}
 
-	leadingHTML += `<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script></head><body>`
+	leadingHTML += `</head><body>`
 
 	// Write leading HTML to writer
 	_, err = w.Write([]byte(leadingHTML))
