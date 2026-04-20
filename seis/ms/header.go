@@ -144,20 +144,20 @@ func (h RecordHeader) SamplePeriod() time.Duration {
 // IsValid performs a simple consistency check of the RecordHeader contents.
 func (h RecordHeader) IsValid() bool {
 	for _, b := range h.SequenceNumber {
-		if !((b >= '0' && b <= '9') || (b == ' ') || (b == 0)) {
+		if (b < '0' || b > '9') && (b != ' ') && (b != 0) {
 			return false
 		}
 	}
 
-	if q := h.DataQualityIndicator; !(q == 'D' || q == 'R' || q == 'M' || q == 'Q') {
+	if q := h.DataQualityIndicator; q != 'D' && q != 'R' && q != 'M' && q != 'Q' {
 		return false
 	}
 
-	if b := h.ReservedByte; !(b == ' ' || b == 0) {
+	if b := h.ReservedByte; b != ' ' && b != 0 {
 		return false
 	}
 
-	if s := h.RecordStartTime; !(s.Hour <= 23 && s.Minute <= 59 && s.Second <= 60) {
+	if s := h.RecordStartTime; s.Hour > 23 || s.Minute > 59 || s.Second > 60 {
 		return false
 	}
 

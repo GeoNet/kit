@@ -43,7 +43,9 @@ func TestState(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		defer os.Remove(tmpfile.Name())
+		defer func() {
+			_ = os.Remove(tmpfile.Name())
+		}()
 
 		raw, err := os.ReadFile("testdata/state.json")
 		if err != nil {

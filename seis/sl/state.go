@@ -119,7 +119,7 @@ func (s *State) ReadFile(path string) error {
 		return nil
 	}
 
-	data, err := os.ReadFile(path)
+	data, err := os.ReadFile(path) //nolint:gosec
 	if err != nil {
 		return err
 	}

@@ -94,11 +94,13 @@ func TestStreams(t *testing.T) {
 			Integrator: NewIntegrator(1.0, 1.0/x.sps, x.q),
 		}
 		d, err := func(path string) ([]int32, error) {
-			file, err := os.Open(path)
+			file, err := os.Open(path) //nolint:gosec
 			if err != nil {
 				return nil, err
 			}
-			defer file.Close()
+			defer func() {
+				_ = file.Close()
+			}()
 
 			var samples []int32
 			scanner := bufio.NewScanner(file)

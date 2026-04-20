@@ -16,7 +16,7 @@ func TestStationInfo(t *testing.T) {
 
 	for k, v := range checks {
 		t.Run(k, func(t *testing.T) {
-			raw, err := os.ReadFile("testdata/" + v)
+			raw, err := os.ReadFile("testdata/" + v) //nolint:gosec
 			if err != nil {
 				t.Fatal(err)
 			}

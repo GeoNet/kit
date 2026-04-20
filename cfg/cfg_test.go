@@ -9,14 +9,14 @@ import (
 )
 
 func TestPostgresEnv(t *testing.T) {
-	os.Setenv("DB_HOST", "")
-	os.Setenv("DB_USER", "")
-	os.Setenv("DB_PASSWD", "")
-	os.Setenv("DB_NAME", "")
-	os.Setenv("DB_SSLMODE", "")
-	os.Setenv("DB_CONN_TIMEOUT", "")
-	os.Setenv("DB_MAX_IDLE_CONNS", "")
-	os.Setenv("DB_MAX_OPEN_CONNS", "")
+	_ = os.Setenv("DB_HOST", "")
+	_ = os.Setenv("DB_USER", "")
+	_ = os.Setenv("DB_PASSWD", "")
+	_ = os.Setenv("DB_NAME", "")
+	_ = os.Setenv("DB_SSLMODE", "")
+	_ = os.Setenv("DB_CONN_TIMEOUT", "")
+	_ = os.Setenv("DB_MAX_IDLE_CONNS", "")
+	_ = os.Setenv("DB_MAX_OPEN_CONNS", "")
 
 	var err error
 
@@ -28,7 +28,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_HOST... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_HOST", "host")
+	_ = os.Setenv("DB_HOST", "host")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -38,7 +38,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_USER... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_USER", "user")
+	_ = os.Setenv("DB_USER", "user")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -48,7 +48,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_NAME... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_PASSWD", "passwd")
+	_ = os.Setenv("DB_PASSWD", "passwd")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -58,7 +58,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_NAME... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_NAME", "name")
+	_ = os.Setenv("DB_NAME", "name")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -68,7 +68,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_SSLMODE... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_SSLMODE", "false")
+	_ = os.Setenv("DB_SSLMODE", "false")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -78,7 +78,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_CONN_TIMEOUT... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_CONN_TIMEOUT", "30")
+	_ = os.Setenv("DB_CONN_TIMEOUT", "30")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -88,7 +88,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_MAX_IDLE_CONNS... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_MAX_IDLE_CONNS", "1")
+	_ = os.Setenv("DB_MAX_IDLE_CONNS", "1")
 
 	_, err = cfg.PostgresEnv()
 	if err == nil {
@@ -98,7 +98,7 @@ func TestPostgresEnv(t *testing.T) {
 		t.Errorf("expected error starting with DB_MAX_OPEN_CONNS... got: %s", err.Error())
 	}
 
-	os.Setenv("DB_MAX_OPEN_CONNS", "2")
+	_ = os.Setenv("DB_MAX_OPEN_CONNS", "2")
 
 	p, err := cfg.PostgresEnv()
 	if err != nil {

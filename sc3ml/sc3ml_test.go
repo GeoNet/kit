@@ -23,7 +23,7 @@ the version.  The validating them using the XSDs:
 */
 func TestUnmarshal(t *testing.T) {
 	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml", "2015p768477_0.11.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -205,7 +205,7 @@ func TestUnmarshal(t *testing.T) {
 					t.Errorf("%s: m.MethodID expected trimmed mean got %s", input, m.MethodID)
 				}
 
-				if !(len(m.StationMagnitudeContributions) > 1) {
+				if len(m.StationMagnitudeContributions) < 2 {
 					t.Error("expected more than 1 StationMagnitudeContribution")
 				}
 
@@ -266,7 +266,7 @@ func TestUnmarshal(t *testing.T) {
 
 func TestUnmarshall10(t *testing.T) {
 	for _, input := range []string{"2018p587301-201808060715471135_0.10.xml", "2018p632195-201808222155051312_0.10.xml", "2018p587301-201808060715471135_0.11.xml", "2018p632195-201808222155051312_0.11.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -311,7 +311,7 @@ func TestUnmarshall10(t *testing.T) {
 
 func TestDecodeSC3ML07CMT(t *testing.T) {
 	for _, input := range []string{"2016p408314-201606010431276083_0.7.xml", "2016p408314-201606010431276083_0.8.xml", "2016p408314-201606010431276083_0.9.xml", "2016p408314-201606010431276083_0.10.xml", "2016p408314-201606010431276083_0.11.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -392,7 +392,7 @@ func TestDecodeSC3ML07CMT(t *testing.T) {
 
 func TestUnmarshall06(t *testing.T) {
 	for _, input := range []string{"2801727_0.6.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -473,7 +473,7 @@ func TestUnmarshall06(t *testing.T) {
 
 func TestUnmarshall12_13(t *testing.T) {
 	for _, input := range []string{"2024p344188_0.12.xml", "2024p344188_0.13.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -554,7 +554,7 @@ func TestUnmarshall12_13(t *testing.T) {
 
 func TestUnmarshalUnsupported(t *testing.T) {
 	for _, input := range []string{"2015p768477_0.4.xml"} {
-		b, err := os.ReadFile("testdata/" + input)
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
 		if err != nil {
 			t.Fatal(err)
 		}

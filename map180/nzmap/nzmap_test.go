@@ -9,7 +9,7 @@ import (
 
 // these tests also output SVG to svg_test/ for visual inspection.
 func init() {
-	if err := os.Mkdir("svg_test", 0755); err != nil {
+	if err := os.Mkdir("svg_test", 0700); err != nil {
 		fmt.Println("Error creating svg_test directory", err)
 	}
 }
@@ -26,9 +26,9 @@ func TestIconWellington(t *testing.T) {
 		t.Error("point should be on the icon map")
 	}
 
-	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
+	fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y())
 
-	if err := os.WriteFile("svg_test/nzicon-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzicon-wellington.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -45,9 +45,9 @@ func TestIconRaoul(t *testing.T) {
 		t.Error("point should be on the icon map")
 	}
 
-	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
+	fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y())
 
-	if err := os.WriteFile("svg_test/nzicon-raoul.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzicon-raoul.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -64,9 +64,9 @@ func TestIconAucklandIsland(t *testing.T) {
 		t.Error("point should be on the icon map")
 	}
 
-	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
+	fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y())
 
-	if err := os.WriteFile("svg_test/nzicon-aucklandisland.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzicon-aucklandisland.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -83,9 +83,9 @@ func TestIconCanberra(t *testing.T) {
 		t.Error("point should not be on the icon map")
 	}
 
-	b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y()))
+	fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/></svg>", p.X(), p.Y())
 
-	if err := os.WriteFile("svg_test/nzicon-canberra.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzicon-canberra.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -107,12 +107,12 @@ func TestMediumWellington(t *testing.T) {
 			t.Error("point should be on the map")
 		}
 
-		b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/>", p.X(), p.Y()))
+		fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/>", p.X(), p.Y())
 	}
 
 	b.WriteString("</svg>")
 
-	if err := os.WriteFile("svg_test/nzmedium-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzmedium-wellington.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -135,12 +135,12 @@ func TestMediumIob(t *testing.T) {
 			t.Error("point should not be on the map")
 		}
 
-		b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/>", p.X(), p.Y()))
+		fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"5\" fill=\"black\"/>", p.X(), p.Y())
 	}
 
 	b.WriteString("</svg>")
 
-	if err := os.WriteFile("svg_test/nzmedium-iob.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzmedium-iob.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -148,7 +148,7 @@ func TestMediumIob(t *testing.T) {
 func TestMediumRegionWellington(t *testing.T) {
 	var b bytes.Buffer
 
-	var pt Points = Points{
+	pt := Points{
 		// ~ Wellington
 		Point{Longitude: 174.7,
 			Latitude: -41.2,
@@ -190,12 +190,12 @@ func TestMediumRegionWellington(t *testing.T) {
 			}
 		}
 
-		b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"2\" fill=\"black\"/>", p.X(), p.Y()))
+		fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"2\" fill=\"black\"/>", p.X(), p.Y())
 	}
 
 	b.WriteString("</svg>")
 
-	if err := os.WriteFile("svg_test/nzmediumregion-wellington.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzmediumregion-wellington.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -203,7 +203,7 @@ func TestMediumRegionWellington(t *testing.T) {
 func TestMediumRegionRaoul(t *testing.T) {
 	var b bytes.Buffer
 
-	var pt Points = Points{
+	pt := Points{
 		// ~ Raoul
 		Point{Longitude: -177.9286,
 			Latitude: -29.2684,
@@ -244,12 +244,12 @@ func TestMediumRegionRaoul(t *testing.T) {
 			}
 		}
 
-		b.WriteString(fmt.Sprintf("<circle cx=\"%d\" cy=\"%d\" r=\"2\" fill=\"black\"/>", p.X(), p.Y()))
+		fmt.Fprintf(&b, "<circle cx=\"%d\" cy=\"%d\" r=\"2\" fill=\"black\"/>", p.X(), p.Y())
 	}
 
 	b.WriteString("</svg>")
 
-	if err := os.WriteFile("svg_test/nzmediumregion-raoul.svg", b.Bytes(), 0644); err != nil { // nolint: gosec
+	if err := os.WriteFile("svg_test/nzmediumregion-raoul.svg", b.Bytes(), 0600); err != nil {
 		t.Fatal(err)
 	}
 }

@@ -153,7 +153,9 @@ func (s *S3) GetWithContext(
 	if err != nil {
 		return 0, err
 	}
-	defer result.Body.Close()
+	defer func() {
+		_ = result.Body.Close()
+	}()
 
 	n, err := io.Copy(w, result.Body)
 
@@ -180,7 +182,9 @@ func (s *S3) GetByteRange(bucket, key, version, byteRange string, b *bytes.Buffe
 	if err != nil {
 		return err
 	}
-	defer result.Body.Close()
+	defer func() {
+		_ = result.Body.Close()
+	}()
 
 	_, err = b.ReadFrom(result.Body)
 
@@ -201,7 +205,9 @@ func (s *S3) GetWithLastModified(bucket, key, version string, b *bytes.Buffer) (
 	if err != nil {
 		return time.Time{}, err
 	}
-	defer result.Body.Close()
+	defer func() {
+		_ = result.Body.Close()
+	}()
 
 	_, err = b.ReadFrom(result.Body)
 
@@ -221,7 +227,9 @@ func (s *S3) LastModified(bucket, key, version string) (time.Time, error) {
 	if err != nil {
 		return time.Time{}, err
 	}
-	defer result.Body.Close()
+	defer func() {
+		_ = result.Body.Close()
+	}()
 
 	return aws.ToTime(result.LastModified), nil
 }
@@ -538,7 +546,9 @@ func (s *S3) PutStreamWithContext(ctx context.Context, bucket, key string, reade
 // putStream is the common code used internally to upload a data stream to
 // an S3 bucket using the client's uploader.
 func (s *S3) putStream(ctx context.Context, bucket, key string, reader io.ReadCloser) error {
-	defer reader.Close()
+	defer func() {
+		_ = reader.Close()
+	}()
 
 	if s.uploader == nil {
 		return errors.New("error uploading to s3, uploader not initialised")

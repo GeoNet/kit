@@ -109,7 +109,8 @@ func decodeSteim(version int, raw []byte, wordOrder, frameCount uint8, expectedS
 				skipFirstDiff = 1
 			}
 
-			if version == 2 {
+			switch version {
+			case 2:
 				switch nib {
 				case 1: //4 8bit differences
 					d = applyDifferencesFromWord(wb, 4-skipFirstDiff, 8, d)
@@ -136,16 +137,21 @@ func decodeSteim(version int, raw []byte, wordOrder, frameCount uint8, expectedS
 						return d, fmt.Errorf("steim%v: nib 11 dnib 11 is an illegal configuration @ frame %v word %v", version, f, w)
 					}
 				}
-			} else if version == 1 {
-				switch nib {
-				case 1: //4 8bit differences
-					d = applyDifferencesFromWord(wb, 4-skipFirstDiff, 8, d)
-				case 2: //2 16bit differences
-					d = applyDifferencesFromWord(wb, 2-skipFirstDiff, 16, d)
-				case 3: //1 32bit difference
-					d = applyDifferencesFromWord(wb, 1-skipFirstDiff, 32, d)
+			case 1:
+				{
+					switch nib {
+					case 1: //4 8bit differences
+						d = applyDifferencesFromWord(wb, 4-skipFirstDiff, 8, d)
+					case 2: //2 16bit differences
+						d = applyDifferencesFromWord(wb, 2-skipFirstDiff, 16, d)
+					case 3: //1 32bit difference
+						d = applyDifferencesFromWord(wb, 1-skipFirstDiff, 32, d)
+					}
 				}
+			default:
+				// invalid version
 			}
+
 		}
 	}
 

@@ -61,12 +61,12 @@ func SVGTriangle(m Marker, b *bytes.Buffer) {
 	h := w * 2
 	c := int(float64(h) * 0.33)
 
-	b.WriteString(fmt.Sprintf("<g id=\"%s\"><path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" fill=\"%s\" opacity=\"0.5\">",
-		m.id, int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour))
+	fmt.Fprintf(b, "<g id=\"%s\"><path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" fill=\"%s\" opacity=\"0.5\">",
+		m.id, int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour)
 	b.WriteString(`<desc>` + m.label + `.</desc>`)
 	b.WriteString(`<set attributeName="opacity" from="0.5" to="1" begin="mouseover" end="mouseout"  dur="2s"/></path>`)
-	b.WriteString(fmt.Sprintf("<path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\" opacity=\"1\" /></g>",
-		int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour))
+	fmt.Fprintf(b, "<path d=\"M%d %d l%d 0 l-%d -%d l-%d %d Z\" stroke=\"%s\" stroke-width=\"1\" fill=\"none\" opacity=\"1\" /></g>",
+		int(m.x), int(m.y)+c, w, w, h, w, h, m.svgColour)
 }
 
 // puts the label or short label on the SVG image all at the same place.
@@ -74,14 +74,14 @@ func SVGTriangle(m Marker, b *bytes.Buffer) {
 func labelMarkers(m []Marker, x, y int, anchor string, fontSize int, short bool, b *bytes.Buffer) {
 	b.WriteString(`<g id="marker_labels">`)
 	for _, mr := range m {
-		b.WriteString(fmt.Sprintf("<text x=\"%d\" y=\"%d\" font-size=\"%d\" visibility=\"hidden\" text-anchor=\"%s\">", x, y, fontSize, anchor))
+		fmt.Fprintf(b, "<text x=\"%d\" y=\"%d\" font-size=\"%d\" visibility=\"hidden\" text-anchor=\"%s\">", x, y, fontSize, anchor)
 		if short {
 			b.WriteString(mr.shortLabel)
 		} else {
 			b.WriteString(mr.label)
 		}
-		b.WriteString(fmt.Sprintf("<set attributeName=\"visibility\" from=\"hidden\" to=\"visible\" begin=\"%s.mouseover\" end=\"%s.mouseout\" dur=\"2s\"/>",
-			mr.id, mr.id))
+		fmt.Fprintf(b, "<set attributeName=\"visibility\" from=\"hidden\" to=\"visible\" begin=\"%s.mouseover\" end=\"%s.mouseout\" dur=\"2s\"/>",
+			mr.id, mr.id)
 		b.WriteString(`</text>`)
 	}
 	b.WriteString(`</g>`)
