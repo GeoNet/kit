@@ -34,6 +34,8 @@ func main() {
 	http.Handle("/geonetheaderv2", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetheaderv1", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetfooter", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetfooterv2", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetfooterv1", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetheaderbasic", http.HandlerFunc(testUIhandler))
 
 	log.Println("starting server")
@@ -54,7 +56,30 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 
 	path := req.URL.Path
 	switch path {
-	case "/geonetfooter":
+	case "/geonetfooter", "/geonetfooterv2":
+		config := footer.FooterConfigV2{
+			Origin: "https://www.geonet.org.nz",
+			ExtraLogos: []footer.FooterLogoV2{
+				{
+					URL:     "https://www.rcet.science",
+					LogoURL: "/example_extra_logo.png",
+					Alt:     "RCET logo",
+					Width:   260,
+					Height:  45,
+				},
+			},
+			IconPath: "/dependencies/geonet-design-system/icons",
+		}
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-design-system/css/geonet-design-system.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Aspekta.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Soehne.css">
+		<script src="/dependencies/geonet-design-system/js/geonet-design-system.js"></script>`
+
+		html, err = footer.ReturnGeoNetFooterV2(config)
+		if err != nil {
+			log.Println(err)
+		}
+	case "/geonetfooterv1":
 		config := footer.FooterConfig{
 			ExtraLogos: []footer.FooterLogo{
 				{
@@ -66,9 +91,9 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		}
 		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
 		<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">
-		<link rel="stylesheet" href="/local/footer.css">
+		<link rel="stylesheet" href="/local/footer-v1.css">
 		<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script>
-		<script src="/local/footer.js"></script>`
+		<script src="/local/footer-v1.js"></script>`
 
 		html, err = footer.ReturnGeoNetFooter(config)
 		if err != nil {

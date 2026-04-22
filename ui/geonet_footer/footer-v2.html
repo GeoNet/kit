@@ -1,0 +1,169 @@
+<footer class="geonet-footer">
+	<div class="graphic"></div>
+	<div class="body">
+	    {{if not .Basic}}
+		<div class="link-lists">
+			<div class="link-list">
+				<h3 class="header">Hazards</h3>
+				<ul class="links">
+					<li>
+						<a class="link" href="/">Earthquakes</a>
+					</li>
+					<li>
+						<a class="link" href="/">Landslides</a>
+					</li>
+					<li>
+						<a class="link" href="/">Tsunami</a>
+					</li>
+					<li>
+						<a class="link" href="/">Volcano</a>
+					</li>
+				</ul>
+			</div>
+			<div class="link-list">
+				<h3 class="header">Data</h3>
+				<ul class="links">
+					<li>
+						<a class="link" href="/">Sensor network map</a>
+					</li>
+					<li>
+						<a class="link" href="/">Tilde data discovery</a>
+					</li>
+					<li>
+						<a class="link" href="/">Explore by geological process</a>
+					</li>
+					<li>
+						<a class="link" href="/">Explore by domain</a>
+					</li>
+					<li>
+						<a class="link" href="/">API documentation</a>
+					</li>
+					<li>
+						<a class="link" href="/">Support</a>
+					</li>
+				</ul>
+			</div>
+			<div class="link-list">
+				<h3 class="header">Keep in touch</h3>
+				<ul class="links">
+					<li>
+						<a class="link" href="/">Contact us</a>
+					</li>
+					<div class="link-list">
+						<ul class="links -horizontal -social">
+							<li>
+								<a class="link" href="/">
+									<img src="{{.IconPath}}/facebook.svg">
+								</a>
+							</li>
+							<li>
+								<a class="link" href="/">
+									<img src="{{.IconPath}}/x.svg">
+								</a>
+							</li>
+							<li>
+								<a class="link" href="/">
+									<img src="{{.IconPath}}/instagram.svg">
+								</a>
+							</li>
+							<li>
+								<a class="link" href="/">
+									<img src="{{.IconPath}}/youtube.svg">
+								</a>
+							</li>
+							<li>
+								<a class="link" href="/">
+									<img src="{{.IconPath}}/github.svg">
+								</a>
+							</li>
+						</ul>
+					</div>
+				</ul>
+			</div>
+    	    <div class="link-list">
+    		  <h3 class="header">Download our app</h3>
+      		    <ul class="links">
+                    <li>
+                        <a class="link" href="/">
+                            <img src="{{.IconPath}}/ios-app.svg">
+                        </a>
+                    </li>
+                    <li>
+                        <a class="link" href="/">
+                           	<img src="{{.IconPath}}/android-app.svg">
+                        </a>
+                    </li>
+                    <li>
+                        <a class="link" href="/">About our apps</a>
+                    </li>
+          		</ul>
+        	</div>
+	</div>
+	{{end}}
+	<div class="logo-container">
+		<div class="link-list">
+			<ul class="links -horizontal -logos">
+				<li>
+					<a class="link" href="/">
+						<img src="{{.IconPath}}/geonet-on-dark.svg">
+					</a>
+				</li>
+				<li>
+				    <a class="link" href="/">
+						<img src="{{.IconPath}}/esnz-logo.svg">
+					</a>
+				</li>
+				<li>
+					<a class="link" href="/">
+						<img src="{{.IconPath}}/toka-tu-ake-nhc-logo.svg">
+					</a>
+				</li>
+				{{range $index,$logo := .ExtraLogos }}
+				<li>
+					<a class="link" href="{{$logo.URL}}">
+                        <img src="{{$logo.LogoURL}}" alt="{{$logo.Alt}}" width="{{$logo.Width}}" height="{{$logo.Height}}">
+                    </a>
+				</li>
+				{{end}}
+				<li>
+					<a class="link -inline" href="/">
+						<img src="{{.IconPath}}/government.svg">
+					</a>
+				</li>
+			</ul>
+		</div>
+		<div class="shieldcontainer">
+			<a class="link" href="/">
+				<img src="{{.IconPath}}/shielded.svg">
+				</a>
+			</div>
+		</div>
+	</div>
+	<div class="imprint">
+		<p class="attribution">GeoNet is a collaboration between NHC Toka Tū Ake and Earth Sciences New Zealand. GeoNet content is copyright Earth Sciences New Zealand and is licensed under a Creative Commons Attribution 3.0 New Zealand License</p>
+		<div class="link-list">
+			<ul class="links -horizontal -imprint">
+			    {{if not .Basic}}
+				<li>
+					<a class="link" href="/">Glossary</a>
+				</li>
+				{{end}}
+				<li>
+					<a class="link {{if .Basic}}-external{{end}}" href="/">Accessibility</a>
+				</li>
+				<li>
+					<a class="link {{if .Basic}}-external{{end}}" href="/">Privacy</a>
+				</li>
+				<li>
+					<a class="link {{if .Basic}}-external{{end}}" href="/">Copyright</a>
+				</li>
+				<li>
+					<a class="link {{if .Basic}}-external{{end}}" href="/">Terms of use</a>
+				</li>
+				<li>
+					<a class="link {{if .Basic}}-external{{end}}" href="/">Cookie preferences</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+</footer>
