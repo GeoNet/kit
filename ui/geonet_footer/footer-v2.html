@@ -1,0 +1,157 @@
+{{define "footer"}}
+<footer class="geonet-footer {{if .Basic}}-basic{{end}}">
+    <div class="graphic"></div>
+    <div class="footer-body {{if .Basic}}-basic{{end}}">
+        <div class="content">
+       	    {{if not .Basic}}
+            <div class="link-lists">
+                <div class="link-list">
+                    <h3 class="header">Hazards</h3>
+                    <ul class="links">
+                        <li><a class="link" href="{{.Origin}}/earthquake/how">Earthquakes</a></li>
+                        <li><a class="link" href="{{.Origin}}/landslide/how">Landslides</a></li>
+                        <li><a class="link" href="{{.Origin}}/tsunami/how">Tsunami</a></li>
+                        <li><a class="link" href="{{.Origin}}/volcano/how">Volcano</a></li>
+                    </ul>
+                </div>
+                <div class="link-list">
+                    <h3 class="header">Data</h3>
+                    <ul class="links">
+                        <li>
+                            <a class="link" href="{{.Origin}}/data/network/sensor/search">
+                                Sensor network map
+                            </a>
+                        </li>
+                        <li>
+                            <a class="link -external -match" href="https://tilde.geonet.org.nz/ui/data-discovery" target="_blank" rel="nofollow noopener">
+                                Tilde data discovery
+                            </a>
+                        </li>
+                        <!--TODO: What other links should go here? -->
+                        <!--<li><a class="link" href="/">Explore by geological process</a></li>-->
+                        <!--<li><a class="link" href="/">Explore by domain</a></li>-->
+                        <!--<li><a class="link" href="/">API documentation</a></li>-->
+                        <!--<li><a class="link" href="/">Support</a></li>-->
+                    </ul>
+                </div>
+                <div class="link-list">
+                    <h3 class="header">Keep in touch</h3>
+                    <ul class="links">
+                        <li><a class="link" href="{{.Origin}}/contact">Contact us</a></li>
+                        <div class="link-list">
+                            <ul class="links -horizontal -social">
+                                <li>
+                                    <a class="link" href="https://www.facebook.com/geonetnz/" target="_blank" rel="nofollow noopener">
+                                        <img src="{{.IconPath}}/facebook.svg">
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="link" href="https://twitter.com/geonet" target="_blank" rel="nofollow noopener">
+                                        <img src="{{.IconPath}}/x.svg">
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="link" href="https://www.instagram.com/geonet_nz/" target="_blank" rel="nofollow noopener">
+                                        <img src="{{.IconPath}}/instagram.svg">
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="link" href="https://www.youtube.com/user/GeoNetNZ" target="_blank" rel="nofollow noopener">
+                                        <img src="{{.IconPath}}/youtube.svg">
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="link" href="https://github.com/GeoNet" target="_blank" rel="nofollow noopener">
+                                        <img src="{{.IconPath}}/github.svg">
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </ul>
+                </div>
+                <div class="link-list">
+                    <h3 class="header">Download our app</h3>
+                    <ul class="links">
+                        <li>
+                            <a class="link" href="https://itunes.apple.com/nz/app/geonet-quake/id533054360?mt=8" target="_blank" rel="nofollow noopener">
+                                <img src="{{.IconPath}}/ios-app.svg">
+                            </a>
+                        </li>
+                        <li>
+                            <a class="link" href="https://play.google.com/store/apps/details?id=nz.org.geonet.quake&hl=en" target="_blank" rel="nofollow noopener">
+                                <img src="{{.IconPath}}/android-app.svg">
+                            </a>
+                        </li>
+                        <!--<li><a class="link" href="">About our apps</a></li>  TODO: where should this link go to? -->
+                    </ul>
+                </div>
+            </div>
+            {{end}}
+            <div class="logo-container">
+                <div class="link-list">
+                    <ul class="links -horizontal -logos">
+                        <li>
+                            <a class="link" href="{{.Origin}}/">
+                                <img src="{{.IconPath}}/geonet-on-dark.svg">
+                            </a>
+                        </li>
+                        <li>
+                            <a class="link" href="https://earthsciences.nz" target="_blank" rel="nofollow noopener">
+                                <img src="{{.IconPath}}/esnz-logo.svg">
+                            </a>
+                        </li>
+                        {{range $index,$logo := .ExtraLogos }}
+        				<li>
+           					<a class="link" href="{{$logo.URL}}">
+                                <img src="{{$logo.LogoURL}}" alt="{{$logo.Alt}}" width="{{$logo.Width}}" height="{{$logo.Height}}">
+                            </a>
+        				</li>
+        				{{end}}
+                        <li>
+                            <a class="link -inline" href="https://www.govt.nz" target="_blank" rel="nofollow noopener">
+                                <img src="{{.IconPath}}/government-logo-on-dark-compact.svg">
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+                <div class="shieldcontainer">
+                    <a class="link" href="#" id="shielded-logo">
+                        <img src="{{.IconPath}}/shielded.svg">
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer-imprint {{if .Basic}}-basic{{end}}">
+        <div class="content">
+            <p class="attribution">
+                GeoNet is a collaboration between <a href="https://www.earthsciences.nz/" target="_blank" rel="nofollow noopener">Earth 
+                Sciences NZ</a>, <a href="https://www.mbie.govt.nz/" target="_blank" rel="nofollow noopener">Ministry of Business Innovation 
+                and Employment Hīkina Whakatutuki</a> (MBIE), <a href="https://www.naturalhazards.govt.nz" target="_blank" rel="nofollow noopener">Natural 
+                Hazards Commission Toka Tū Ake</a> (NHC), <a href="https://www.linz.govt.nz/" target="_blank" rel="nofollow noopener">Land Information
+                New Zealand Toitū Te Whenua</a> (LINZ), and the <a href="https://www.civildefence.govt.nz/" target="_blank" rel="nofollow noopener">National Emergency Management Agency 
+                Te Rākau Whakamarumaru</a> (NEMA). GeoNet content is copyright Earth Sciences New Zealand and is licensed 
+                under a <a href="https://creativecommons.org/licenses/by/3.0/nz/" target="_blank" rel="nofollow noopener">Creative Commons Attribution 3.0 New Zealand License</a>
+            </p>
+            <div class="link-list">
+                <ul class="links -horizontal -imprint">
+                    <!--The following links are from Figma, but we do not know where they should link to-->
+                    <!--<li><a class="link" href="/">Glossary</a></li>-->
+                    <!--<li><a class="link" href="/">Accessibility</a></li>-->
+                    <!--<li><a class="link" href="/">Copyright</a></li>-->
+                    <!--<li><a class="link" href="/">Terms of use</a></li>-->
+                    <!--<li><a class="link" href="/">Cookie preferences</a></li>-->
+
+                    <li><a class="link" href="{{.Origin}}/about">About GeoNet</a></li>
+                    <li><a class="link" href="{{.Origin}}/ngmc">NGMC</a></li>
+                    <li><a class="link" href="{{.Origin}}/policy">Data Policy</a></li>
+                    <li><a class="link" href="{{.Origin}}/disclaimer">Disclaimer</a></li>
+                    <li><a class="link" href="https://www.earthsciences.nz/privacy-policy" target="_blank" rel="nofollow noopener">Privacy</a></li>
+                    <li><a class="link" href="{{.Origin}}/sponsors">Sponsors</a></li>
+                    <li><a class="link" href="{{.Origin}}/reviews">Reviews Plans & Reports</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</footer>
+{{end}}

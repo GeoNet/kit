@@ -71,8 +71,8 @@ cp node_modules/$MODULE/dist/css/bootstrap.v5.min.css.map $OUT_DIR/$MODULE/boots
 # Copy required CSS/JS files to assets folder
 mkdir -p assets/local
 cp ../geonet_header_basic/header_basic.css assets/local/
-cp ../geonet_footer/footer.js assets/local/
-cp ../geonet_footer/footer.css assets/local/
+cp ../geonet_footer/footer-v1.js assets/local/
+cp ../geonet_footer/footer-v1.css assets/local/
 cp ../geonet_header/header-v1.css assets/local/
 cp ../geonet_header/header-v1.js assets/local/
 cp ../geonet_header/header-v2.js assets/local/

@@ -6,9 +6,9 @@ import (
 	"html/template"
 )
 
-//go:embed footer.html
-var footerHTML string
-var footerTmpl = template.Must(template.New("footer").Parse(footerHTML))
+//go:embed footer-v1.html
+var footerHtmlV1 string
+var footerTmplV1 = template.Must(template.New("footer").Parse(footerHtmlV1))
 
 //go:embed images/geonet_logo.svg
 var geonetLogo template.HTML
@@ -70,7 +70,7 @@ func ReturnGeoNetFooter(config FooterConfig) (template.HTML, error) {
 		config.Origin = ""
 	}
 
-	if err := footerTmpl.ExecuteTemplate(&b, "footer", config); err != nil {
+	if err := footerTmplV1.ExecuteTemplate(&b, "footer", config); err != nil {
 		return contents, err
 	}
 	return template.HTML(b.String()), nil // nolint: gosec // The source is our HTML file.
