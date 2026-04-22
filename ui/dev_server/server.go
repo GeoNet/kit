@@ -37,6 +37,8 @@ func main() {
 	http.Handle("/geonetfooterv2", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetfooterv1", http.HandlerFunc(testUIhandler))
 	http.Handle("/geonetheaderbasic", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetheaderbasicv2", http.HandlerFunc(testUIhandler))
+	http.Handle("/geonetheaderbasicv1", http.HandlerFunc(testUIhandler))
 
 	log.Println("starting server")
 	server := &http.Server{
@@ -132,7 +134,39 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Println(err)
 		}
-	case "/geonetheaderbasic":
+	case "/geonetheaderbasic", "/geonetheaderbasicv2":
+		items := []header_basic.HeaderBasicItemV2{
+			header_basic.HeaderBasicLinkV2{
+				Title:      "Test Home",
+				URL:        "https://www.geonet.org.nz",
+				IsExternal: false,
+			},
+			header_basic.HeaderBasicLinkV2{
+				Title:      "Test External",
+				URL:        "https://www.geonet.org.nz",
+				IsExternal: true,
+			},
+			header_basic.HeaderBasicLinkV2{
+				Title:      "Test Not External",
+				URL:        "https://www.geonet.org.nz",
+				IsExternal: false,
+			},
+		}
+		config := header_basic.HeaderBasicConfigV2{
+			Items:    items,
+			IconPath: "/dependencies/geonet-design-system/icons",
+		}
+		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-design-system/css/geonet-design-system.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Aspekta.css">
+		<link rel="stylesheet" href="/dependencies/geonet-fonts/css/Soehne.css">
+		<script type="module" src="/dependencies/geonet-design-system/js/geonet-design-system.js"></script>
+		<script type="module" src="/local/header-basic-v2.js"></script>`
+
+		html, err = header_basic.ReturnGeoNetHeaderBasicV2(config)
+		if err != nil {
+			log.Println(err)
+		}
+	case "/geonetheaderbasicv1":
 		items := []header_basic.HeaderBasicItem{
 			header_basic.HeaderBasicLink{
 				Title:      "Test Home",
@@ -171,7 +205,7 @@ func testUIhandler(w http.ResponseWriter, req *http.Request) {
 		}
 		leadingHTML += `<link rel="stylesheet" href="/dependencies/geonet-bootstrap/bootstrap.v5.min.css">
 		<link rel="stylesheet" href="/dependencies/@fortawesome/fontawesome-free/css/all.min.css">
-		<link rel="stylesheet" href="/local/header_basic.css">
+		<link rel="stylesheet" href="/local/header-basic-v1.css">
 		<script src="/dependencies/geonet-bootstrap/bootstrap.bundle.v5.min.js"></script>`
 
 		html, err = header_basic.ReturnGeoNetHeaderBasic(config)
