@@ -65,9 +65,9 @@ func (d HeaderBasicDropdown) GetLinks() []HeaderBasicLink {
 	return d.Links
 }
 
-//go:embed header_basic.html
-var headerBasicHTML string
-var headerBasicTmpl = template.Must(template.New("headerbasic").Parse(headerBasicHTML))
+//go:embed header-basic-v1.html
+var headerBasicHtmlV1 string
+var headerBasicTmplV1 = template.Must(template.New("headerbasic").Parse(headerBasicHtmlV1))
 
 //go:embed icons/home.svg
 var homeIcon template.HTML
@@ -80,7 +80,7 @@ func ReturnGeoNetHeaderBasic(config HeaderBasicConfig) (template.HTML, error) {
 
 	config.HomeIcon = homeIcon
 
-	if err := headerBasicTmpl.ExecuteTemplate(&b, "headerbasic", config); err != nil {
+	if err := headerBasicTmplV1.ExecuteTemplate(&b, "headerbasic", config); err != nil {
 		return contents, err
 	}
 	return template.HTML(b.String()), nil // nolint: gosec // The source is our HTML file.

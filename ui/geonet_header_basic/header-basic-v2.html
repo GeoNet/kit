@@ -1,0 +1,35 @@
+{{define "headerbasic"}}
+<header class="geonet-header -inactive -basic">
+    <img class="logo" src={{.IconPath}}/geonet.svg />
+    <img
+      class="logo -on-dark"
+      aria-hidden="true"
+      src={{.IconPath}}/geonet-on-dark.svg
+    />
+	<div class="mobilemenu">
+		<button class="menubutton -basic" aria-controls="primarynav secondarynav" aria-expanded="false">
+			<span class="text">Menu</span>
+		</button>
+	</div>
+	<nav id="primarynav" class="primarynav -mobile-closed">
+		<ul class="list">
+		{{range $_,$item := .Items }}
+    		<li class="item">
+                <a
+                    class="link -no-menu {{if $item.External}}-external{{end}}"
+                    href="{{$item.GetURL}}"
+                    rel="{{if $item.External}}external noopener noreferrer{{end}}"
+                    title="{{$item.GetTitle}}"
+                    target="{{if $item.External}}_blank{{else}}_self{{end}}"
+                >
+    				<span class="text">{{$item.GetTitle}}</span>
+    			</a>
+    		</li>
+		{{end}}
+		</ul>
+	</nav>
+	<div class="divider">
+		<span class="indicator"></span>
+	</div>
+</header>
+{{end}}
