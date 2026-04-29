@@ -16,6 +16,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 )
 
 type asset struct {
@@ -32,16 +33,24 @@ func (a asset) String() string {
 	return fmt.Sprintf("asset{path:%s, hashedPath:%s, mime:%s, fileType:%s, sri:%s}", a.path, a.hashedPath, a.mime, a.fileType, a.sri)
 }
 
-// assets is populated during init and then is only used for reading.
-var assets map[string]*asset
+var assetStore AssetStore
 
-// assetHashes maps asset filename to the corresponding hash-prefixed asset pathname.
-var assetHashes map[string]string
-var assetError error
+type AssetStore struct {
+	mu sync.RWMutex
+	// The directory to pull assets from
+	directory string
+	// The prefix of each asset (this will be stripped from the asset path).
+	prefix string
+	// assets is populated during init.
+	assets map[string]*asset
+	// hashes maps asset filename to the corresponding hash-prefixed asset pathname.
+	hashes map[string]string
+	error  error
+}
 
 func init() {
 	// optionally, one can call InitAssets() to re-init to another directory
-	assetError = InitAssets("assets/assets", "assets")
+	_ = InitAssets("assets/assets", "assets")
 }
 
 // As part of Subresource Integrity we need to calculate the hash of the asset, we do this when the asset is loaded into memory
@@ -122,6 +131,9 @@ func createSubResourcePreloadTag(a *asset, nonce string) (string, error) {
 // args can be 1~3 strings: 1. the asset path, 2. nonce for script attribute,
 // 3. script loading attribute ("defer" or "async").
 func CreateSubResourceTag(args ...string) (template.HTML, error) {
+	assetStore.mu.RLock()
+	defer assetStore.mu.RUnlock()
+
 	var nonce string
 	if len(args) > 1 {
 		nonce = args[1]
@@ -132,11 +144,11 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 			attr = args[2]
 		}
 	}
-	hashedPath, ok := assetHashes[args[0]]
+	hashedPath, ok := assetStore.hashes[args[0]]
 	if !ok {
 		return template.HTML(""), fmt.Errorf("hashed pathname for asset not found for '%s", args[0])
 	}
-	a, ok := assets[hashedPath]
+	a, ok := assetStore.assets[hashedPath]
 	if !ok {
 		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", hashedPath)
 	}
@@ -150,15 +162,18 @@ func CreateSubResourceTag(args ...string) (template.HTML, error) {
 // allow the file to be fetched in parallel with the module file that imports it, and also allows us
 // to set the SRI attribute of imported modules.
 func CreateSubResourcePreload(args ...string) (template.HTML, error) {
+	assetStore.mu.RLock()
+	defer assetStore.mu.RUnlock()
+
 	var nonce string
 	if len(args) > 1 {
 		nonce = args[1]
 	}
-	hashedPath, ok := assetHashes[args[0]]
+	hashedPath, ok := assetStore.hashes[args[0]]
 	if !ok {
 		return template.HTML(""), fmt.Errorf("hashed pathname for asset not found for '%s", args[0])
 	}
-	a, ok := assets[hashedPath]
+	a, ok := assetStore.assets[hashedPath]
 	if !ok {
 		return template.HTML(""), fmt.Errorf("asset does not exist at path '%v'", hashedPath)
 	}
@@ -179,9 +194,11 @@ func CreateSubResourcePreload(args ...string) (template.HTML, error) {
 //	}
 //	</script>
 func CreateImportMap(nonce string) template.HTML {
+	assetStore.mu.RLock()
+	defer assetStore.mu.RUnlock()
 
 	importMapping := make(map[string]string, 0)
-	for k, v := range assetHashes {
+	for k, v := range assetStore.hashes {
 		if !strings.HasSuffix(k, ".mjs") {
 			continue
 		}
@@ -232,16 +249,19 @@ func createImportMapTag(importMapping map[string]string, nonce string) string {
 //
 // The finger printed path can be looked up with AssetPath.
 func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
+	assetStore.mu.RLock()
+	defer assetStore.mu.RUnlock()
+
 	err := CheckQuery(r, []string{"GET"}, []string{}, []string{"v"})
 	if err != nil {
 		return err
 	}
 
-	if assetError != nil {
-		return assetError
+	if assetStore.error != nil {
+		return assetStore.error
 	}
 
-	a := assets[r.URL.Path]
+	a := assetStore.assets[r.URL.Path]
 	if a == nil {
 		return StatusError{Code: http.StatusNotFound}
 	}
@@ -252,6 +272,34 @@ func AssetHandler(r *http.Request, h http.Header, b *bytes.Buffer) error {
 	h.Set("Cache-Control", "max-age=86400")
 	h.Set("Content-Type", a.mime)
 
+	return nil
+}
+
+// UpdateAsset adds a single asset file to the assetStore. This is useful
+// in development to support hot reloading changes to asset files.
+func UpdateAsset(file string) error {
+	assetStore.mu.Lock()
+	defer assetStore.mu.Unlock()
+
+	// Ignore adding assets that aren't in the store's chosen directory
+	if !strings.HasPrefix(file, assetStore.directory) {
+		return fmt.Errorf("asset not in assetStore's directory. directory: %s , asset path: %s", assetStore.directory, file)
+	}
+
+	a, err := loadAsset(file, assetStore.prefix)
+	if err != nil {
+		return err
+	}
+	// Remove existing asset
+	existing := assetStore.assets[strings.TrimPrefix(file, assetStore.prefix)]
+	delete(assetStore.assets, existing.hashedPath)
+	delete(assetStore.assets, existing.path)
+	delete(assetStore.hashes, existing.path)
+
+	// Add updated asset
+	assetStore.assets[a.hashedPath] = a
+	assetStore.assets[a.path] = a
+	assetStore.hashes[a.path] = a.hashedPath
 	return nil
 }
 
@@ -332,11 +380,14 @@ func loadAsset(file, prefix string) (*asset, error) {
 
 // InitAssets loads all assets below dir into global maps.
 func InitAssets(dir, prefix string) error {
+	assetStore.mu.Lock()
+	defer assetStore.mu.Unlock()
+
 	var fileList []string
 
-	assets = make(map[string]*asset)
-	assetHashes = make(map[string]string)
-	assetError = func() error {
+	assets := make(map[string]*asset)
+	assetHashes := make(map[string]string)
+	assetError := func() error {
 		err := filepath.Walk(dir, func(path string, f os.FileInfo, err error) error {
 			fileList = append(fileList, path)
 			return nil
@@ -364,6 +415,12 @@ func InitAssets(dir, prefix string) error {
 		}
 		return nil
 	}()
+
+	assetStore.directory = dir
+	assetStore.prefix = prefix
+	assetStore.assets = assets
+	assetStore.hashes = assetHashes
+	assetStore.error = assetError
 
 	return assetError
 }
