@@ -20,7 +20,7 @@ jobs:
     uses: GeoNet/Actions/.github/workflows/reusable-go-apps.yml@main
     with:
       testSetup: |
-        docker run --name localstack -d --rm -p 4566:4566 -p 4510-4559:4510-4559 docker.io/localstack/localstack:4.0.3
+        docker run --name localstack -d --rm -p 4566:4566 -p 4510-4559:4510-4559 docker.io/localstack/localstack:4.10.0
         echo "waiting for localstack to be ready"
         until curl -v localhost:4566; do
           sleep 1s
