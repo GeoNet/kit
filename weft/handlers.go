@@ -413,6 +413,33 @@ func TextError(e error, h http.Header, b *bytes.Buffer, nonce string) error {
 	return err
 }
 
+// TextInternalError exposes 500 errors to the client
+// for INTERNAL USERS!!!
+func TextInternalError(e error, h http.Header, b *bytes.Buffer, nonce string) error {
+	if b == nil {
+		return errors.New("nil *bytes.Buffer")
+	}
+
+	var msg string
+	switch Status(e) {
+	case http.StatusServiceUnavailable:
+		msg = "service unable error: " + e.Error()
+	case http.StatusInternalServerError:
+		msg = "internal server error: " + e.Error()
+	default:
+		// Fall back to the public-facing handler for all other statuses
+		return TextError(e, h, b, nonce)
+	}
+
+	// response
+	b.Reset()
+	h.Set("Surrogate-Control", "no-store")
+	h.Set("Content-Type", "text/plain; charset=utf-8")
+
+	_, err := b.WriteString(msg)
+	return err
+}
+
 // UseError sets Headers are set for intermediate caches.
 // The content of b is not changed.
 //
