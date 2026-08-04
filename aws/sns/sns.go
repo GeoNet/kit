@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	smithyendpoints "github.com/aws/smithy-go/endpoints"
 )
 
 type SNS struct {
@@ -25,7 +26,7 @@ func New() (SNS, error) {
 	if err != nil {
 		return SNS{}, err
 	}
-	return SNS{client: sns.NewFromConfig(cfg)}, nil
+	return SNS{client: newFromConfig(cfg)}, nil
 }
 
 // NewWithMaxRetries returns the same as New(), but with the
@@ -35,7 +36,7 @@ func NewWithMaxRetries(maxRetries int) (SNS, error) {
 	if err != nil {
 		return SNS{}, err
 	}
-	client := sns.NewFromConfig(cfg, func(options *sns.Options) {
+	client := newFromConfig(cfg, func(options *sns.Options) {
 		options.Retryer = retry.AddWithMaxAttempts(options.Retryer, maxRetries)
 	})
 	return SNS{client: client}, nil
@@ -47,29 +48,44 @@ func getConfig() (aws.Config, error) {
 		return aws.Config{}, errors.New("AWS_REGION is not set")
 	}
 
-	var cfg aws.Config
-	var err error
-
-	if awsEndpoint := os.Getenv("AWS_ENDPOINT_URL"); awsEndpoint != "" {
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:   "aws",
-				SigningRegion: region,
-				URL:           awsEndpoint,
-			}, nil
-		})
-
-		cfg, err = config.LoadDefaultConfig(
-			context.TODO(),
-			config.WithEndpointResolverWithOptions(customResolver))
-	} else {
-		cfg, err = config.LoadDefaultConfig(context.TODO())
-	}
-
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return aws.Config{}, err
 	}
 	return cfg, nil
+}
+
+// newFromConfig adds the custom endpoint option to the list of options given (if
+// the AWS_ENDPOINT_URL env var is set), and returns a Client.
+func newFromConfig(config aws.Config, optFns ...func(*sns.Options)) *sns.Client {
+
+	if awsEndpoint := os.Getenv("AWS_ENDPOINT_URL"); awsEndpoint != "" {
+		customResolver := func(options *sns.Options) {
+			options.EndpointResolverV2 = newCustomEndpointResolver(awsEndpoint)
+		}
+		optFns = append(optFns, customResolver)
+	}
+
+	client := sns.NewFromConfig(config, optFns...)
+
+	return client
+}
+
+type customEndpointResolver struct {
+	inner    sns.EndpointResolverV2
+	endpoint *string
+}
+
+func newCustomEndpointResolver(endpoint string) *customEndpointResolver {
+	return &customEndpointResolver{
+		inner:    sns.NewDefaultEndpointResolverV2(),
+		endpoint: &endpoint,
+	}
+}
+
+func (c *customEndpointResolver) ResolveEndpoint(ctx context.Context, params sns.EndpointParameters) (smithyendpoints.Endpoint, error) {
+	params.Endpoint = c.endpoint
+	return c.inner.ResolveEndpoint(ctx, params)
 }
 
 // Ready returns whether the SNS client has been initialised.
