@@ -36,7 +36,7 @@ func New() (S3, error) {
 	if err != nil {
 		return S3{}, err
 	}
-	return S3{client: s3.NewFromConfig(cfg)}, nil
+	return S3{client: newFromConfig(cfg)}, nil
 }
 
 // NewWithMaxRetries returns the same as New(), but with the
@@ -46,7 +46,7 @@ func NewWithMaxRetries(maxRetries int) (S3, error) {
 	if err != nil {
 		return S3{}, err
 	}
-	client := s3.NewFromConfig(cfg, func(options *s3.Options) {
+	client := newFromConfig(cfg, func(options *s3.Options) {
 		options.Retryer = retry.AddWithMaxAttempts(options.Retryer, maxRetries)
 	})
 	return S3{client: client}, nil
@@ -59,7 +59,7 @@ func NewWithOptions(optFns ...func(*s3.Options)) (S3, error) {
 	if err != nil {
 		return S3{}, err
 	}
-	client := s3.NewFromConfig(cfg, optFns...)
+	client := newFromConfig(cfg, optFns...)
 	return S3{client: client}, nil
 }
 
@@ -90,29 +90,28 @@ func getConfig() (aws.Config, error) {
 		return aws.Config{}, errors.New("AWS_REGION is not set")
 	}
 
-	var cfg aws.Config
-	var err error
-
-	if awsEndpoint := os.Getenv("AWS_ENDPOINT_URL"); awsEndpoint != "" {
-		customResolver := aws.EndpointResolverWithOptionsFunc(func(service, region string, options ...interface{}) (aws.Endpoint, error) {
-			return aws.Endpoint{
-				PartitionID:       "aws",
-				URL:               awsEndpoint,
-				HostnameImmutable: true,
-			}, nil
-		})
-
-		cfg, err = config.LoadDefaultConfig(
-			context.TODO(),
-			config.WithEndpointResolverWithOptions(customResolver))
-	} else {
-		cfg, err = config.LoadDefaultConfig(context.TODO())
-	}
-
+	cfg, err := config.LoadDefaultConfig(context.TODO())
 	if err != nil {
 		return aws.Config{}, err
 	}
 	return cfg, nil
+}
+
+// newFromConfig adds the UsePathStyle option to the list of options given (if
+// the AWS_ENDPOINT_URL env var is set), and returns a Client. This is to support
+// the usage of LocalStack for tests.
+func newFromConfig(config aws.Config, optFns ...func(*s3.Options)) *s3.Client {
+
+	if awsEndpoint := os.Getenv("AWS_ENDPOINT_URL"); awsEndpoint != "" {
+		customResolver := func(options *s3.Options) {
+			options.UsePathStyle = true
+		}
+		optFns = append(optFns, customResolver)
+	}
+
+	client := s3.NewFromConfig(config, optFns...)
+
+	return client
 }
 
 // Ready returns whether the S3 client has been initialised.
