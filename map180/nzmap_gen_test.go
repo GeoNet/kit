@@ -86,7 +86,7 @@ const (
 	// used for drawing lakes ontop of landmasses.
 	lakePath = "<path class=\"nzmap-lake\" fill=\"#ffffff\" stroke=\"#778899\" stroke-width=\"0.75\" stroke-linejoin=\"round\" d=\"%s\"/>"
 	// fixed size SVG images (icons)
-	fixed = "<?xml version=\"1.0\"?><svg height=\"%d\" width=\"%d\" xmlns=\"http://www.w3.org/2000/svg\"><title>Map of New Zealand.</title>"
+	fixed = "<?xml version=\"1.0\"?><svg width=\"%d\" height=\"%d\" viewBox=\"0 0 %d %d\" xmlns=\"http://www.w3.org/2000/svg\"><title>Map of New Zealand.</title>"
 	// responsive
 	responsive = "<?xml version=\"1.0\"?><svg viewBox=\"0 0 %d %d\" xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><title>Map of New Zealand.</title>"
 )
@@ -154,7 +154,7 @@ func TestIconNewZealand(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	buf.WriteString(fmt.Sprintf(fixed, m.height, m.width))
+	buf.WriteString(fmt.Sprintf(fixed, m.width, m.height, m.width, m.height))
 	buf.WriteString(fmt.Sprintf(landPath, land))
 	buf.WriteString(fmt.Sprintf(lakePath, lakes))
 
@@ -209,7 +209,7 @@ func TestIconNewZealandRaoulChathams(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	buf.WriteString(fmt.Sprintf(fixed, m.height, m.width))
+	buf.WriteString(fmt.Sprintf(fixed, m.width, m.height, m.width, m.height))
 	buf.WriteString(fmt.Sprintf(landPath, land))
 	buf.WriteString(fmt.Sprintf(lakePath, lakes))
 
@@ -267,7 +267,7 @@ func TestIconNewZealandSouth(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	buf.WriteString(fmt.Sprintf(fixed, m.height, m.width))
+	buf.WriteString(fmt.Sprintf(fixed, m.width, m.height, m.width, m.height))
 	buf.WriteString(fmt.Sprintf(landPath, land))
 	buf.WriteString(fmt.Sprintf(lakePath, lakes))
 
