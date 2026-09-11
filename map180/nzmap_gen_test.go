@@ -16,15 +16,17 @@ import (
 )
 
 /*
-Use these tests to generate files in nzmap.  Adjust the pg connection in setup depending on the DB used.
-e.g., 862640294325.dkr.ecr.ap-southeast-2.amazonaws.com/haz-db:9.5
+Use these tests to generate files in nzmap. Firstly, start up a Postgres DB (recommended to use the one
+defined in the haz repo: https://github.com/GeoNet/haz/tree/main/etc). e.g.:
 
-create the tables public.map180_layers and public.map180_labels (cf etc/nz_map180_layer.ddl):
+	docker build -t haz-db .
+	docker run -p 5432:5432 -e POSTGRES_PASSWORD=test haz-db:latest
 
-    psql -h 127.0.0.1 hazard postgresql
+Start psql:
 
+	psql -h localhost -U postgres -d hazard
 
-then copy and paste the following commands:
+Then copy and paste the following commands:
 
     drop table public.map180_layers;
     drop table public.map180_labels;
@@ -60,17 +62,19 @@ then copy and paste the following commands:
     GRANT SELECT ON public.map180_labels TO PUBLIC;
 
 
-The add the coast line data:
+Then add the coast line data:
 
-    cp data/new_zealand_map_layers.ddl.gz /work/new_zealand_map_layers.ddl.gz
-    gunzip /work/new_zealand_map_layers.ddl.gz
-    psql -h 127.0.0.1 hazard postgres -f /work/new_zealand_map_layers.ddl
+	mkdir work
+    cp ./data/new_zealand_map_layers.ddl.gz ./work/new_zealand_map_layers.ddl.gz
+    gunzip ./work/new_zealand_map_layers.ddl.gz
+    psql -h localhost -U postgres -d hazard -f ./work/new_zealand_map_layers.ddl
+    rm -rf ./work
 
 
-Generate and format the nzmap files:
+Export the environment variables in env.list, then generate and format the nzmap files:
 
     go test -tags generate
-    gofmt -s -w nzmap/
+    goimports -w nzmap/
 */
 
 const (
