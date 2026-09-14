@@ -331,7 +331,7 @@ func TestCreateImportTag(t *testing.T) {
 			"No nonce, one module file",
 			"",
 			map[string]*asset{
-				"test.mjs": &asset{
+				"test.mjs": {
 					hashedPath: "/assets/js/hashprefix-test.mjs",
 					sri:        "sha384-abcd",
 				},
@@ -351,11 +351,11 @@ func TestCreateImportTag(t *testing.T) {
 			"Nonce present, two module files",
 			"abcdefg",
 			map[string]*asset{
-				"test1.mjs": &asset{
+				"test1.mjs": {
 					hashedPath: "/assets/js/hashprefix-test1.mjs",
 					sri:        "sha384-efgh",
 				},
-				"test2.mjs": &asset{
+				"test2.mjs": {
 					hashedPath: "/assets/js/hashprefix-test2.mjs",
 					sri:        "sha384-ijkl",
 				},
