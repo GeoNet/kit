@@ -20,6 +20,7 @@ the version.  The validating them using the XSDs:
 		xmllint --noout --schema sc3ml_0.11.xsd 2015p768477_0.11.xml
 		xmllint --noout --schema sc3ml_0.12.xsd 2024p344188_0.12.xml
 		xmllint --noout --schema sc3ml_0.13.xsd 2024p344188_0.13.xml
+		xmllint --noout --schema scml_0.14.xsd 2026p748403_0.14.xml
 */
 func TestUnmarshal(t *testing.T) {
 	for _, input := range []string{"2015p768477_0.7.xml", "2015p768477_0.8.xml", "2015p768477_0.9.xml", "2015p768477_0.10.xml", "2015p768477_0.11.xml"} {
@@ -548,6 +549,91 @@ func TestUnmarshall12_13(t *testing.T) {
 
 		if e.PreferredMagnitude.StationCount != 5 {
 			t.Errorf("%s: Expected StationCount 5 gor %d", input, e.PreferredMagnitude.StationCount)
+		}
+	}
+}
+
+func TestUnmarshall14(t *testing.T) {
+	for _, input := range []string{"2026p748403_0.14.xml"} {
+		b, err := os.ReadFile("testdata/" + input) //nolint:gosec
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		var s sc3ml.Seiscomp
+
+		if err = sc3ml.Unmarshal(b, &s); err != nil {
+			t.Errorf("%s: %s", input, err.Error())
+		}
+
+		if len(s.EventParameters.Events) != 1 {
+			t.Errorf("should have found 1 event for %s.", input)
+		}
+
+		e := s.EventParameters.Events[0]
+
+		if e.PublicID != "2026p748403" {
+			t.Errorf("%s: expected publicID 2026p748403 got %s", input, e.PublicID)
+		}
+
+		if e.Type != "earthquake" {
+			t.Errorf("%s: expected type earthquake got %s", input, e.Type)
+		}
+
+		if e.PreferredOriginID != "Origin/20261004215844.377698.20945" {
+			t.Errorf("%s: expected preferredOriginID Origin/20261004215844.377698.20945 got %s", input, e.PreferredOriginID)
+		}
+
+		if e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano) != "2026-10-04T21:49:33.737549Z" {
+			t.Errorf("%s: expected 2026-10-04T21:49:33.737549Z, got %s", input, e.PreferredOrigin.Time.Value.Format(time.RFC3339Nano))
+		}
+
+		if e.PreferredOrigin.Latitude.Value != -42.1883659362793 {
+			t.Errorf("%s: Latitude expected -42.1883659362793 got %f", input, e.PreferredOrigin.Latitude.Value)
+		}
+
+		if e.PreferredOrigin.Longitude.Value != 172.7863311767578 {
+			t.Errorf("%s: Longitude expected 172.7863311767578 got %f", input, e.PreferredOrigin.Longitude.Value)
+		}
+
+		if e.PreferredOrigin.Depth.Value != 33.001792907714844 {
+			t.Errorf("%s: Depth expected 33.001792907714844 got %f", input, e.PreferredOrigin.Depth.Value)
+		}
+
+		if e.PreferredOrigin.MethodID != "LOCSAT" {
+			t.Errorf("%s: MethodID expected LOCSAT got %s", input, e.PreferredOrigin.MethodID)
+		}
+
+		if e.PreferredOrigin.EarthModelID != "iasp91" {
+			t.Errorf("%s: EarthModelID expected iasp91 got %s", input, e.PreferredOrigin.EarthModelID)
+		}
+
+		if e.PreferredOrigin.Quality.AzimuthalGap != 60.37852478027344 {
+			t.Errorf("%s: AzimuthalGap expected 60.37852478027344 got %f", input, e.PreferredOrigin.Quality.AzimuthalGap)
+		}
+
+		if e.PreferredOrigin.Quality.MinimumDistance != 0.4347148835659027 {
+			t.Errorf("%s: MinimumDistance expected 0.4347148835659027 got %f", input, e.PreferredOrigin.Quality.MinimumDistance)
+		}
+
+		if e.PreferredOrigin.Quality.UsedPhaseCount != 18 {
+			t.Errorf("%s: UsedPhaseCount expected 18 got %d", input, e.PreferredOrigin.Quality.UsedPhaseCount)
+		}
+
+		if e.PreferredOrigin.Quality.UsedStationCount != 12 {
+			t.Errorf("%s: UsedStationCount expected 12 got %d", input, e.PreferredOrigin.Quality.UsedStationCount)
+		}
+
+		if e.PreferredMagnitude.Magnitude.Value != 2.1051612378064357 {
+			t.Errorf("%s: Magnitude expected 2.1051612378064357 got %f", input, e.PreferredMagnitude.Magnitude.Value)
+		}
+
+		if e.PreferredMagnitude.Type != "MLv" {
+			t.Errorf("%s: Magnitude type expected MLv got %s", input, e.PreferredMagnitude.Type)
+		}
+
+		if e.PreferredMagnitude.StationCount != 6 {
+			t.Errorf("%s: Expected StationCount 6 got %d", input, e.PreferredMagnitude.StationCount)
 		}
 	}
 }
