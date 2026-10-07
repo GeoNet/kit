@@ -39,6 +39,19 @@ func New() (S3, error) {
 	return S3{client: newFromConfig(cfg)}, nil
 }
 
+// NewAnonymous returns an S3 struct which wraps an S3 client using anonymous credentials.
+// This is useful for accessing public S3 buckets that don't require authentication.
+// It is an error if the AWS_REGION environment variable is not set.
+// Requests with recoverable errors will be retried with the default retrier.
+func NewAnonymous() (S3, error) {
+	cfg, err := getConfig()
+	if err != nil {
+		return S3{}, err
+	}
+	cfg.Credentials = aws.AnonymousCredentials{}
+	return S3{client: newFromConfig(cfg)}, nil
+}
+
 // NewWithMaxRetries returns the same as New(), but with the
 // back off set to up to maxRetries times.
 func NewWithMaxRetries(maxRetries int) (S3, error) {
