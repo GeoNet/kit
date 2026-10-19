@@ -10,6 +10,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/aws/retry"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/sns"
+	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 )
 
 type SNS struct {
@@ -66,12 +67,28 @@ func (s *SNS) Client() *sns.Client {
 
 // Publish publishes message to topicArn.
 func (s *SNS) Publish(topicArn string, message []byte) error {
+	return s.PublishWithContext(context.Background(), topicArn, message)
+}
+
+// PublishWithContext publishes message to topicArn using ctx.
+func (s *SNS) PublishWithContext(ctx context.Context, topicArn string, message []byte) error {
+	return s.PublishWithAttributesWithContext(ctx, topicArn, message, nil)
+}
+
+// PublishWithAttributes publishes message to topicArn with the supplied message attributes.
+func (s *SNS) PublishWithAttributes(topicArn string, message []byte, messageAttributes map[string]types.MessageAttributeValue) error {
+	return s.PublishWithAttributesWithContext(context.Background(), topicArn, message, messageAttributes)
+}
+
+// PublishWithAttributesWithContext publishes message to topicArn with the supplied message attributes using ctx.
+func (s *SNS) PublishWithAttributesWithContext(ctx context.Context, topicArn string, message []byte, messageAttributes map[string]types.MessageAttributeValue) error {
 	input := sns.PublishInput{
-		Message:  aws.String(string(message)),
-		TopicArn: aws.String(topicArn),
+		Message:           aws.String(string(message)),
+		MessageAttributes: messageAttributes,
+		TopicArn:          aws.String(topicArn),
 	}
 
-	result, err := s.client.Publish(context.TODO(), &input)
+	result, err := s.client.Publish(ctx, &input)
 	if err != nil {
 		return err
 	}
