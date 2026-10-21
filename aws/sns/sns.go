@@ -72,16 +72,11 @@ func (s *SNS) Publish(topicArn string, message []byte) error {
 
 // PublishWithContext publishes message to topicArn using ctx.
 func (s *SNS) PublishWithContext(ctx context.Context, topicArn string, message []byte) error {
-	return s.PublishWithAttributesWithContext(ctx, topicArn, message, nil)
+	return s.PublishWithAttributes(ctx, topicArn, message, nil)
 }
 
-// PublishWithAttributes publishes message to topicArn with the supplied message attributes.
-func (s *SNS) PublishWithAttributes(topicArn string, message []byte, messageAttributes map[string]types.MessageAttributeValue) error {
-	return s.PublishWithAttributesWithContext(context.Background(), topicArn, message, messageAttributes)
-}
-
-// PublishWithAttributesWithContext publishes message to topicArn with the supplied message attributes using ctx.
-func (s *SNS) PublishWithAttributesWithContext(ctx context.Context, topicArn string, message []byte, messageAttributes map[string]types.MessageAttributeValue) error {
+// PublishWithAttributes publishes message to topicArn with the supplied message attributes using ctx.
+func (s *SNS) PublishWithAttributes(ctx context.Context, topicArn string, message []byte, messageAttributes map[string]types.MessageAttributeValue) error {
 	input := sns.PublishInput{
 		Message:           aws.String(string(message)),
 		MessageAttributes: messageAttributes,
