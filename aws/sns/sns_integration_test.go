@@ -4,6 +4,7 @@
 package sns
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -11,6 +12,8 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
+	"github.com/aws/aws-sdk-go-v2/service/sns/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,8 +27,12 @@ const (
 )
 
 type SNSMessage struct {
-	Message  string `json:"Message"`
-	TopicArn string `json:"TopicArn"`
+	Message           string `json:"Message"`
+	TopicArn          string `json:"TopicArn"`
+	MessageAttributes map[string]struct {
+		Type  string `json:"Type"`
+		Value string `json:"Value"`
+	} `json:"MessageAttributes"`
 }
 
 func setup(createQueue, createTopic bool) (string, string) {
@@ -165,6 +172,66 @@ func TestSNSPublish(t *testing.T) {
 	err = json.Unmarshal([]byte(message), &m)
 	assert.Nil(t, err)
 	assert.Equal(t, testMessage, m.Message)
+}
+
+func TestSNSPublishWithContext(t *testing.T) {
+	// ARRANGE
+	queueArn, topicArn := setup(true, true)
+	defer teardown(queueArn, topicArn)
+	awsCmdSubscribeQueueToTopic(topicArn, queueArn)
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sns client: %v", err))
+
+	// Normal publish with context
+	err = client.PublishWithContext(context.Background(), topicArn, []byte(testMessage))
+
+	// ASSERT
+	require.Nil(t, err)
+	var m SNSMessage
+	err = json.Unmarshal([]byte(awsCmdReceiveMessage(testQueue)), &m)
+	require.Nil(t, err)
+	assert.Equal(t, testMessage, m.Message)
+
+	// Cancelled context test
+	t.Run("cancelled", func(t *testing.T) {
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+
+		err := client.PublishWithContext(ctx, topicArn, []byte(testMessage))
+
+		require.Error(t, err)
+		assert.ErrorIs(t, err, context.Canceled)
+	})
+}
+
+func TestSNSPublishWithAttributes(t *testing.T) {
+	// ARRANGE
+	queueArn, topicArn := setup(true, true)
+	defer teardown(queueArn, topicArn)
+	awsCmdSubscribeQueueToTopic(topicArn, queueArn)
+
+	client, err := New()
+	require.Nil(t, err, fmt.Sprintf("error creating sns client: %v", err))
+
+	const attributeName = "test-attribute"
+	const attributeValue = "test-attribute-value"
+
+	// ACTION
+	err = client.PublishWithAttributes(context.Background(), topicArn, []byte(testMessage), map[string]types.MessageAttributeValue{
+		attributeName: {
+			DataType:    aws.String("String"),
+			StringValue: aws.String(attributeValue),
+		},
+	})
+
+	// ASSERT
+	require.Nil(t, err)
+	var m SNSMessage
+	err = json.Unmarshal([]byte(awsCmdReceiveMessage(testQueue)), &m)
+	require.Nil(t, err)
+	assert.Equal(t, testMessage, m.Message)
+	assert.Equal(t, attributeValue, m.MessageAttributes[attributeName].Value)
 }
 
 func TestSNSCreateTopic(t *testing.T) {
